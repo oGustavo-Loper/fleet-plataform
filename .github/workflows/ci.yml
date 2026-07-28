@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: API typecheck
+        run: pnpm --filter @fleet/api typecheck
+
+      - name: API tests
+        run: pnpm --filter @fleet/api test
+
+      - name: Web typecheck
+        run: pnpm --filter @fleet/web typecheck
+
+      - name: Web tests
+        run: pnpm --filter @fleet/web test

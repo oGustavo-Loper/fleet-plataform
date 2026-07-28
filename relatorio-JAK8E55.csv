@@ -1,0 +1,17 @@
+"Tipo","Valor"
+"Veículo","JAK 8E55 - Tracker"
+"Período","01/05/2026 até 31/05/2026"
+"Abastecimentos","3"
+"Manutenções","0"
+"KM rodados","632"
+"Média","14.84 km/l"
+"Custo total","R$ 283.78"
+
+"Abastecimentos"
+"Data","KM","Litros","Valor/L","Total","Média","Posto","Motorista","Endereço"
+"2026-05-07","48752","19.00","6.39","121.41","18.58","Coqueiro","",""
+"2026-05-02","48300","18.10","6.88","124.53","9.94","Coqueiro","",""
+"2026-05-02","48399","5.50","6.88","37.84","18.00","Tres bicos","",""
+
+"Manutenções"
+"Data","KM","Título","Tipo","Total","Fornecedor"

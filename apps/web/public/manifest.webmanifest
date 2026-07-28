@@ -1,0 +1,16 @@
+{
+  "name": "Fleet Platform",
+  "short_name": "Fleet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Gestao de veiculos, custos, quilometragem e manutencoes com suporte offline.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
