@@ -1,0 +1,11 @@
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+.git
+.turbo
+dist
+apps/*/dist
+coverage
+artifacts
+.DS_Store
+
