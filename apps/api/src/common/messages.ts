@@ -19,6 +19,7 @@ export enum PtBrMessage {
   PASSWORD_RESET_CODE_ALREADY_USED = "Código já utilizado.",
   PASSWORD_RESET_CODE_EXPIRED = "Código expirado.",
   PASSWORD_RESET_CODE_INVALID = "Código inválido.",
+  PASSWORD_RESET_CODE_LOCKED = "Número máximo de tentativas excedido. Solicite um novo código.",
   EMAIL_ALREADY_EXISTS = "Já existe uma conta com este e-mail.",
   CHECKOUT_PLAN_NOT_SUPPORTED = "Plano ainda não suportado no checkout hospedado.",
   PAYMENT_NOT_CONFIRMED = "Pagamento ainda não confirmado.",
@@ -32,6 +33,8 @@ export enum PtBrMessage {
   LITERS_MUST_BE_GREATER_THAN_ZERO = "Informe uma quantidade de litros maior que zero.",
   DRIVER_RESTRICTED_TO_ASSIGNED_VEHICLE = "Este motorista só pode registrar abastecimento para o veículo vinculado.",
   DATA_ENCRYPTION_KEY_REQUIRED = "DATA_ENCRYPTION_KEY é obrigatória para criptografar e descriptografar dados sensíveis.",
+  JWT_ACCESS_SECRET_REQUIRED = "JWT_ACCESS_SECRET é obrigatória para emitir e validar tokens de acesso.",
+  JWT_REFRESH_SECRET_REQUIRED = "JWT_REFRESH_SECRET é obrigatória para emitir e validar tokens de renovação.",
   DATABASE_UNAVAILABLE = "Banco de dados indisponível.",
   NOT_INFORMED = "Não informado."
 }

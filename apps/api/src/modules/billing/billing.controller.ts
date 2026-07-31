@@ -13,7 +13,7 @@ export class BillingController {
     @Headers("x-billing-token") billingToken?: string
   ) {
     const expectedToken = process.env.BILLING_WEBHOOK_TOKEN;
-    if (expectedToken && billingToken !== expectedToken) {
+    if (!expectedToken || billingToken !== expectedToken) {
       throw new BadRequestException(PtBrMessage.WEBHOOK_INVALID);
     }
 
