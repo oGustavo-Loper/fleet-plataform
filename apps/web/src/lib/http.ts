@@ -1,25 +1,19 @@
-const DEFAULT_API_URL = "http://127.0.0.1:4000/graphql";
+const DEFAULT_API_URL = "/graphql";
 const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 export function resolveApiUrl() {
-  const configuredUrl = import.meta.env.VITE_API_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  if (typeof window === "undefined") {
-    return DEFAULT_API_URL;
-  }
-
-  const host = window.location.hostname || "127.0.0.1";
-  return `http://${host}:4000/graphql`;
+  return import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 }
 
 export function resolveRequestTimeoutMs() {
-  const raw = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? DEFAULT_REQUEST_TIMEOUT_MS);
+  const raw = Number(
+    import.meta.env.VITE_API_TIMEOUT_MS ?? DEFAULT_REQUEST_TIMEOUT_MS
+  );
+
   if (!Number.isFinite(raw) || raw < 1000) {
     return DEFAULT_REQUEST_TIMEOUT_MS;
   }
+
   return Math.floor(raw);
 }
 
@@ -33,11 +27,14 @@ export async function fetchWithTimeout(
   const externalSignal = init?.signal;
 
   const handleExternalAbort = () => controller.abort();
+
   if (externalSignal) {
     if (externalSignal.aborted) {
       controller.abort();
     } else {
-      externalSignal.addEventListener("abort", handleExternalAbort, { once: true });
+      externalSignal.addEventListener("abort", handleExternalAbort, {
+        once: true,
+      });
     }
   }
 
@@ -49,14 +46,18 @@ export async function fetchWithTimeout(
   try {
     return await fetch(input, {
       ...init,
-      signal: controller.signal
+      signal: controller.signal,
     });
   } catch (error) {
-    if (timedOut || (error instanceof DOMException && error.name === "AbortError")) {
+    if (
+      timedOut ||
+      (error instanceof DOMException && error.name === "AbortError")
+    ) {
       throw new Error(
-        `Tempo limite da API (${timeoutMs}ms). Verifique se o backend esta online e acessivel.`
+        `Tempo limite da API (${timeoutMs}ms). Verifique se o backend está online e acessível.`
       );
     }
+
     throw error;
   } finally {
     globalThis.clearTimeout(timeoutId);

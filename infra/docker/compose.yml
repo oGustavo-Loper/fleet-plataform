@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: fleet_platform
       POSTGRES_USER: fleet
       POSTGRES_PASSWORD: fleet
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fleet -d fleet_platform"]
       interval: 5s
@@ -36,7 +34,7 @@ services:
       HOST: 0.0.0.0
       PORT: 4000
       BILLING_PROVIDER: mercado_pago
-      WEB_BASE_URL: ${WEB_BASE_URL:-http://127.0.0.1:5173}
+      WEB_BASE_URL: ${WEB_BASE_URL:-https://fleet.gustavoloper.xyz}
       MERCADO_PAGO_CHECKOUT_URL: https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=demo
       BILLING_WEBHOOK_TOKEN: change-me-webhook-token
       MEDIA_STORAGE_DIR: /workspace/apps/api/uploads
@@ -48,18 +46,16 @@ services:
     command: >
       sh -lc "if [ ! -x /workspace/node_modules/.bin/nest ]; then pnpm install --frozen-lockfile; fi &&
       pnpm --filter @fleet/api dev"
-    ports:
-      - "4000:4000"
     healthcheck:
       test:
         [
           "CMD-SHELL",
           "node -e \"fetch('http://127.0.0.1:4000/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""
         ]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 12
-      start_period: 20s
+      retries: 20
+      start_period: 300s
     volumes:
       - ../..:/workspace
       - fleet_api_node_modules:/workspace/node_modules
@@ -80,14 +76,12 @@ services:
     environment:
       VITE_HOST: 0.0.0.0
       VITE_PORT: 5173
-      VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:4000/graphql}
-      WEB_BASE_URL: ${WEB_BASE_URL:-http://127.0.0.1:5173}
+      VITE_API_URL: ${VITE_API_URL:-/graphql}
+      WEB_BASE_URL: ${WEB_BASE_URL:-https://fleet.gustavoloper.xyz}
       CHOKIDAR_USEPOLLING: "true"
     command: >
       sh -lc "if [ ! -x /workspace/node_modules/.bin/vite ]; then pnpm install --frozen-lockfile; fi &&
       pnpm --filter @fleet/web dev -- --host 0.0.0.0 --port 5173"
-    ports:
-      - "5173:5173"
     healthcheck:
       test:
         [
