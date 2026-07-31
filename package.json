@@ -15,8 +15,10 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @fleet/web --filter @fleet/api dev",
-    "docker:dev": "docker compose -f infra/docker/compose.yml up --build",
-    "docker:dev:down": "docker compose -f infra/docker/compose.yml down",
+    "docker:dev": "docker compose --env-file .env -f infra/docker/compose.yml -f infra/docker/compose.local.yml up --build",
+    "docker:dev:down": "docker compose --env-file .env -f infra/docker/compose.yml -f infra/docker/compose.local.yml down",
+    "docker:prod": "docker compose --env-file .env -f infra/docker/compose.yml up --build",
+    "docker:prod:down": "docker compose --env-file .env -f infra/docker/compose.yml down",
     "build": "pnpm -r build",
     "test": "pnpm --filter @fleet/api test && pnpm --filter @fleet/web test",
     "typecheck": "pnpm -r typecheck",

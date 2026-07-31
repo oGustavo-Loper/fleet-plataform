@@ -12,12 +12,16 @@ import { COMPLETE_FIRST_LOGIN_MUTATION } from "../lib/queries";
 
 export function FirstAccessPage() {
   const navigate = useNavigate();
-  const { auth, login, isAuthenticated } = useAuth();
+  const { auth, login, isAuthenticated, isInitializing } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
   const [completeFirstLogin, { loading, error }] = useMutation(COMPLETE_FIRST_LOGIN_MUTATION);
+
+  if (isInitializing) {
+    return null;
+  }
 
   if (!isAuthenticated || !auth) {
     return <Navigate to="/login" replace />;

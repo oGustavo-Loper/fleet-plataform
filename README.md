@@ -33,9 +33,9 @@ pnpm docker:dev
 pnpm build
 ```
 
-## Docker dev
+## Docker dev (teste local)
 
-Para subir `postgres + api + web` com um comando:
+Para subir `postgres + api + web` com portas publicadas no host, para testar em `127.0.0.1`:
 
 ```bash
 pnpm docker:dev
@@ -52,6 +52,19 @@ Para derrubar:
 ```bash
 pnpm docker:dev:down
 ```
+
+Esse modo usa `infra/docker/compose.yml` + `infra/docker/compose.local.yml`, que sobrescreve `VITE_API_URL`/`WEB_BASE_URL` para `127.0.0.1` e publica as portas no host.
+
+## Docker prod
+
+Para subir sem publicar portas no host, pensado para rodar atras de um reverse proxy/Cloudflare Tunnel apontando para o dominio configurado em `WEB_BASE_URL`:
+
+```bash
+pnpm docker:prod
+pnpm docker:prod:down
+```
+
+Esse modo usa somente `infra/docker/compose.yml`, com `WEB_BASE_URL` padrao `https://fleet.gustavoloper.xyz` e `VITE_API_URL` relativo (`/graphql`). Ele exige que o proxy externo roteie `/graphql` para o container `api` e o restante para o container `web`.
 
 ## Variaveis esperadas
 

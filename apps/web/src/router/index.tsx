@@ -21,7 +21,7 @@ import { VehiclesPage } from "../pages/VehiclesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export function AppRouter() {
-  const { auth, isAuthenticated } = useAuth();
+  const { auth, isAuthenticated, isInitializing } = useAuth();
 
   return (
     <>
@@ -31,7 +31,7 @@ export function AppRouter() {
         <Route
           path="/"
           element={
-            isAuthenticated
+            isInitializing ? null : isAuthenticated
               ? <Navigate to={auth?.mustChangePassword ? "/first-access" : "/dashboard"} replace />
               : <LandingPage />
           }

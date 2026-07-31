@@ -80,6 +80,7 @@ export function FuelsPage() {
         open={drawerOpen}
         title="Novo abastecimento"
         subtitle="Preencha os dados no drawer e acompanhe o histórico logo abaixo."
+        width="min(680px, 100vw)"
         onClose={() => setDrawerOpen(false)}
       >
         {tenantId ? (

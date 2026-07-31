@@ -19,6 +19,7 @@ import {
 type AuthContextValue = {
   auth: StoredAuth | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (auth: StoredAuth) => void;
   logout: () => void;
 };
@@ -27,10 +28,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [auth, setAuth] = useState<StoredAuth | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     setAuth(getStoredAuth());
+    setIsInitializing(false);
   }, []);
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       auth,
       isAuthenticated: Boolean(auth?.accessToken),
+      isInitializing,
       login: (nextAuth) => {
         setStoredAuth(nextAuth);
         setAuth(nextAuth);
@@ -124,7 +128,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         void apolloClient.clearStore();
       }
     }),
-    [auth]
+    [auth, isInitializing]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
