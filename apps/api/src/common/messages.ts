@@ -36,5 +36,6 @@ export enum PtBrMessage {
   JWT_ACCESS_SECRET_REQUIRED = "JWT_ACCESS_SECRET é obrigatória para emitir e validar tokens de acesso.",
   JWT_REFRESH_SECRET_REQUIRED = "JWT_REFRESH_SECRET é obrigatória para emitir e validar tokens de renovação.",
   DATABASE_UNAVAILABLE = "Banco de dados indisponível.",
+  SYNC_ENTITY_NOT_SUPPORTED = "Entidade não suportada para sincronização offline.",
   NOT_INFORMED = "Não informado."
 }

@@ -13,6 +13,11 @@ export class FleetDatabase extends Dexie {
       vehicles: "id, plate, status",
       outbox: "id, status, createdAt"
     });
+
+    this.version(2).stores({
+      vehicles: "id, plate, status",
+      outbox: "id, status, createdAt, tenantId, entity"
+    });
   }
 }
 

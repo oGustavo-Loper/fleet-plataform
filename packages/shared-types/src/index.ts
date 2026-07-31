@@ -187,10 +187,11 @@ export interface VehicleReportItem {
 
 export interface SyncQueueItem<TPayload = unknown> {
   id: string;
-  entity: "vehicle" | "odometer" | "fuel" | "maintenance";
-  operation: "create" | "update";
+  tenantId: string;
+  entity: "vehicle" | "driver" | "fuelLog" | "maintenance";
+  operation: "create";
   payload: TPayload;
   createdAt: string;
-  status: "pending" | "processing" | "synced" | "conflict";
+  status: "PENDING" | "SYNCING" | "SYNCED" | "ERROR";
   errorMessage?: string;
 }

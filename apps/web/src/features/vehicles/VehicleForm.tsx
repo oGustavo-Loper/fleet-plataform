@@ -24,6 +24,7 @@ import {
 import { upsertQueryListItem } from "../../lib/apollo-cache";
 import { isBlank, parseNumber } from "../../lib/form-validation";
 import { formatPlate } from "../../lib/masks";
+import { submitOrQueueOffline } from "../../lib/offline-submit";
 
 type Props = {
   tenantId: string;
@@ -64,12 +65,13 @@ export function VehicleForm({
   const isEditing = Boolean(initialVehicle?.id);
   const [form, setForm] = useState(getInitialForm(initialVehicle));
   const [validationError, setValidationError] = useState("");
+  const [queuedMessage, setQueuedMessage] = useState("");
 
   useEffect(() => {
     setForm(getInitialForm(initialVehicle));
   }, [initialVehicle]);
 
-  const [mutateVehicle, { loading, error }] = useMutation(
+  const [mutateVehicle, { loading, error, reset: resetMutation }] = useMutation(
     isEditing ? UPDATE_VEHICLE_MUTATION : CREATE_VEHICLE_MUTATION,
     {
       update(cache, { data }) {
@@ -103,6 +105,7 @@ export function VehicleForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setValidationError("");
+    setQueuedMessage("");
 
     if (limitReached) {
       return;
@@ -148,40 +151,63 @@ export function VehicleForm({
       return;
     }
 
-    await mutateVehicle({
-      variables: {
-        input: isEditing
-          ? {
-              id: initialVehicle?.id,
-              plate,
-              vehicleType: form.vehicleType,
-              brand,
-              model,
-              year: Number(year),
-              fuelType: form.fuelType,
-              currentKm: Number(currentKm),
-              ownerName,
-              companyName,
-              status: form.status
-            }
-          : {
-              tenantId,
-              plate,
-              vehicleType: form.vehicleType,
-              brand,
-              model,
-              year: Number(year),
-              fuelType: form.fuelType,
-              currentKm: Number(currentKm),
-              ownerName,
-              companyName,
-              status: form.status
-            }
-      }
+    if (isEditing) {
+      await mutateVehicle({
+        variables: {
+          input: {
+            id: initialVehicle?.id,
+            plate,
+            vehicleType: form.vehicleType,
+            brand,
+            model,
+            year: Number(year),
+            fuelType: form.fuelType,
+            currentKm: Number(currentKm),
+            ownerName,
+            companyName,
+            status: form.status
+          }
+        }
+      });
+
+      setForm(getInitialForm(null));
+      onDone?.();
+      return;
+    }
+
+    const input = {
+      tenantId,
+      plate,
+      vehicleType: form.vehicleType,
+      brand,
+      model,
+      year: Number(year),
+      fuelType: form.fuelType,
+      currentKm: Number(currentKm),
+      ownerName,
+      companyName,
+      status: form.status
+    };
+
+    const { queued } = await submitOrQueueOffline({
+      entity: "vehicle",
+      tenantId,
+      payload: input,
+      mutate: () => mutateVehicle({ variables: { input } })
     });
 
+    if (queued) {
+      resetMutation();
+      setQueuedMessage(
+        "Sem conexão: veículo salvo neste dispositivo e será enviado quando a internet voltar."
+      );
+    }
+
     setForm(getInitialForm(null));
-    onDone?.();
+
+    if (!queued) {
+      onDone?.();
+    }
   }
 
   return (
@@ -300,6 +326,9 @@ export function VehicleForm({
       ) : null}
       {validationError ? (
         <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>{validationError}</p>
+      ) : null}
+      {queuedMessage ? (
+        <p style={{ ...supportingPanelStyle, color: "#fbbf24" }}>{queuedMessage}</p>
       ) : null}
       {error ? <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>Falha ao salvar veículo.</p> : null}
       <div style={footerActionsStyle}>
