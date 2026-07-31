@@ -28,21 +28,21 @@ services:
     init: true
     environment:
       DATABASE_URL: postgresql://fleet:fleet@postgres:5432/fleet_platform?schema=public
-      DATA_ENCRYPTION_KEY: f86e61507e6bb368b2ea86d64570e8c29ae135c3ed441b3e1cff6be9b6392108
-      JWT_ACCESS_SECRET: change-me-access
-      JWT_REFRESH_SECRET: change-me-refresh
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?Defina DATA_ENCRYPTION_KEY no .env}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Defina JWT_ACCESS_SECRET no .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Defina JWT_REFRESH_SECRET no .env}
       HOST: 0.0.0.0
       PORT: 4000
       BILLING_PROVIDER: mercado_pago
       WEB_BASE_URL: ${WEB_BASE_URL:-https://fleet.gustavoloper.xyz}
       MERCADO_PAGO_CHECKOUT_URL: https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=demo
-      BILLING_WEBHOOK_TOKEN: change-me-webhook-token
+      BILLING_WEBHOOK_TOKEN: ${BILLING_WEBHOOK_TOKEN:?Defina BILLING_WEBHOOK_TOKEN no .env}
       MEDIA_STORAGE_DIR: /workspace/apps/api/uploads
-      SMTP_HOST: ""
-      SMTP_PORT: "587"
-      SMTP_USER: ""
-      SMTP_PASSWORD: ""
-      MAIL_FROM: Fleet Platform <no-reply@fleet.local>
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-Fleet Platform <no-reply@fleet.local>}
     command: >
       sh -lc "if [ ! -x /workspace/node_modules/.bin/nest ]; then pnpm install --frozen-lockfile; fi &&
       pnpm --filter @fleet/api dev"
