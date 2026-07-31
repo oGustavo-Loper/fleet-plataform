@@ -95,6 +95,9 @@ export function PlansPage() {
     return (
       <div style={publicPageStyle}>
         <main style={publicMainStyle}>
+          <Link style={backLinkStyle} to="/">
+            ← Voltar para a home
+          </Link>
           <article style={publicHeroStyle}>
             <strong style={heroKickerStyle}>Planos Fleet Platform</strong>
             <h1 style={heroTitleStyle}>Escolha o plano ideal para sua frota</h1>
@@ -248,6 +251,12 @@ export function PlansPage() {
     </CenteredShell>
   );
 }
+
+const backLinkStyle: CSSProperties = {
+  justifySelf: "start",
+  color: "#cbd5e1",
+  fontSize: "0.9rem"
+};
 
 const publicHeroStyle: CSSProperties = {
   padding: "1.25rem",

@@ -28,6 +28,15 @@ type Props = {
   onCancel?: () => void;
 };
 
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL"
+});
+
+function formatCurrency(value: number) {
+  return currencyFormatter.format(value);
+}
+
 export function FuelForm({
   tenantId,
   vehicles,
@@ -269,7 +278,7 @@ export function FuelForm({
 
   return (
     <form style={{ ...formPanelStyle, ...drawerFormStyle }} onSubmit={handleSubmit}>
-      <div style={formGridStyle}>
+      <div style={{ ...formGridStyle, ...fuelFormGridStyle }}>
         <FormField label="Veículo">
           <select
             style={formInputStyle}
@@ -439,7 +448,7 @@ export function FuelForm({
             }
           }}
         />
-        <FormField label="Observações">
+        <FormField label="Observações" style={fullWidthFieldStyle}>
           <input
             style={formInputStyle}
             placeholder="Ex: Abastecimento de rotina"
@@ -449,23 +458,46 @@ export function FuelForm({
         </FormField>
       </div>
       {selectedVehicle ? (
-        <p style={supportingPanelStyle}>
-          Veículo selecionado: {formatPlate(selectedVehicle.plate)} • {selectedVehicle.model} • KM mínimo{" "}
-          {selectedVehicle.currentKm + 1}
-        </p>
-      ) : null}
-      {selectedVehicle && computedDistance > 0 ? (
-        <p style={supportingPanelStyle}>
-          KM rodado estimado: {computedDistance.toLocaleString("pt-BR")} • Média estimada:{" "}
-          {computedAverage.toFixed(2)} km/l
-        </p>
-      ) : null}
-      {isDriver ? (
-        <p style={supportingPanelStyle}>
-          {canFuelAnyVehicle
-            ? "Motorista com permissão para abastecer qualquer veículo."
-            : "Motorista restrito ao veículo vinculado pela empresa."}
-        </p>
+        <div style={summaryCardStyle}>
+          <p style={summaryTitleStyle}>Resumo do abastecimento</p>
+          <div style={summaryGridStyle}>
+            <div style={summaryItemStyle}>
+              <span style={summaryLabelStyle}>Veículo</span>
+              <strong style={summaryValueStyle}>
+                {formatPlate(selectedVehicle.plate)} • {selectedVehicle.model}
+              </strong>
+            </div>
+            <div style={summaryItemStyle}>
+              <span style={summaryLabelStyle}>KM mínimo</span>
+              <strong style={summaryValueStyle}>{selectedVehicle.currentKm + 1}</strong>
+            </div>
+            <div style={summaryItemStyle}>
+              <span style={summaryLabelStyle}>Distância estimada</span>
+              <strong style={summaryValueStyle}>
+                {computedDistance > 0 ? `${computedDistance.toLocaleString("pt-BR")} km` : "—"}
+              </strong>
+            </div>
+            <div style={summaryItemStyle}>
+              <span style={summaryLabelStyle}>Consumo médio</span>
+              <strong style={summaryValueStyle}>
+                {computedAverage > 0 ? `${computedAverage.toFixed(2)} km/l` : "—"}
+              </strong>
+            </div>
+            <div style={summaryItemStyle}>
+              <span style={summaryLabelStyle}>Valor total</span>
+              <strong style={summaryValueStyle}>
+                {computedTotal > 0 ? formatCurrency(computedTotal) : "—"}
+              </strong>
+            </div>
+          </div>
+          {isDriver ? (
+            <p style={summaryNoteStyle}>
+              {canFuelAnyVehicle
+                ? "Motorista com permissão para abastecer qualquer veículo."
+                : "Motorista restrito ao veículo vinculado pela empresa."}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {validationError ? (
         <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>{validationError}</p>
@@ -491,8 +523,18 @@ export function FuelForm({
 
 const drawerFormStyle: CSSProperties = {
   display: "grid",
-  gap: "1rem",
+  gap: "1.25rem",
   marginBottom: 0
+};
+
+const fuelFormGridStyle: CSSProperties = {
+  columnGap: "1.5rem",
+  rowGap: "1.4rem",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))"
+};
+
+const fullWidthFieldStyle: CSSProperties = {
+  gridColumn: "1 / -1"
 };
 
 const helperTextStyle: CSSProperties = {
@@ -511,12 +553,59 @@ const supportingPanelStyle: CSSProperties = {
   lineHeight: 1.5
 };
 
+const summaryCardStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.9rem",
+  padding: "1.1rem",
+  borderRadius: "1rem",
+  background: "rgba(15, 23, 42, 0.55)",
+  border: "1px solid rgba(251, 191, 36, 0.22)"
+};
+
+const summaryTitleStyle: CSSProperties = {
+  margin: 0,
+  color: "#fbbf24",
+  fontSize: "0.82rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.06em"
+};
+
+const summaryGridStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.9rem",
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
+};
+
+const summaryItemStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.3rem"
+};
+
+const summaryLabelStyle: CSSProperties = {
+  color: "#94a3b8",
+  fontSize: "0.82rem"
+};
+
+const summaryValueStyle: CSSProperties = {
+  color: "#f8fafc",
+  fontSize: "1rem"
+};
+
+const summaryNoteStyle: CSSProperties = {
+  margin: 0,
+  paddingTop: "0.6rem",
+  borderTop: "1px solid rgba(148, 163, 184, 0.14)",
+  color: "#94a3b8",
+  lineHeight: 1.5
+};
+
 const locationActionsStyle = {
   display: "flex",
   flexWrap: "wrap" as const,
   alignItems: "center",
   gap: "0.75rem",
-  marginTop: "0.6rem"
+  marginTop: "0.75rem"
 };
 
 const locationButtonStyle = {

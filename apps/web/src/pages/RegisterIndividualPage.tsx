@@ -253,7 +253,9 @@ export function RegisterIndividualPage() {
 const formStyle: CSSProperties = {
   display: "grid",
   gap: "1rem",
+  width: "100%",
   maxWidth: "520px",
+  margin: "0 auto",
   padding: "1.25rem",
   background: "rgba(15, 23, 42, 0.72)",
   borderRadius: "1rem",

@@ -35,11 +35,14 @@ input {
 .app-sidebar a,
 .app-sidebar button {
   -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
+.app-sidebar a:hover,
 .app-sidebar a:focus,
 .app-sidebar a:focus-visible,
 .app-sidebar a:active,
+.app-sidebar button:hover,
 .app-sidebar button:focus,
 .app-sidebar button:focus-visible,
 .app-sidebar button:active {
@@ -47,10 +50,20 @@ input {
   box-shadow: none !important;
 }
 
+.app-sidebar-link,
+.app-sidebar-link:visited,
+.app-sidebar-link:hover,
+.app-sidebar-link:focus,
+.app-sidebar-link:focus-visible,
 .app-sidebar-link:active {
   border-color: rgba(148, 163, 184, 0.18) !important;
 }
 
+.app-sidebar-link[aria-current="page"],
+.app-sidebar-link[aria-current="page"]:visited,
+.app-sidebar-link[aria-current="page"]:hover,
+.app-sidebar-link[aria-current="page"]:focus,
+.app-sidebar-link[aria-current="page"]:focus-visible,
 .app-sidebar-link[aria-current="page"]:active {
   border-color: #fbbf24 !important;
 }
