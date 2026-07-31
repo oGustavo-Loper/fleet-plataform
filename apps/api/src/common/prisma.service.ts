@@ -1371,6 +1371,13 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   };
 
   syncEvent = {
+    findByOperationId: async (operationId: string) => {
+      await this.ensureReady();
+      const result = await pool.query("SELECT * FROM sync_events WHERE operation_id = $1 LIMIT 1", [
+        operationId
+      ]);
+      return result.rows[0] ? this.mapSyncEventRow(result.rows[0]) : null;
+    },
     count: async (args?: { where?: Record<string, unknown> }) => {
       await this.ensureReady();
       const tenantId = args?.where?.tenantId as string | undefined;

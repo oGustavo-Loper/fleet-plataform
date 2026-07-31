@@ -1,5 +1,6 @@
 import { useMutation } from "@apollo/client/react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { liveQuery } from "dexie";
 import type { VehicleListItem } from "@fleet/shared-types";
 
 import {
@@ -15,6 +16,8 @@ import { CREATE_MAINTENANCE_MUTATION, MAINTENANCE_LOGS_QUERY } from "../../lib/q
 import { appendQueryListItem } from "../../lib/apollo-cache";
 import { isBlank, parseNumber } from "../../lib/form-validation";
 import { formatPlate } from "../../lib/masks";
+import { submitOrQueueOffline } from "../../lib/offline-submit";
+import { getPendingMaxOdometerKm } from "../../lib/sync-manager";
 
 function getAutoTitle(type: string) {
   const titles: Record<string, string> = {
@@ -91,6 +94,7 @@ export function MaintenanceForm({
     partCost: ""
   });
   const [validationError, setValidationError] = useState("");
+  const [queuedMessage, setQueuedMessage] = useState("");
 
   useEffect(() => {
     if (!allowedVehicles.length) {
@@ -112,6 +116,27 @@ export function MaintenanceForm({
   }, [allowedVehicles]);
 
   const selectedVehicle = allowedVehicles.find((vehicle) => vehicle.id === form.vehicleId);
+
+  const [pendingMaxOdometer, setPendingMaxOdometer] = useState(0);
+
+  useEffect(() => {
+    if (!form.vehicleId) {
+      setPendingMaxOdometer(0);
+      return;
+    }
+
+    const subscription = liveQuery(() => getPendingMaxOdometerKm("maintenance", form.vehicleId)).subscribe({
+      next: setPendingMaxOdometer,
+      error: () => setPendingMaxOdometer(0)
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form.vehicleId]);
+
+  const effectiveCurrentKm = selectedVehicle
+    ? Math.max(selectedVehicle.currentKm, pendingMaxOdometer)
+    : 0;
+
   const computedTotal = useMemo(() => {
     if (form.maintenanceType === "OIL_CHANGE") {
       return Number(form.oilCost || 0);
@@ -150,7 +175,7 @@ export function MaintenanceForm({
     });
   }, [form.maintenanceType]);
 
-  const [createMaintenance, { loading, error }] = useMutation(CREATE_MAINTENANCE_MUTATION, {
+  const [createMaintenance, { loading, error, reset: resetMutation }] = useMutation(CREATE_MAINTENANCE_MUTATION, {
     update(cache, { data }) {
       const maintenance = data?.createMaintenance;
       if (!maintenance) {
@@ -170,6 +195,7 @@ export function MaintenanceForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setValidationError("");
+    setQueuedMessage("");
 
     const vehicleId = form.vehicleId.trim();
     const title = form.title.trim();
@@ -199,8 +225,8 @@ export function MaintenanceForm({
       return;
     }
 
-    if (selectedVehicle && odometerKm <= selectedVehicle.currentKm) {
-      setValidationError(`A quilometragem deve ser maior que ${selectedVehicle.currentKm}.`);
+    if (selectedVehicle && odometerKm <= effectiveCurrentKm) {
+      setValidationError(`A quilometragem deve ser maior que ${effectiveCurrentKm}.`);
       return;
     }
 
@@ -254,43 +280,53 @@ export function MaintenanceForm({
       }
     }
 
-    await createMaintenance({
-      variables: {
-        input: {
-          tenantId,
-          vehicleId,
-          title,
-          maintenanceType: form.maintenanceType,
-          performedAt,
-          odometerKm,
-          totalCost,
-          supplierName: supplierName || "",
-          notes: notes || "",
-          nextMaintenanceAt: form.nextMaintenanceAt || null,
-          nextMaintenanceKm: form.nextMaintenanceKm ? Number(form.nextMaintenanceKm) : null,
-          oilType: form.oilType || null,
-          oilBrand: form.oilBrand || null,
-          oilCost: form.oilCost ? Number(form.oilCost) : null,
-          previousOilChangeAt: form.previousOilChangeAt || null,
-          previousOilChangeKm: form.previousOilChangeKm ? Number(form.previousOilChangeKm) : null,
-          previousOilChangeNotes: form.previousOilChangeNotes || null,
-          changedOilFilter: form.changedOilFilter,
-          changedAirFilter: form.changedAirFilter,
-          changedFuelFilter: form.changedFuelFilter,
-          tireBrand: form.tireBrand || null,
-          tireQuantity: form.tireQuantity ? Number(form.tireQuantity) : null,
-          tireUnitCost: form.tireUnitCost ? Number(form.tireUnitCost) : null,
-          batteryBrand: form.batteryBrand || null,
-          batteryCost: form.batteryCost ? Number(form.batteryCost) : null,
-          batteryVoltage: form.batteryVoltage || null,
-          brakeService: form.brakeService || null,
-          beltChanged: form.beltChanged,
-          partName: form.partName || null,
-          partBrand: form.partBrand || null,
-          partCost: form.partCost ? Number(form.partCost) : null
-        }
-      }
+    const input = {
+      tenantId,
+      vehicleId,
+      title,
+      maintenanceType: form.maintenanceType,
+      performedAt,
+      odometerKm,
+      totalCost,
+      supplierName: supplierName || "",
+      notes: notes || "",
+      nextMaintenanceAt: form.nextMaintenanceAt || null,
+      nextMaintenanceKm: form.nextMaintenanceKm ? Number(form.nextMaintenanceKm) : null,
+      oilType: form.oilType || null,
+      oilBrand: form.oilBrand || null,
+      oilCost: form.oilCost ? Number(form.oilCost) : null,
+      previousOilChangeAt: form.previousOilChangeAt || null,
+      previousOilChangeKm: form.previousOilChangeKm ? Number(form.previousOilChangeKm) : null,
+      previousOilChangeNotes: form.previousOilChangeNotes || null,
+      changedOilFilter: form.changedOilFilter,
+      changedAirFilter: form.changedAirFilter,
+      changedFuelFilter: form.changedFuelFilter,
+      tireBrand: form.tireBrand || null,
+      tireQuantity: form.tireQuantity ? Number(form.tireQuantity) : null,
+      tireUnitCost: form.tireUnitCost ? Number(form.tireUnitCost) : null,
+      batteryBrand: form.batteryBrand || null,
+      batteryCost: form.batteryCost ? Number(form.batteryCost) : null,
+      batteryVoltage: form.batteryVoltage || null,
+      brakeService: form.brakeService || null,
+      beltChanged: form.beltChanged,
+      partName: form.partName || null,
+      partBrand: form.partBrand || null,
+      partCost: form.partCost ? Number(form.partCost) : null
+    };
+
+    const { queued } = await submitOrQueueOffline({
+      entity: "maintenance",
+      tenantId,
+      payload: input,
+      mutate: () => createMaintenance({ variables: { input } })
     });
+
+    if (queued) {
+      resetMutation();
+      setQueuedMessage(
+        "Sem conexão: manutenção salva neste dispositivo e será enviada quando a internet voltar."
+      );
+    }
 
     setForm({
       vehicleId: firstVehicle?.id ?? "",
@@ -325,7 +361,9 @@ export function MaintenanceForm({
       partCost: ""
     });
 
-    onDone?.();
+    if (!queued) {
+      onDone?.();
+    }
   }
 
   if (!allowedVehicles.length) {
@@ -414,9 +452,9 @@ export function MaintenanceForm({
           <input
             style={formInputStyle}
             type="number"
-            min={selectedVehicle ? selectedVehicle.currentKm + 1 : 0}
+            min={selectedVehicle ? effectiveCurrentKm + 1 : 0}
             placeholder={
-              selectedVehicle ? `Ex: ${selectedVehicle.currentKm + 1}` : "Ex: 45211"
+              selectedVehicle ? `Ex: ${effectiveCurrentKm + 1}` : "Ex: 45211"
             }
             value={form.odometerKm}
             required
@@ -688,7 +726,7 @@ export function MaintenanceForm({
       {selectedVehicle ? (
         <p style={{ color: "#94a3b8", marginBottom: 0 }}>
           Veículo selecionado: {formatPlate(selectedVehicle.plate)} • {selectedVehicle.model} • KM mínimo{" "}
-          {selectedVehicle.currentKm + 1}
+          {effectiveCurrentKm + 1}
         </p>
       ) : null}
       {isDriver ? (
@@ -699,6 +737,7 @@ export function MaintenanceForm({
         </p>
       ) : null}
       {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
+      {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao registrar manutenção.</p> : null}
       <div style={actionsRowStyle}>
         <button style={primarySubmitStyle} type="submit" disabled={loading}>

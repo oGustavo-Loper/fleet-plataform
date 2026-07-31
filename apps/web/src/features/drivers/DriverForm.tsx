@@ -20,6 +20,7 @@ import { upsertQueryListItem } from "../../lib/apollo-cache";
 import { hasMinDigits, isBlank } from "../../lib/form-validation";
 import { formatCpf, formatPlate, limitText, onlyDigits } from "../../lib/masks";
 import { resolveMediaUrl, uploadMediaFile } from "../../lib/media";
+import { submitOrQueueOffline } from "../../lib/offline-submit";
 
 function getInitialForm(driver?: DriverListItem | null) {
   return {
@@ -58,12 +59,13 @@ export function DriverForm({
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [queuedMessage, setQueuedMessage] = useState("");
 
   useEffect(() => {
     setForm(getInitialForm(initialDriver));
   }, [initialDriver]);
 
-  const [mutateDriver, { loading, error }] = useMutation(
+  const [mutateDriver, { loading, error, reset: resetMutation }] = useMutation(
     isEditing ? UPDATE_DRIVER_MUTATION : CREATE_DRIVER_MUTATION,
     {
       update(cache, { data }) {
@@ -86,6 +88,7 @@ export function DriverForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setValidationError("");
+    setQueuedMessage("");
 
     const fullName = form.fullName.trim();
     const registrationId = form.registrationId.trim();
@@ -134,22 +137,45 @@ export function DriverForm({
       photoDataUrl: form.photoDataUrl
     };
 
-    await mutateDriver({
-      variables: {
-        input: isEditing
-          ? {
-              id: initialDriver?.id,
-              ...baseInput
-            }
-          : {
-              tenantId,
-              ...baseInput
-            }
-      }
+    if (isEditing) {
+      await mutateDriver({
+        variables: {
+          input: {
+            id: initialDriver?.id,
+            ...baseInput
+          }
+        }
+      });
+
+      setForm(getInitialForm(null));
+      onDone?.();
+      return;
+    }
+
+    const input = {
+      tenantId,
+      ...baseInput
+    };
+
+    const { queued } = await submitOrQueueOffline({
+      entity: "driver",
+      tenantId,
+      payload: input,
+      mutate: () => mutateDriver({ variables: { input } })
     });
 
+    if (queued) {
+      resetMutation();
+      setQueuedMessage(
+        "Sem conexão: motorista salvo neste dispositivo e será enviado quando a internet voltar."
+      );
+    }
+
     setForm(getInitialForm(null));
-    onDone?.();
+
+    if (!queued) {
+      onDone?.();
+    }
   }
 
   return (
@@ -306,6 +332,7 @@ export function DriverForm({
         Motoristas em férias ou desligados perdem o acesso ao sistema, mas o histórico permanece salvo.
       </p>
       {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
+      {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao salvar motorista.</p> : null}
       <div style={footerActionsStyle}>
         <button style={primarySubmitStyle} type="submit" disabled={loading}>

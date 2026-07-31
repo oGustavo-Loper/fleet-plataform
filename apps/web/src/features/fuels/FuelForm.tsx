@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useMutation } from "@apollo/client/react";
+import { liveQuery } from "dexie";
 import type { DriverListItem, FuelType, VehicleListItem } from "@fleet/shared-types";
 
 import {
@@ -15,6 +16,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { CREATE_FUEL_LOG_MUTATION, FUEL_LOGS_QUERY, VEHICLES_QUERY } from "../../lib/queries";
 import { appendQueryListItem, upsertQueryListItem } from "../../lib/apollo-cache";
 import { isBlank, parseNumber } from "../../lib/form-validation";
+import { submitOrQueueOffline } from "../../lib/offline-submit";
+import { getPendingMaxOdometerKm } from "../../lib/sync-manager";
 import { formatPlate } from "../../lib/masks";
 import { captureCurrentLocation, resolveMediaUrl, uploadMediaFile } from "../../lib/media";
 
@@ -75,11 +78,32 @@ export function FuelForm({
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptError, setReceiptError] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [queuedMessage, setQueuedMessage] = useState("");
 
   const selectedVehicle = useMemo(
     () => allowedVehicles.find((vehicle) => vehicle.id === form.vehicleId),
     [allowedVehicles, form.vehicleId]
   );
+
+  const [pendingMaxOdometer, setPendingMaxOdometer] = useState(0);
+
+  useEffect(() => {
+    if (!form.vehicleId) {
+      setPendingMaxOdometer(0);
+      return;
+    }
+
+    const subscription = liveQuery(() => getPendingMaxOdometerKm("fuelLog", form.vehicleId)).subscribe({
+      next: setPendingMaxOdometer,
+      error: () => setPendingMaxOdometer(0)
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form.vehicleId]);
+
+  const effectiveCurrentKm = selectedVehicle
+    ? Math.max(selectedVehicle.currentKm, pendingMaxOdometer)
+    : 0;
 
   useEffect(() => {
     if (!allowedVehicles.length) {
@@ -136,7 +160,7 @@ export function FuelForm({
     return Number((computedDistance / liters).toFixed(2));
   }, [computedDistance, form.liters]);
 
-  const [createFuelLog, { loading, error }] = useMutation(CREATE_FUEL_LOG_MUTATION, {
+  const [createFuelLog, { loading, error, reset: resetMutation }] = useMutation(CREATE_FUEL_LOG_MUTATION, {
     update(cache, { data }) {
       const fuelLog = data?.createFuelLog;
       if (!fuelLog) {
@@ -173,6 +197,7 @@ export function FuelForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setValidationError("");
+    setQueuedMessage("");
 
     const vehicleId = form.vehicleId.trim();
     const fueledAt = form.fueledAt.trim();
@@ -198,8 +223,8 @@ export function FuelForm({
       return;
     }
 
-    if (selectedVehicle && odometerKm <= selectedVehicle.currentKm) {
-      setValidationError(`A quilometragem deve ser maior que ${selectedVehicle.currentKm}.`);
+    if (selectedVehicle && odometerKm <= effectiveCurrentKm) {
+      setValidationError(`A quilometragem deve ser maior que ${effectiveCurrentKm}.`);
       return;
     }
 
@@ -218,27 +243,37 @@ export function FuelForm({
       return;
     }
 
-    await createFuelLog({
-      variables: {
-        input: {
-          tenantId,
-          vehicleId,
-          driverId: form.driverId || null,
-          fueledAt,
-          odometerKm,
-          fuelType: form.fuelType,
-          liters,
-          totalCost: computedTotal,
-          pricePerLiter,
-          stationName,
-          notes: notes || "",
-          receiptPhotoDataUrl: form.receiptPhotoDataUrl,
-          fuelingAddress: fuelingAddress || null,
-          fuelingLatitude: form.fuelingLatitude,
-          fuelingLongitude: form.fuelingLongitude
-        }
-      }
+    const input = {
+      tenantId,
+      vehicleId,
+      driverId: form.driverId || null,
+      fueledAt,
+      odometerKm,
+      fuelType: form.fuelType,
+      liters,
+      totalCost: computedTotal,
+      pricePerLiter,
+      stationName,
+      notes: notes || "",
+      receiptPhotoDataUrl: form.receiptPhotoDataUrl,
+      fuelingAddress: fuelingAddress || null,
+      fuelingLatitude: form.fuelingLatitude,
+      fuelingLongitude: form.fuelingLongitude
+    };
+
+    const { queued } = await submitOrQueueOffline({
+      entity: "fuelLog",
+      tenantId,
+      payload: input,
+      mutate: () => createFuelLog({ variables: { input } })
     });
+
+    if (queued) {
+      resetMutation();
+      setQueuedMessage(
+        "Sem conexão: abastecimento salvo neste dispositivo e será enviado quando a internet voltar."
+      );
+    }
 
     setForm({
       vehicleId: firstVehicle?.id ?? "",
@@ -255,7 +290,10 @@ export function FuelForm({
       fuelingLatitude: null,
       fuelingLongitude: null
     });
-    onDone?.();
+
+    if (!queued) {
+      onDone?.();
+    }
   }
 
   async function handleLocationCapture() {
@@ -330,10 +368,10 @@ export function FuelForm({
           <input
             style={formInputStyle}
             type="number"
-            min={selectedVehicle ? selectedVehicle.currentKm + 1 : 0}
+            min={selectedVehicle ? effectiveCurrentKm + 1 : 0}
             placeholder={
               selectedVehicle
-                ? `Ex: ${selectedVehicle.currentKm + 1}`
+                ? `Ex: ${effectiveCurrentKm + 1}`
                 : "Ex: 45210"
             }
             value={form.odometerKm}
@@ -469,7 +507,7 @@ export function FuelForm({
             </div>
             <div style={summaryItemStyle}>
               <span style={summaryLabelStyle}>KM mínimo</span>
-              <strong style={summaryValueStyle}>{selectedVehicle.currentKm + 1}</strong>
+              <strong style={summaryValueStyle}>{effectiveCurrentKm + 1}</strong>
             </div>
             <div style={summaryItemStyle}>
               <span style={summaryLabelStyle}>Distância estimada</span>
@@ -501,6 +539,9 @@ export function FuelForm({
       ) : null}
       {validationError ? (
         <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>{validationError}</p>
+      ) : null}
+      {queuedMessage ? (
+        <p style={{ ...supportingPanelStyle, color: "#fbbf24" }}>{queuedMessage}</p>
       ) : null}
       {error ? (
         <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>

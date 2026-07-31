@@ -565,3 +565,13 @@ export const CREATE_MAINTENANCE_MUTATION = gql`
     }
   }
 `;
+
+export const PUSH_SYNC_EVENT_MUTATION = gql`
+  mutation PushSyncEvent($input: PushSyncInput!) {
+    pushSyncEvent(input: $input) {
+      operationId
+      status
+      errorMessage
+    }
+  }
+`;
