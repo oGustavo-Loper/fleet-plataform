@@ -7,7 +7,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main.js",
-    "test": "find src -name '*.test.ts' -print0 | xargs -0 env TS_NODE_TRANSPILE_ONLY=true node --loader ts-node/esm --test",
+    "test": "find src -name '*.test.ts' -print0 | xargs -0 env NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true node --loader ts-node/esm --test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "prisma:generate": "prisma generate",

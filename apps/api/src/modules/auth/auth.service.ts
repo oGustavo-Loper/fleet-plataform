@@ -4,6 +4,7 @@ import { createHash, randomInt } from "node:crypto";
 import * as argon2 from "argon2";
 
 import { PtBrMessage } from "../../common/messages.js";
+import { getJwtAccessSecret, getJwtRefreshSecret } from "../../common/jwt-secrets.js";
 import { PrismaService } from "../../common/prisma.service.js";
 import { LoginInput } from "./dto/login.input.js";
 import { CreateCheckoutSessionInput } from "./dto/create-checkout-session.input.js";
@@ -15,6 +16,8 @@ import { RequestPasswordResetInput } from "./dto/request-password-reset.input.js
 import { UpgradePlanInput } from "./dto/upgrade-plan.input.js";
 import { MailService } from "./mail.service.js";
 import { RefreshSessionInput } from "./dto/refresh-session.input.js";
+
+const MAX_PASSWORD_RESET_ATTEMPTS = 5;
 
 @Injectable()
 export class AuthService {
@@ -44,11 +47,11 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.signAsync(basePayload, {
-        secret: process.env.JWT_ACCESS_SECRET ?? "access-dev-secret",
+        secret: getJwtAccessSecret(),
         expiresIn: "15m"
       }),
       refreshToken: await this.jwtService.signAsync(basePayload, {
-        secret: process.env.JWT_REFRESH_SECRET ?? "refresh-dev-secret",
+        secret: getJwtRefreshSecret(),
         expiresIn: "7d"
       }),
       userId: authUser.id,
@@ -111,7 +114,7 @@ export class AuthService {
 
     try {
       decoded = await this.jwtService.verifyAsync(input.refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET ?? "refresh-dev-secret"
+        secret: getJwtRefreshSecret()
       });
     } catch {
       throw new UnauthorizedException(PtBrMessage.SESSION_EXPIRED);
@@ -239,6 +242,10 @@ export class AuthService {
 
     if (resetCode.expiresAt.getTime() < Date.now()) {
       throw new BadRequestException(PtBrMessage.PASSWORD_RESET_CODE_EXPIRED);
+    }
+
+    if (resetCode.attempts >= MAX_PASSWORD_RESET_ATTEMPTS) {
+      throw new BadRequestException(PtBrMessage.PASSWORD_RESET_CODE_LOCKED);
     }
 
     const candidateHash = this.hashResetCode(input.code, resetCode.codeSalt);

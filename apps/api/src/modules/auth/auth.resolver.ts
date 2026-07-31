@@ -1,5 +1,10 @@
+import { UseGuards } from "@nestjs/common";
 import { Args, Mutation, Resolver } from "@nestjs/graphql";
 
+import type { AuthenticatedUser } from "../../common/auth-user.js";
+import { assertTenantAccess } from "../../common/assert-tenant-access.js";
+import { CurrentUser } from "../../common/current-user.js";
+import { GqlJwtAuthGuard } from "../../common/gql-jwt-auth.guard.js";
 import { TenantModel } from "../tenants/tenant.types.js";
 import {
   AuthPayload,
@@ -58,7 +63,9 @@ export class AuthResolver {
   }
 
   @Mutation(() => TenantModel)
-  upgradePlan(@Args("input") input: UpgradePlanInput) {
+  @UseGuards(GqlJwtAuthGuard)
+  upgradePlan(@Args("input") input: UpgradePlanInput, @CurrentUser() user: AuthenticatedUser) {
+    assertTenantAccess(user, input.tenantId);
     return this.authService.upgradePlan(input);
   }
 
@@ -68,7 +75,12 @@ export class AuthResolver {
   }
 
   @Mutation(() => TenantModel)
-  confirmBillingPayment(@Args("input") input: ConfirmBillingPaymentInput) {
+  @UseGuards(GqlJwtAuthGuard)
+  confirmBillingPayment(
+    @Args("input") input: ConfirmBillingPaymentInput,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    assertTenantAccess(user, input.tenantId);
     return this.authService.confirmBillingPayment(input);
   }
 }
