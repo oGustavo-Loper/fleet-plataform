@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
 import * as argon2 from "argon2";
 import { Pool, PoolClient } from "pg";
 
@@ -757,9 +757,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  private async syncDriverUser(client: PoolClient, driver: DriverRecord) {
+  private async syncDriverUser(client: PoolClient, driver: DriverRecord): Promise<string | undefined> {
     if (!driver.loginEmail) {
-      return;
+      return undefined;
     }
 
     const existing = await client.query<{ id: string; password_hash: string | null; demo_password: string | null }>(
@@ -790,8 +790,10 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
           driver.isActive
         ]
       );
-      return;
+      return undefined;
     }
+
+    const temporaryPassword = randomInt(0, 1000000).toString().padStart(6, "0");
 
     await client.query(
       `
@@ -805,13 +807,15 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         driver.tenantId,
         driver.loginEmail,
         driver.fullName,
-        await argon2.hash("demo1234"),
+        await argon2.hash(temporaryPassword),
         driver.id,
         driver.assignedVehicleIds,
         driver.allowAnyVehicle,
         driver.isActive
       ]
     );
+
+    return temporaryPassword;
   }
 
   tenant = {
@@ -1074,8 +1078,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         );
 
         const record = this.mapDriverRow(result.rows[0]);
-        await this.syncDriverUser(client, record);
-        return record;
+        const temporaryPassword = await this.syncDriverUser(client, record);
+        return temporaryPassword ? { ...record, temporaryPassword } : record;
       });
     },
     update: async (args: UpdateArgs<Record<string, unknown>>) => {
@@ -1168,8 +1172,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         );
 
         const record = this.mapDriverRow(result.rows[0]);
-        await this.syncDriverUser(client, record);
-        return record;
+        const temporaryPassword = await this.syncDriverUser(client, record);
+        return temporaryPassword ? { ...record, temporaryPassword } : record;
       });
     },
     delete: async (args: { where: { id: string } }) => {

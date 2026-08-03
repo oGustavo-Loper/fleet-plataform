@@ -60,6 +60,7 @@ export function DriverForm({
   const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [queuedMessage, setQueuedMessage] = useState("");
+  const [temporaryPasswordNotice, setTemporaryPasswordNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setForm(getInitialForm(initialDriver));
@@ -138,7 +139,7 @@ export function DriverForm({
     };
 
     if (isEditing) {
-      await mutateDriver({
+      const result = await mutateDriver({
         variables: {
           input: {
             id: initialDriver?.id,
@@ -148,6 +149,13 @@ export function DriverForm({
       });
 
       setForm(getInitialForm(null));
+
+      const temporaryPassword = result.data?.updateDriver?.temporaryPassword;
+      if (temporaryPassword) {
+        setTemporaryPasswordNotice(temporaryPassword);
+        return;
+      }
+
       onDone?.();
       return;
     }
@@ -157,7 +165,7 @@ export function DriverForm({
       ...baseInput
     };
 
-    const { queued } = await submitOrQueueOffline({
+    const { queued, result } = await submitOrQueueOffline({
       entity: "driver",
       tenantId,
       payload: input,
@@ -173,9 +181,41 @@ export function DriverForm({
 
     setForm(getInitialForm(null));
 
-    if (!queued) {
-      onDone?.();
+    if (queued) {
+      return;
     }
+
+    const temporaryPassword = result?.data?.createDriver?.temporaryPassword;
+    if (temporaryPassword) {
+      setTemporaryPasswordNotice(temporaryPassword);
+      return;
+    }
+
+    onDone?.();
+  }
+
+  if (temporaryPasswordNotice) {
+    return (
+      <div style={formPanelStyle}>
+        <p style={{ color: "#cbd5e1" }}>
+          Motorista salvo. O envio de e-mail não está configurado neste ambiente, então a senha
+          temporária de acesso é exibida abaixo — anote-a, pois ela não será mostrada novamente:
+        </p>
+        <p style={temporaryPasswordStyle}>{temporaryPasswordNotice}</p>
+        <div style={footerActionsStyle}>
+          <button
+            style={primarySubmitStyle}
+            type="button"
+            onClick={() => {
+              setTemporaryPasswordNotice(null);
+              onDone?.();
+            }}
+          >
+            Concluir
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -349,4 +389,16 @@ const footerActionsStyle: CSSProperties = {
   flexWrap: "wrap",
   gap: "0.75rem",
   marginTop: "1rem"
+};
+
+const temporaryPasswordStyle: CSSProperties = {
+  fontSize: "1.4rem",
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  color: "#fbbf24",
+  padding: "0.9rem 1.2rem",
+  borderRadius: "0.9rem",
+  border: "1px dashed rgba(251, 191, 36, 0.4)",
+  background: "rgba(251, 191, 36, 0.08)",
+  textAlign: "center"
 };

@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/com
 import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { MailService } from "../auth/mail.service.js";
 import { CreateDriverInput } from "./dto/create-driver.input.js";
 import { DeleteDriverInput } from "./dto/delete-driver.input.js";
 import { UpdateDriverInput } from "./dto/update-driver.input.js";
@@ -14,7 +15,10 @@ type DriverAccountInfo = {
 
 @Injectable()
 export class DriversService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService
+  ) {}
 
   private async findLinkedUser(driverId: string) {
     const users = await this.prisma.user.findMany({ where: { driverId } });
@@ -32,6 +36,32 @@ export class DriversService {
     if (cnh && cnh.replace(/\D/g, "").length !== 11) {
       throw new BadRequestException(PtBrMessage.CNH_INVALID);
     }
+  }
+
+  private async deliverTemporaryPassword<
+    T extends { loginEmail?: string; fullName: string; temporaryPassword?: string }
+  >(driver: T): Promise<T> {
+    if (!driver.temporaryPassword || !driver.loginEmail) {
+      return driver;
+    }
+
+    try {
+      const delivery = await this.mailService.sendDriverCredentials(
+        driver.loginEmail,
+        driver.temporaryPassword,
+        driver.fullName
+      );
+
+      if (delivery.deliveryMode !== "console") {
+        return { ...driver, temporaryPassword: undefined };
+      }
+    } catch {
+      // The driver (and its login) were already committed before this call —
+      // a mail provider failure must not surface as if creation itself failed.
+      // Fall back to showing the password on screen, same as the "not configured" case.
+    }
+
+    return driver;
   }
 
   async listByTenant(tenantId: string, user?: AuthenticatedUser) {
@@ -89,8 +119,9 @@ export class DriversService {
       }
     });
 
+    const deliveredCreated = await this.deliverTemporaryPassword(created);
     const linkedUser = await this.findLinkedUser(created.id);
-    return { ...created, ...this.accountInfoFromUser(linkedUser) };
+    return { ...deliveredCreated, ...this.accountInfoFromUser(linkedUser) };
   }
 
   async update(input: UpdateDriverInput, actorTenantId?: string) {
@@ -143,8 +174,9 @@ export class DriversService {
       }
     });
 
+    const deliveredUpdated = await this.deliverTemporaryPassword(updated);
     const linkedUser = await this.findLinkedUser(updated.id);
-    return { ...updated, ...this.accountInfoFromUser(linkedUser) };
+    return { ...deliveredUpdated, ...this.accountInfoFromUser(linkedUser) };
   }
 
   async delete(input: DeleteDriverInput, actorTenantId?: string) {
