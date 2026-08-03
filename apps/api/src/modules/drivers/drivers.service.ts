@@ -40,7 +40,7 @@ export class DriversService {
 
   private async deliverTemporaryPassword<
     T extends { loginEmail?: string; fullName: string; temporaryPassword?: string }
-  >(driver: T): Promise<T> {
+  >(driver: T): Promise<T & { credentialsEmailSent?: boolean }> {
     if (!driver.temporaryPassword || !driver.loginEmail) {
       return driver;
     }
@@ -53,7 +53,7 @@ export class DriversService {
       );
 
       if (delivery.deliveryMode !== "console") {
-        return { ...driver, temporaryPassword: undefined };
+        return { ...driver, temporaryPassword: undefined, credentialsEmailSent: true };
       }
     } catch {
       // The driver (and its login) were already committed before this call —
@@ -61,7 +61,7 @@ export class DriversService {
       // Fall back to showing the password on screen, same as the "not configured" case.
     }
 
-    return driver;
+    return { ...driver, credentialsEmailSent: false };
   }
 
   async listByTenant(tenantId: string, user?: AuthenticatedUser) {

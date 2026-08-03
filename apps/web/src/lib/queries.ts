@@ -333,6 +333,7 @@ export const CREATE_DRIVER_MUTATION = gql`
       accountRole
       hasCompletedFirstLogin
       temporaryPassword
+      credentialsEmailSent
     }
   }
 `;
@@ -357,6 +358,7 @@ export const UPDATE_DRIVER_MUTATION = gql`
       accountRole
       hasCompletedFirstLogin
       temporaryPassword
+      credentialsEmailSent
     }
   }
 `;
