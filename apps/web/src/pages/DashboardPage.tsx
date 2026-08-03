@@ -11,6 +11,7 @@ import { SyncCenter } from "../features/sync/SyncCenter";
 import { useSyncStatus } from "../hooks/useSyncStatus";
 import { useTenant } from "../hooks/useTenant";
 import { DASHBOARD_SUMMARY_QUERY } from "../lib/queries";
+import { planLabel } from "../lib/plans";
 
 export function DashboardPage() {
   const { auth } = useAuth();
@@ -79,7 +80,7 @@ export function DashboardPage() {
         >
           <strong>Conta pessoa fisíca</strong>
           <p style={{ marginBottom: 0, color: "#cbd5e1" }}>
-            Plano atual: {activeTenant.planCode}. Limite atual:{" "}
+            Plano atual: {planLabel(activeTenant.planCode)}. Limite atual:{" "}
             {activeTenant.vehicleLimit ?? "Ilimitado"} veículos.
           </p>
           <Link style={{ color: "#fbbf24", display: "inline-block", marginTop: "0.75rem" }} to="/plans">

@@ -6,6 +6,7 @@ import { CenteredShell } from "../components/CenteredShell";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { upsertQueryListItem } from "../lib/apollo-cache";
+import { planLabel } from "../lib/plans";
 import {
   CREATE_CHECKOUT_SESSION_MUTATION,
   TENANT_QUERY,
@@ -184,7 +185,7 @@ export function PlansPage() {
         <article style={currentPlanCardStyle}>
           <strong>Plano atual</strong>
           <p style={heroTextStyle}>
-            {activeTenant?.name} • {activeTenant?.planCode} •{" "}
+            {activeTenant?.name} • {planLabel(activeTenant?.planCode)} •{" "}
             {activeTenant?.planStatus === "ACTIVE" ? "Ativo" : "Em avaliação"}
           </p>
         </article>

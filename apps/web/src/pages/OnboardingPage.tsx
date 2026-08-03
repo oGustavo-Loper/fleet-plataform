@@ -7,6 +7,7 @@ import type { DriverListItem, VehicleListItem } from "@fleet/shared-types";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { DRIVERS_QUERY, VEHICLES_QUERY } from "../lib/queries";
+import { planLabel } from "../lib/plans";
 
 export function OnboardingPage() {
   const { auth } = useAuth();
@@ -36,7 +37,7 @@ export function OnboardingPage() {
         <article style={cardStyle}>
           <strong>1. Conta criada</strong>
           <p style={mutedStyle}>
-            Plano atual: {activeTenant?.planCode ?? "-"} •{" "}
+            Plano atual: {planLabel(activeTenant?.planCode)} •{" "}
             {activeTenant?.vehicleLimit ?? "Veículos ilimitados"}
           </p>
         </article>
