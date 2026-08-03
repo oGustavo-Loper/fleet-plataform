@@ -6,11 +6,22 @@ import { DriversService } from "./drivers.service.js";
 function createDriversService(options?: {
   deliveryMode?: "console" | "email" | "resend";
   throwOnSend?: boolean;
+  tenant?: { accountType?: string; planCode?: string; planStatus?: string };
+  existingDriverCount?: number;
 }) {
   const activityLogCalls: Array<Record<string, unknown>> = [];
   const sendDriverCredentialsCalls: Array<{ email: string; temporaryPassword: string; fullName: string }> = [];
 
   const prisma = {
+    tenant: {
+      async findUnique() {
+        return {
+          accountType: options?.tenant?.accountType ?? "COMPANY",
+          planCode: options?.tenant?.planCode ?? "COMPANY_PRO",
+          planStatus: options?.tenant?.planStatus ?? "ACTIVE"
+        };
+      }
+    },
     driver: {
       async findUnique(args: { where: { id: string } }) {
         return {
@@ -46,7 +57,10 @@ function createDriversService(options?: {
         };
       },
       async findMany() {
-        return [];
+        return Array.from({ length: options?.existingDriverCount ?? 0 }, (_, index) => ({
+          id: `existing-driver-${index}`,
+          employmentStatus: "ACTIVE"
+        }));
       }
     },
     activityLog: {
@@ -211,6 +225,68 @@ test("create maps inactive flag to VACATION status", async () => {
   assert.equal(result.employmentStatus, "VACATION");
   assert.equal(result.isActive, false);
   assert.equal((result as { registrationId?: string }).registrationId, "MT-1002");
+});
+
+test("create rejects a third driver on a free-tier individual account", async () => {
+  const { service } = createDriversService({
+    tenant: { accountType: "INDIVIDUAL", planCode: "ESSENTIAL_FREE" },
+    existingDriverCount: 2
+  });
+
+  await assert.rejects(
+    () =>
+      service.create({
+        tenantId: "tenant-sol",
+        fullName: "Terceiro Motorista",
+        cpf: "111.222.333-44",
+        cnh: "99887766550",
+        cnhCategory: "B",
+        cnhExpiresAt: "2027-08-10",
+        assignedVehicleIds: [],
+        allowAnyVehicle: false
+      }),
+    /Limite de motoristas/
+  );
+});
+
+test("create rejects a third driver on a company trial account", async () => {
+  const { service } = createDriversService({
+    tenant: { accountType: "COMPANY", planCode: "COMPANY_START", planStatus: "TRIAL" },
+    existingDriverCount: 2
+  });
+
+  await assert.rejects(() =>
+    service.create({
+      tenantId: "tenant-sol",
+      fullName: "Terceiro Motorista",
+      registrationId: "MT-1003",
+      cnh: "99887766550",
+      cnhCategory: "B",
+      cnhExpiresAt: "2027-08-10",
+      assignedVehicleIds: [],
+      allowAnyVehicle: false
+    })
+  );
+});
+
+test("create allows a third driver once the company plan is active", async () => {
+  const { service } = createDriversService({
+    tenant: { accountType: "COMPANY", planCode: "COMPANY_PRO", planStatus: "ACTIVE" },
+    existingDriverCount: 2
+  });
+
+  const result = await service.create({
+    tenantId: "tenant-sol",
+    fullName: "Terceiro Motorista",
+    registrationId: "MT-1003",
+    cnh: "99887766550",
+    cnhCategory: "B",
+    cnhExpiresAt: "2027-08-10",
+    assignedVehicleIds: [],
+    allowAnyVehicle: false
+  });
+
+  assert.equal(result.fullName, "Terceiro Motorista");
 });
 
 test("update preserves LGPD by not logging CNH as activity detail", async () => {

@@ -34,6 +34,8 @@ export function DriversPage() {
     filteredDrivers,
     primaryDrivers,
     terminatedDrivers,
+    driverLimit,
+    driverLimitReached,
     pagedDrivers,
     page,
     setPage,
@@ -89,6 +91,12 @@ export function DriversPage() {
           Novo motorista
         </button>
       </div>
+      {driverLimitReached ? (
+        <p style={limitNoticeStyle}>
+          Limite de {driverLimit} motoristas do plano gratuito atingido. Assine um plano pago para
+          cadastrar mais motoristas.
+        </p>
+      ) : null}
       {roleChangeError ? <p style={roleChangeErrorStyle}>{roleChangeError}</p> : null}
       {loading || tenantLoading ? (
         <LoadingState message="Carregando motoristas..." />
@@ -170,6 +178,8 @@ export function DriversPage() {
             tenantId={activeTenant.id}
             vehicles={vehicles}
             initialDriver={drawerMode === "edit" ? selectedDriver : null}
+            driverLimit={driverLimit ?? undefined}
+            driverLimitReached={drawerMode === "create" && driverLimitReached}
             onDone={closeDrawer}
             onCancel={closeDrawer}
           />
@@ -238,6 +248,15 @@ const roleChangeErrorStyle: CSSProperties = {
   background: "rgba(248, 113, 113, 0.12)",
   border: "1px solid rgba(248, 113, 113, 0.3)",
   color: "#fda4af",
+  marginBottom: "1rem"
+};
+
+const limitNoticeStyle: CSSProperties = {
+  padding: "0.9rem 1rem",
+  borderRadius: "0.9rem",
+  background: "rgba(251, 191, 36, 0.1)",
+  border: "1px solid rgba(251, 191, 36, 0.28)",
+  color: "#fbbf24",
   marginBottom: "1rem"
 };
 

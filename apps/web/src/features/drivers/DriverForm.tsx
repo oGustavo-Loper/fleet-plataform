@@ -61,6 +61,8 @@ export function DriverForm({
   tenantId,
   vehicles,
   initialDriver,
+  driverLimit,
+  driverLimitReached,
   onDone,
   onCancel
 }: {
@@ -68,11 +70,14 @@ export function DriverForm({
   tenantId: string;
   vehicles: VehicleListItem[];
   initialDriver?: DriverListItem | null;
+  driverLimit?: number;
+  driverLimitReached?: boolean;
   onDone?: () => void;
   onCancel?: () => void;
 }) {
   const isCompany = accountType === "COMPANY";
   const isEditing = Boolean(initialDriver?.id);
+  const limitReached = Boolean(driverLimitReached) && !isEditing;
   const [form, setForm] = useState(getInitialForm(initialDriver));
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
@@ -110,6 +115,10 @@ export function DriverForm({
     event.preventDefault();
     setValidationError("");
     setQueuedMessage("");
+
+    if (limitReached) {
+      return;
+    }
 
     const fullName = form.fullName.trim();
     const registrationId = form.registrationId.trim();
@@ -395,11 +404,17 @@ export function DriverForm({
       <p style={{ color: "#94a3b8", marginBottom: 0, marginTop: "0.8rem" }}>
         Motoristas em férias ou desligados perdem o acesso ao sistema, mas o histórico permanece salvo.
       </p>
+      {limitReached ? (
+        <p style={{ color: "#fda4af" }}>
+          Limite de {driverLimit} motoristas do plano gratuito atingido. Assine um plano pago para
+          cadastrar mais motoristas.
+        </p>
+      ) : null}
       {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
       {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao salvar motorista.</p> : null}
       <div style={footerActionsStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading}>
+        <button style={primarySubmitStyle} type="submit" disabled={loading || limitReached}>
           {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar motorista"}
         </button>
         {onCancel ? (

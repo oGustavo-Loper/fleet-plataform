@@ -38,6 +38,27 @@ export class DriversService {
     }
   }
 
+  private async assertDriverPlanLimit(tenantId: string) {
+    const FREE_TIER_DRIVER_LIMIT = 2;
+
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const isFreeTier =
+      tenant?.planCode === "ESSENTIAL_FREE" ||
+      (tenant?.accountType === "COMPANY" && tenant?.planStatus !== "ACTIVE");
+
+    if (!isFreeTier) {
+      return;
+    }
+
+    const activeDriverCount = (await this.prisma.driver.findMany({ where: { tenantId } })).filter(
+      (driver) => driver.employmentStatus !== "TERMINATED"
+    ).length;
+
+    if (activeDriverCount >= FREE_TIER_DRIVER_LIMIT) {
+      throw new BadRequestException(PtBrMessage.DRIVER_PLAN_LIMIT_REACHED);
+    }
+  }
+
   private async deliverTemporaryPassword<
     T extends { loginEmail?: string; fullName: string; temporaryPassword?: string }
   >(driver: T): Promise<T & { credentialsEmailSent?: boolean }> {
@@ -88,6 +109,7 @@ export class DriversService {
 
   async create(input: CreateDriverInput) {
     this.assertValidCnh(input.cnh);
+    await this.assertDriverPlanLimit(input.tenantId);
     const employmentStatus =
       input.employmentStatus ?? (input.isActive === false ? "VACATION" : "ACTIVE");
 

@@ -42,5 +42,6 @@ export enum PtBrMessage {
   DATABASE_UNAVAILABLE = "Banco de dados indisponível.",
   SYNC_ENTITY_NOT_SUPPORTED = "Entidade não suportada para sincronização offline.",
   CNH_INVALID = "Informe uma CNH válida, com 11 dígitos.",
+  DRIVER_PLAN_LIMIT_REACHED = "Limite de motoristas do plano gratuito atingido (2 motoristas). Assine um plano pago para cadastrar mais motoristas.",
   NOT_INFORMED = "Não informado."
 }
