@@ -17,7 +17,7 @@ export class MaintenanceResolver {
   @Query(() => [MaintenanceModel])
   maintenanceLogs(@Args("tenantId") tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, tenantId);
-    return this.maintenanceService.listByTenant(tenantId);
+    return this.maintenanceService.listByTenant(tenantId, user);
   }
 
   @Mutation(() => MaintenanceModel)

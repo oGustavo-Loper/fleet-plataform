@@ -6,10 +6,15 @@ import { PrismaService } from "../../common/prisma.service.js";
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  listByTenant(tenantId: string) {
-    return this.prisma.user.findMany({
+  async listByTenant(tenantId: string) {
+    const users = await this.prisma.user.findMany({
       where: { tenantId },
       orderBy: { fullName: "asc" }
     });
+
+    return users.map((user) => ({
+      ...user,
+      hasCompletedFirstLogin: !user.mustChangePassword
+    }));
   }
 }

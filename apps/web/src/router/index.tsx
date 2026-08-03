@@ -50,6 +50,8 @@ export function AppRouter() {
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/fuels" element={<FuelsPage />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN", "MANAGER", "COMPANY", "INDIVIDUAL"]} />}>
           <Route path="/reports" element={<ReportsPage />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["ADMIN", "COMPANY", "INDIVIDUAL"]} />}>

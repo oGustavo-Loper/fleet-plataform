@@ -1,21 +1,27 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 
+import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { getVisibleVehicleIds } from "../../common/vehicle-visibility.js";
 import { CreateMaintenanceInput } from "./dto/create-maintenance.input.js";
 
 @Injectable()
 export class MaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listByTenant(tenantId: string) {
+  async listByTenant(tenantId: string, user?: AuthenticatedUser) {
     const items = await this.prisma.maintenanceLog.findMany({
       where: { tenantId },
       orderBy: { performedAt: "desc" },
       take: 50
     });
 
-    return items.map((item) => ({
+    const visibleItems = user
+      ? items.filter((item) => getVisibleVehicleIds(user, [item.vehicleId]).includes(item.vehicleId))
+      : items;
+
+    return visibleItems.map((item) => ({
       id: item.id,
       tenantId: item.tenantId,
       vehicleId: item.vehicleId,

@@ -22,6 +22,7 @@ type TeamUser = {
   email: string;
   role: UserRole;
   isActive: boolean;
+  hasCompletedFirstLogin: boolean;
 };
 
 export function TeamPage() {
@@ -59,6 +60,9 @@ export function TeamPage() {
                 <span style={{ ...statusBadgeStyle, color: item.isActive ? "#4ade80" : "#fda4af" }}>
                   {item.isActive ? "Ativo" : "Inativo"}
                 </span>
+                {!item.hasCompletedFirstLogin ? (
+                  <span style={pendingBadgeStyle}>Pendente</span>
+                ) : null}
               </div>
             </article>
           ))}
@@ -115,6 +119,15 @@ const statusBadgeStyle: CSSProperties = {
   padding: "0.3rem 0.6rem",
   borderRadius: "999px",
   background: "rgba(148, 163, 184, 0.12)",
+  fontSize: "0.8rem",
+  height: "fit-content"
+};
+
+const pendingBadgeStyle: CSSProperties = {
+  padding: "0.3rem 0.6rem",
+  borderRadius: "999px",
+  background: "rgba(251, 191, 36, 0.12)",
+  color: "#fbbf24",
   fontSize: "0.8rem",
   height: "fit-content"
 };

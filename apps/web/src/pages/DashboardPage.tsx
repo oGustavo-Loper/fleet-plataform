@@ -4,6 +4,7 @@ import { AppShell } from "@fleet/ui";
 import type { DashboardSummary } from "@fleet/shared-types";
 
 import { StatusPill } from "../components/StatusPill";
+import { useAuth } from "../contexts/AuthContext";
 import { DashboardView } from "../features/dashboard/DashboardView";
 import { useApiHeartbeat } from "../hooks/useApiHeartbeat";
 import { SyncCenter } from "../features/sync/SyncCenter";
@@ -12,6 +13,8 @@ import { useTenant } from "../hooks/useTenant";
 import { DASHBOARD_SUMMARY_QUERY } from "../lib/queries";
 
 export function DashboardPage() {
+  const { auth } = useAuth();
+  const canViewReports = auth?.role !== "DRIVER";
   const { status } = useSyncStatus();
   const apiHeartbeat = useApiHeartbeat();
   const { activeTenant, loading: tenantLoading } = useTenant();
@@ -58,9 +61,11 @@ export function DashboardPage() {
         <Link style={quickLinkStyle} to="/vehicles">
           Veículos
         </Link>
-        <Link style={quickLinkStyle} to="/reports">
-          Relatórios
-        </Link>
+        {canViewReports ? (
+          <Link style={quickLinkStyle} to="/reports">
+            Relatórios
+          </Link>
+        ) : null}
       </div>
       {activeTenant?.accountType === "INDIVIDUAL" ? (
         <article

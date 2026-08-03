@@ -42,7 +42,10 @@ export class AuthService {
       sub: authUser.id,
       tenantId: authUser.tenantId,
       role: authUser.role,
-      email: authUser.email
+      email: authUser.email,
+      driverId: authUser.driverId,
+      assignedVehicleIds: authUser.assignedVehicleIds ?? [],
+      allowAnyVehicle: authUser.allowAnyVehicle ?? false
     };
 
     return {
