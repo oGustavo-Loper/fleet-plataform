@@ -108,6 +108,8 @@ export interface DriverListItem {
   employmentStatus: DriverEmploymentStatus;
   isActive: boolean;
   photoDataUrl?: string;
+  accountRole?: UserRole;
+  hasCompletedFirstLogin: boolean;
 }
 
 export interface FuelLogItem {

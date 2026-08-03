@@ -307,6 +307,8 @@ export const DRIVERS_QUERY = gql`
       employmentStatus
       isActive
       photoDataUrl
+      accountRole
+      hasCompletedFirstLogin
     }
   }
 `;
@@ -328,6 +330,8 @@ export const CREATE_DRIVER_MUTATION = gql`
       employmentStatus
       isActive
       photoDataUrl
+      accountRole
+      hasCompletedFirstLogin
     }
   }
 `;
@@ -349,6 +353,8 @@ export const UPDATE_DRIVER_MUTATION = gql`
       employmentStatus
       isActive
       photoDataUrl
+      accountRole
+      hasCompletedFirstLogin
     }
   }
 `;
@@ -598,17 +604,48 @@ export const USERS_QUERY = gql`
   }
 `;
 
-export const INVITE_USER_MUTATION = gql`
-  mutation InviteUser($input: InviteUserInput!) {
-    inviteUser(input: $input) {
-      debugPassword
-      user {
-        id
-        fullName
-        email
-        role
-        isActive
-      }
+export const PROMOTE_DRIVER_TO_MANAGER_MUTATION = gql`
+  mutation PromoteDriverToManager($driverId: String!) {
+    promoteDriverToManager(driverId: $driverId) {
+      id
+      fullName
+      cpf
+      registrationId
+      cnh
+      cnhCategory
+      cnhExpiresAt
+      createdAt
+      loginEmail
+      assignedVehicleIds
+      allowAnyVehicle
+      employmentStatus
+      isActive
+      photoDataUrl
+      accountRole
+      hasCompletedFirstLogin
+    }
+  }
+`;
+
+export const DEMOTE_MANAGER_TO_DRIVER_MUTATION = gql`
+  mutation DemoteManagerToDriver($driverId: String!) {
+    demoteManagerToDriver(driverId: $driverId) {
+      id
+      fullName
+      cpf
+      registrationId
+      cnh
+      cnhCategory
+      cnhExpiresAt
+      createdAt
+      loginEmail
+      assignedVehicleIds
+      allowAnyVehicle
+      employmentStatus
+      isActive
+      photoDataUrl
+      accountRole
+      hasCompletedFirstLogin
     }
   }
 `;

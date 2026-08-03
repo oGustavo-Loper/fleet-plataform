@@ -13,7 +13,9 @@ export function DriverList({
   onEdit,
   onSetVacation,
   onActivate,
-  onTerminate
+  onTerminate,
+  onPromoteToManager,
+  onDemoteToDriver
 }: {
   accountType?: AccountType;
   drivers: DriverListItem[];
@@ -23,6 +25,8 @@ export function DriverList({
   onSetVacation?: (driver: DriverListItem) => void;
   onActivate?: (driver: DriverListItem) => void;
   onTerminate?: (driver: DriverListItem) => void;
+  onPromoteToManager?: (driver: DriverListItem) => void;
+  onDemoteToDriver?: (driver: DriverListItem) => void;
 }) {
   const isCompany = accountType === "COMPANY";
   function getVehicleLabel(driver: DriverListItem) {
@@ -74,6 +78,15 @@ export function DriverList({
                   : []),
                 ...(driver.employmentStatus !== "TERMINATED" && onTerminate
                   ? [{ label: "Desligar motorista", danger: true, onSelect: () => onTerminate(driver) }]
+                  : []),
+                ...(driver.accountRole === "MANAGER" && onDemoteToDriver
+                  ? [{ label: "Rebaixar a Motorista", onSelect: () => onDemoteToDriver(driver) }]
+                  : []),
+                ...(driver.accountRole !== "MANAGER" &&
+                driver.loginEmail &&
+                driver.hasCompletedFirstLogin &&
+                onPromoteToManager
+                  ? [{ label: "Promover a Gestor", onSelect: () => onPromoteToManager(driver) }]
                   : [])
               ]}
             />
@@ -89,7 +102,10 @@ export function DriverList({
               <div style={avatarFallbackStyle}>{driver.fullName.slice(0, 1).toUpperCase()}</div>
             )}
             <div style={identityStyle}>
-              <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
+              <div style={nameRowStyle}>
+                <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
+                {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
+              </div>
               <p style={mutedStyle}>
                 {isCompany
                   ? `Matrícula: ${driver.registrationId ?? "Não informada"}`
@@ -147,6 +163,24 @@ const headerStyle: CSSProperties = {
 const identityStyle: CSSProperties = {
   display: "grid",
   gap: "0.25rem"
+};
+
+const nameRowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  flexWrap: "wrap"
+};
+
+const managerBadgeStyle: CSSProperties = {
+  padding: "0.2rem 0.55rem",
+  borderRadius: "999px",
+  background: "rgba(251, 191, 36, 0.14)",
+  color: "#fbbf24",
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em"
 };
 
 const mutedStyle: CSSProperties = {

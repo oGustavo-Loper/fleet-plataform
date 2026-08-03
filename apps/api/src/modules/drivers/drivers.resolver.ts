@@ -1,10 +1,11 @@
-import { UseGuards } from "@nestjs/common";
+import { ForbiddenException, UseGuards } from "@nestjs/common";
 import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 
 import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { assertTenantAccess } from "../../common/assert-tenant-access.js";
 import { CurrentUser } from "../../common/current-user.js";
 import { GqlJwtAuthGuard } from "../../common/gql-jwt-auth.guard.js";
+import { PtBrMessage } from "../../common/messages.js";
 import { CreateDriverInput } from "./dto/create-driver.input.js";
 import { DeleteDriverInput } from "./dto/delete-driver.input.js";
 import { UpdateDriverInput } from "./dto/update-driver.input.js";
@@ -36,5 +37,23 @@ export class DriversResolver {
   @Mutation(() => DriverModel)
   deleteDriver(@Args("input") input: DeleteDriverInput, @CurrentUser() user: AuthenticatedUser) {
     return this.driversService.delete(input, user.tenantId);
+  }
+
+  @Mutation(() => DriverModel)
+  promoteDriverToManager(@Args("driverId") driverId: string, @CurrentUser() user: AuthenticatedUser) {
+    if (user.role !== "ADMIN") {
+      throw new ForbiddenException(PtBrMessage.DRIVER_ROLE_CHANGE_ACCESS_DENIED);
+    }
+
+    return this.driversService.promoteToManager(driverId, user.tenantId);
+  }
+
+  @Mutation(() => DriverModel)
+  demoteManagerToDriver(@Args("driverId") driverId: string, @CurrentUser() user: AuthenticatedUser) {
+    if (user.role !== "ADMIN") {
+      throw new ForbiddenException(PtBrMessage.DRIVER_ROLE_CHANGE_ACCESS_DENIED);
+    }
+
+    return this.driversService.demoteToDriver(driverId, user.tenantId);
   }
 }
