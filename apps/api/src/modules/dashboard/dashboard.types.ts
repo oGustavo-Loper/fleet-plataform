@@ -61,6 +61,15 @@ export class UpcomingMaintenance {
 }
 
 @ObjectType()
+export class DashboardCostTrendPoint {
+  @Field()
+  date!: string;
+
+  @Field(() => Float)
+  cost!: number;
+}
+
+@ObjectType()
 export class DashboardSummaryModel {
   @Field(() => Int)
   totalVehicles!: number;
@@ -79,6 +88,9 @@ export class DashboardSummaryModel {
 
   @Field(() => Int)
   pendingSyncItems!: number;
+
+  @Field(() => [DashboardCostTrendPoint])
+  costTrend!: DashboardCostTrendPoint[];
 
   @Field(() => [UpcomingMaintenance])
   upcomingMaintenance!: UpcomingMaintenance[];
