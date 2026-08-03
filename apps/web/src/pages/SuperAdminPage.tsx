@@ -5,6 +5,7 @@ import type { PlatformTenantSummary } from "@fleet/shared-types";
 
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
 import { ALL_TENANTS_QUERY } from "../lib/queries";
+import { planLabel } from "../lib/plans";
 
 const planStatusLabel: Record<string, string> = {
   ACTIVE: "Ativo",
@@ -88,7 +89,7 @@ export function SuperAdminPage() {
                 </span>
               </div>
               <div style={cardGridStyle}>
-                <DetailItem label="Plano" value={tenant.planCode} />
+                <DetailItem label="Plano" value={planLabel(tenant.planCode)} />
                 <DetailItem
                   label="Limite de veículos"
                   value={tenant.vehicleLimit ? String(tenant.vehicleLimit) : "Ilimitado"}

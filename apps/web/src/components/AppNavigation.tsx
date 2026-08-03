@@ -6,6 +6,7 @@ import type { UserRole } from "@fleet/shared-types";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { resolveMediaUrl } from "../lib/media";
+import { planLabel } from "../lib/plans";
 
 type NavLink = {
   to: string;
@@ -181,13 +182,13 @@ export function AppNavigation() {
           ) : null}
           {activeTenant?.accountType === "INDIVIDUAL" ? (
             <span style={planBadgeStyle}>
-              {activeTenant.planCode} •{" "}
+              {planLabel(activeTenant.planCode)} •{" "}
               {activeTenant.vehicleLimit ? `${activeTenant.vehicleLimit} veículos` : "Ilimitado"}
             </span>
           ) : auth?.role === "DRIVER" ? (
             <span style={planBadgeStyle}>Perfil Motorista</span>
           ) : (
-            <span style={planBadgeStyle}>{activeTenant?.planCode ?? "Plano Empresa"}</span>
+            <span style={planBadgeStyle}>{planLabel(activeTenant?.planCode)}</span>
           )}
         </div>
           <button

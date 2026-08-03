@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import type { TenantSummary, VehicleListItem } from "@fleet/shared-types";
 
+import { planLabel } from "../../lib/plans";
+
 export function VehiclePlanSummary({
   tenant,
   vehiclesCount,
@@ -23,7 +25,7 @@ export function VehiclePlanSummary({
     <article style={planCardStyle}>
       <strong>{isIndividual ? "Pessoa física" : "Empresa em avaliação"}</strong>
       <p style={planTextStyle}>
-        Plano atual: {tenant.planCode}.{" "}
+        Plano atual: {planLabel(tenant.planCode)}.{" "}
         {isCompanyTrial
           ? "A empresa pode cadastrar até 3 veículos até confirmar o pagamento recorrente."
           : "Ao atingir o limite, será necessário assinar um plano superior."}

@@ -9,6 +9,7 @@ import type {
 import { fetchWithTimeout } from "./http";
 import { formatMaintenanceType } from "./maintenance";
 import { resolveMediaUrl } from "./media";
+import { planLabel } from "./plans";
 import { buildReportPerformanceInsights } from "./report-performance";
 
 type PdfFont = "F1" | "F2";
@@ -269,14 +270,14 @@ function formatPlanBadge(tenant: TenantSummary | null, role?: UserRole | null) {
   }
 
   if (tenant.accountType === "INDIVIDUAL") {
-    return `${tenant.planCode} • ${tenant.vehicleLimit ? `${tenant.vehicleLimit} veículos` : "Ilimitado"}`;
+    return `${planLabel(tenant.planCode)} • ${tenant.vehicleLimit ? `${tenant.vehicleLimit} veículos` : "Ilimitado"}`;
   }
 
   if (role === "DRIVER") {
     return "Perfil Motorista";
   }
 
-  return tenant.planCode || "Plano Empresa";
+  return tenant.planCode ? planLabel(tenant.planCode) : "Plano Empresa";
 }
 
 function getVisibleModules(role?: UserRole | null) {
