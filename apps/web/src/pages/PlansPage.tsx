@@ -14,6 +14,10 @@ import {
   UPGRADE_PLAN_MUTATION
 } from "../lib/queries";
 
+// Billing isn't live yet for this initial launch — plan changes are
+// disabled and this flag is the single place to turn them back on.
+const PLAN_ACTIONS_ENABLED = false;
+
 type PlanCard = {
   code: string;
   name: string;
@@ -209,41 +213,47 @@ export function PlansPage() {
             <p style={descriptionStyle}>{plan.description}</p>
             <div style={cardActionsStyle}>
               {hasTenant ? (
-                <>
-                  {plan.code === "COMPANY_PRO" || plan.code === "INDIVIDUAL_PRO" ? (
+                PLAN_ACTIONS_ENABLED ? (
+                  <>
+                    {plan.code === "COMPANY_PRO" || plan.code === "INDIVIDUAL_PRO" ? (
+                      <button
+                        type="button"
+                        style={buttonStyle}
+                        disabled={checkoutLoading}
+                        onClick={() => openCheckout(plan.code)}
+                      >
+                        {checkoutLoading ? "Abrindo checkout..." : "Assinar agora"}
+                      </button>
+                    ) : (
+                      <span style={mutedLabelStyle}>Plano base</span>
+                    )}
                     <button
                       type="button"
-                      style={buttonStyle}
-                      disabled={checkoutLoading}
-                      onClick={() => openCheckout(plan.code)}
-                    >
-                      {checkoutLoading ? "Abrindo checkout..." : "Assinar agora"}
-                    </button>
-                  ) : (
-                    <span style={mutedLabelStyle}>Plano base</span>
-                  )}
-                  <button
-                    type="button"
-                    style={ghostButtonStyle}
-                    disabled={demoLoading || activePlanCode === plan.code}
-                    onClick={() =>
-                      upgradePlan({
-                        variables: {
-                    input: {
-                            tenantId: activeTenant?.id ?? "",
-                            planCode: plan.code
+                      style={ghostButtonStyle}
+                      disabled={demoLoading || activePlanCode === plan.code}
+                      onClick={() =>
+                        upgradePlan({
+                          variables: {
+                            input: {
+                              tenantId: activeTenant?.id ?? "",
+                              planCode: plan.code
+                            }
                           }
-                        }
-                      })
-                    }
-                  >
-                    {demoLoading
-                      ? "Atualizando..."
-                      : activePlanCode === plan.code
-                        ? "Plano atual"
-                        : "Ativar demo"}
-                  </button>
-                </>
+                        })
+                      }
+                    >
+                      {demoLoading
+                        ? "Atualizando..."
+                        : activePlanCode === plan.code
+                          ? "Plano atual"
+                          : "Ativar demo"}
+                    </button>
+                  </>
+                ) : (
+                  <span style={mutedLabelStyle}>
+                    {activePlanCode === plan.code ? "Plano atual" : "Em breve"}
+                  </span>
+                )
               ) : (
                 <Link style={buttonLinkStyle} to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}>
                   {plan.code === "COMPANY_START" ? "Criar conta empresa" : "Criar conta pessoal"}
