@@ -16,7 +16,8 @@ const roleLabel: Record<UserRole, string> = {
   MANAGER: "Gestor",
   COMPANY: "Empresa",
   INDIVIDUAL: "Pessoa física",
-  DRIVER: "Motorista"
+  DRIVER: "Motorista",
+  SUPER_ADMIN: "Admin. da plataforma"
 };
 
 type TeamUser = {

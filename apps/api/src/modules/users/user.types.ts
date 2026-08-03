@@ -5,7 +5,8 @@ export enum UserRole {
   COMPANY = "COMPANY",
   DRIVER = "DRIVER",
   INDIVIDUAL = "INDIVIDUAL",
-  MANAGER = "MANAGER"
+  MANAGER = "MANAGER",
+  SUPER_ADMIN = "SUPER_ADMIN"
 }
 
 registerEnumType(UserRole, { name: "UserRole" });

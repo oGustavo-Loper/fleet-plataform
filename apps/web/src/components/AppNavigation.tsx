@@ -21,7 +21,8 @@ const links: NavLink[] = [
   { to: "/maintenance", label: "Manutenções" },
   { to: "/reports", label: "Relatórios" },
   { to: "/team", label: "Equipe", roles: ["ADMIN", "MANAGER"] },
-  { to: "/plans", label: "Planos" }
+  { to: "/plans", label: "Planos" },
+  { to: "/super-admin", label: "Todas as contas", roles: ["SUPER_ADMIN"] }
 ];
 
 export function AppNavigation() {
