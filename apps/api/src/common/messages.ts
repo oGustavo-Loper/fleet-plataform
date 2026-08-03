@@ -22,6 +22,7 @@ export enum PtBrMessage {
   PASSWORD_RESET_CODE_LOCKED = "Número máximo de tentativas excedido. Solicite um novo código.",
   EMAIL_ALREADY_EXISTS = "Já existe uma conta com este e-mail.",
   MANAGER_INVITE_ACCESS_DENIED = "Apenas o administrador da conta pode convidar novos usuários.",
+  SUPER_ADMIN_ACCESS_DENIED = "Acesso restrito ao administrador da plataforma.",
   CHECKOUT_PLAN_NOT_SUPPORTED = "Plano ainda não suportado no checkout hospedado.",
   PAYMENT_NOT_CONFIRMED = "Pagamento ainda não confirmado.",
   WEBHOOK_INVALID = "Webhook inválido.",

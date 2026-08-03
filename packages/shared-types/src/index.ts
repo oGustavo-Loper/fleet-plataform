@@ -1,7 +1,7 @@
 export type AccountType = "COMPANY" | "INDIVIDUAL";
 export type PlanStatus = "TRIAL" | "ACTIVE" | "INACTIVE";
 
-export type UserRole = "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL" | "MANAGER";
+export type UserRole = "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL" | "MANAGER" | "SUPER_ADMIN";
 
 export type DriverEmploymentStatus = "ACTIVE" | "VACATION" | "TERMINATED";
 
@@ -41,6 +41,11 @@ export interface TenantSummary {
   planStatus: PlanStatus;
   vehicleLimit?: number;
   photoDataUrl?: string;
+}
+
+export interface PlatformTenantSummary extends TenantSummary {
+  billingProvider?: string;
+  billingActivatedAt?: string;
 }
 
 export interface DashboardSummary {

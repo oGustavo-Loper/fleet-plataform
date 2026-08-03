@@ -40,4 +40,10 @@ export class TenantModel {
 
   @Field({ nullable: true })
   photoDataUrl?: string;
+
+  @Field({ nullable: true })
+  billingProvider?: string;
+
+  @Field({ nullable: true })
+  billingActivatedAt?: string;
 }

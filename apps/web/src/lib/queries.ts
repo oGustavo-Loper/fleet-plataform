@@ -30,6 +30,22 @@ export const TENANT_QUERY = gql`
   }
 `;
 
+export const ALL_TENANTS_QUERY = gql`
+  query AllTenants {
+    allTenants {
+      id
+      name
+      accountType
+      documentNumber
+      planCode
+      planStatus
+      vehicleLimit
+      billingProvider
+      billingActivatedAt
+    }
+  }
+`;
+
 export const LOGIN_MUTATION = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
