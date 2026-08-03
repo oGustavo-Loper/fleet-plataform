@@ -10,7 +10,7 @@ import {
   primarySubmitStyle,
   secondaryActionStyle
 } from "../../components/FormField";
-import { FileUploadField } from "../../components/FileUploadField";
+import { AvatarPickerField } from "../../components/AvatarPickerField";
 import {
   CREATE_DRIVER_MUTATION,
   DRIVERS_QUERY,
@@ -180,6 +180,28 @@ export function DriverForm({
 
   return (
     <form style={formPanelStyle} onSubmit={handleSubmit}>
+      <AvatarPickerField
+        photoUrl={resolveMediaUrl(form.photoDataUrl)}
+        alt="Foto do motorista"
+        loading={photoLoading}
+        error={photoError}
+        onSelect={async (file) => {
+          if (!file) {
+            setForm({ ...form, photoDataUrl: "" });
+            return;
+          }
+          setPhotoLoading(true);
+          setPhotoError("");
+          try {
+            const uploaded = await uploadMediaFile(file, "driver-photo");
+            setForm({ ...form, photoDataUrl: uploaded.url });
+          } catch (uploadError) {
+            setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
+          } finally {
+            setPhotoLoading(false);
+          }
+        }}
+      />
       <div style={formGridStyle}>
         <FormField label="Nome do motorista">
           <input
@@ -272,32 +294,19 @@ export function DriverForm({
             ))}
           </select>
         </FormField>
-        <FileUploadField
-          label="Foto do motorista"
-          accept="image/*"
-          buttonLabel="Selecionar foto"
-          hint={photoLoading ? "Enviando foto..." : "Imagem usada no perfil do motorista"}
-          error={photoError}
-          loading={photoLoading}
-          previewUrl={resolveMediaUrl(form.photoDataUrl)}
-          previewAlt="Preview do motorista"
-          onSelect={async (file) => {
-            if (!file) {
-              setForm({ ...form, photoDataUrl: "" });
-              return;
+        <FormField label="Status do motorista">
+          <select
+            style={formInputStyle}
+            value={form.employmentStatus}
+            onChange={(event) =>
+              setForm({ ...form, employmentStatus: event.target.value as DriverEmploymentStatus })
             }
-            setPhotoLoading(true);
-            setPhotoError("");
-            try {
-              const uploaded = await uploadMediaFile(file, "driver-photo");
-              setForm({ ...form, photoDataUrl: uploaded.url });
-            } catch (uploadError) {
-              setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
-            } finally {
-              setPhotoLoading(false);
-            }
-          }}
-        />
+          >
+            <option value="ACTIVE">Ativo</option>
+            <option value="VACATION">Em férias</option>
+            <option value="TERMINATED">Desligado</option>
+          </select>
+        </FormField>
       </div>
       <label
         style={{
@@ -315,20 +324,7 @@ export function DriverForm({
         />
         Permitir abastecer qualquer veículo
       </label>
-      <FormField label="Status do motorista" style={{ marginTop: "0.8rem" }}>
-        <select
-          style={formInputStyle}
-          value={form.employmentStatus}
-          onChange={(event) =>
-            setForm({ ...form, employmentStatus: event.target.value as DriverEmploymentStatus })
-          }
-        >
-          <option value="ACTIVE">Ativo</option>
-          <option value="VACATION">Em férias</option>
-          <option value="TERMINATED">Desligado</option>
-        </select>
-      </FormField>
-      <p style={{ color: "#94a3b8", marginBottom: 0 }}>
+      <p style={{ color: "#94a3b8", marginBottom: 0, marginTop: "0.8rem" }}>
         Motoristas em férias ou desligados perdem o acesso ao sistema, mas o histórico permanece salvo.
       </p>
       {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
