@@ -12,6 +12,13 @@ const vehicleTypeLabel: Record<VehicleListItem["vehicleType"], string> = {
   BUS: "Ônibus"
 };
 
+const vehicleStatusLabel: Record<VehicleListItem["status"], string> = {
+  ACTIVE: "Ativo",
+  INACTIVE: "Inativo",
+  MAINTENANCE: "Manutenção",
+  SOLD: "Vendido"
+};
+
 export function VehicleList({
   vehicles,
   onEdit
@@ -42,7 +49,7 @@ export function VehicleList({
             ) : null}
           </div>
           <p style={supportingStyle}>
-            {vehicleTypeLabel[vehicle.vehicleType]} • {vehicle.status}
+            {vehicleTypeLabel[vehicle.vehicleType]} • {vehicleStatusLabel[vehicle.status]}
           </p>
         </article>
       ))}
