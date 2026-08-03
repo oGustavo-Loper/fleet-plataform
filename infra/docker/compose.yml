@@ -43,7 +43,7 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-Fleet Platform <no-reply@fleet.local>}
+      MAIL_FROM: ${MAIL_FROM:-Fleet Platform <no-reply@contato.fleet.gustavoloper.xyz>}
     command: >
       sh -lc "if [ ! -x /workspace/node_modules/.bin/nest ]; then pnpm install --frozen-lockfile; fi &&
       pnpm --filter @fleet/api dev"
