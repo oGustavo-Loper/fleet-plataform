@@ -23,6 +23,7 @@ export function RegisterCompanyPage() {
     adminFullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     photoDataUrl: ""
   });
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -65,10 +66,17 @@ export function RegisterCompanyPage() {
       return;
     }
 
+    if (password !== form.confirmPassword) {
+      setValidationError("As senhas precisam ser iguais.");
+      return;
+    }
+
+    const { confirmPassword: _confirmPassword, ...registrationForm } = form;
+
     const result = await registerMutation({
         variables: {
           input: {
-            ...form,
+            ...registrationForm,
             companyName,
             cnpj,
             adminFullName,
@@ -181,6 +189,17 @@ export function RegisterCompanyPage() {
             required
             minLength={8}
             onChange={(event) => setForm({ ...form, password: event.target.value })}
+          />
+        </FormField>
+        <FormField label="Confirmar senha">
+          <input
+            style={formInputStyle}
+            type="password"
+            placeholder="Ex: MinhaSenha123"
+            value={form.confirmPassword}
+            required
+            minLength={8}
+            onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
           />
         </FormField>
         <p style={hintStyle}>

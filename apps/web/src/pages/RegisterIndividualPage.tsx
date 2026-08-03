@@ -22,6 +22,7 @@ export function RegisterIndividualPage() {
     cpf: "",
     email: "",
     password: "",
+    confirmPassword: "",
     createDriverProfile: true,
     cnh: "",
     cnhCategory: "B",
@@ -63,6 +64,11 @@ export function RegisterIndividualPage() {
       return;
     }
 
+    if (form.password !== form.confirmPassword) {
+      setValidationError("As senhas precisam ser iguais.");
+      return;
+    }
+
     if (form.createDriverProfile) {
       if (!hasMinDigits(cnh, 5)) {
         setValidationError("Informe a CNH para criar o perfil de motorista.");
@@ -75,10 +81,12 @@ export function RegisterIndividualPage() {
       }
     }
 
+    const { confirmPassword: _confirmPassword, ...registrationForm } = form;
+
     const result = await registerMutation({
       variables: {
         input: {
-          ...form,
+          ...registrationForm,
           fullName,
           cpf,
           email,
@@ -157,6 +165,17 @@ export function RegisterIndividualPage() {
             required
             minLength={8}
             onChange={(event) => setForm({ ...form, password: event.target.value })}
+          />
+        </FormField>
+        <FormField label="Confirmar senha">
+          <input
+            style={formInputStyle}
+            type="password"
+            placeholder="Ex: MinhaSenha123"
+            value={form.confirmPassword}
+            required
+            minLength={8}
+            onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
           />
         </FormField>
         <FileUploadField
