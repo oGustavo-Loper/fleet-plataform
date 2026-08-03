@@ -52,4 +52,7 @@ export class DriverModel {
 
   @Field()
   hasCompletedFirstLogin!: boolean;
+
+  @Field({ nullable: true })
+  temporaryPassword?: string;
 }

@@ -43,6 +43,7 @@ export type DriverRecord = {
   employmentStatus: "ACTIVE" | "VACATION" | "TERMINATED";
   isActive: boolean;
   photoDataUrl?: string;
+  temporaryPassword?: string;
   createdAt: Date;
   updatedAt: Date;
 };
