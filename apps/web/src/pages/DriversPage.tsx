@@ -17,7 +17,6 @@ type StatusFilter = "ALL" | DriverEmploymentStatus;
 export function DriversPage() {
   const { auth } = useAuth();
   const canManageRoles = auth?.role === "ADMIN";
-  const canCreateDriver = auth?.role !== "INDIVIDUAL";
   const {
     activeTenant,
     tenantLoading,
@@ -35,6 +34,8 @@ export function DriversPage() {
     filteredDrivers,
     primaryDrivers,
     terminatedDrivers,
+    driverLimit,
+    driverLimitReached,
     pagedDrivers,
     page,
     setPage,
@@ -86,16 +87,14 @@ export function DriversPage() {
             </select>
           </label>
         </div>
-        {canCreateDriver ? (
-          <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
-            Novo motorista
-          </button>
-        ) : null}
+        <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
+          Novo motorista
+        </button>
       </div>
-      {!canCreateDriver ? (
-        <p style={individualNoticeStyle}>
-          Contas de pessoa física têm apenas o próprio perfil de motorista. Complete seus dados em
-          "Meu perfil".
+      {driverLimitReached ? (
+        <p style={limitNoticeStyle}>
+          Limite de {driverLimit} motoristas do plano gratuito atingido. Assine um plano pago para
+          cadastrar mais motoristas.
         </p>
       ) : null}
       {roleChangeError ? <p style={roleChangeErrorStyle}>{roleChangeError}</p> : null}
@@ -179,6 +178,8 @@ export function DriversPage() {
             tenantId={activeTenant.id}
             vehicles={vehicles}
             initialDriver={drawerMode === "edit" ? selectedDriver : null}
+            driverLimit={driverLimit ?? undefined}
+            driverLimitReached={drawerMode === "create" && driverLimitReached}
             onDone={closeDrawer}
             onCancel={closeDrawer}
           />
@@ -250,7 +251,7 @@ const roleChangeErrorStyle: CSSProperties = {
   marginBottom: "1rem"
 };
 
-const individualNoticeStyle: CSSProperties = {
+const limitNoticeStyle: CSSProperties = {
   padding: "0.9rem 1rem",
   borderRadius: "0.9rem",
   background: "rgba(251, 191, 36, 0.1)",

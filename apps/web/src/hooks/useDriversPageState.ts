@@ -16,6 +16,8 @@ import { upsertQueryListItem } from "../lib/apollo-cache";
 
 type StatusFilter = "ALL" | DriverEmploymentStatus;
 
+const FREE_TIER_DRIVER_LIMIT = 2;
+
 export function useDriversPageState() {
   const [drawerMode, setDrawerMode] = useState<"create" | "view" | "edit" | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<DriverListItem | null>(null);
@@ -113,6 +115,12 @@ export function useDriversPageState() {
       return matchesSearch && matchesStatus;
     });
   }, [drivers, search, statusFilter]);
+
+  const isIndividual = activeTenant?.accountType === "INDIVIDUAL";
+  const isCompanyTrial = activeTenant?.accountType === "COMPANY" && activeTenant?.planStatus !== "ACTIVE";
+  const driverLimit = isIndividual || isCompanyTrial ? FREE_TIER_DRIVER_LIMIT : null;
+  const activeDriverCount = drivers.filter((driver) => driver.employmentStatus !== "TERMINATED").length;
+  const driverLimitReached = driverLimit !== null && activeDriverCount >= driverLimit;
 
   const activeAndVacationDrivers = filteredDrivers.filter((driver) => driver.employmentStatus !== "TERMINATED");
   const terminatedDrivers = filteredDrivers.filter((driver) => driver.employmentStatus === "TERMINATED");
@@ -215,6 +223,8 @@ export function useDriversPageState() {
     filteredDrivers,
     primaryDrivers,
     terminatedDrivers,
+    driverLimit,
+    driverLimitReached,
     pagedDrivers,
     page,
     setPage,
