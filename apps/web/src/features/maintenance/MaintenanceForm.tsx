@@ -740,7 +740,7 @@ export function MaintenanceForm({
       {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao registrar manutenção.</p> : null}
       <div style={actionsRowStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading}>
+        <button className="btn-primary" style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar manutenção"}
         </button>
         {onCancel ? (

@@ -79,7 +79,7 @@ export function DriversPage() {
             </select>
           </label>
         </div>
-        <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
+        <button type="button" className="btn-primary" style={primaryButtonStyle} onClick={openCreateDrawer}>
           Novo motorista
         </button>
       </div>

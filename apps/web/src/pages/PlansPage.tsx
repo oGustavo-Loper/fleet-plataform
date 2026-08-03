@@ -106,10 +106,10 @@ export function PlansPage() {
               uma experiência pronta para web e mobile.
             </p>
             <div style={heroActionsStyle}>
-              <Link style={heroLinkStyle} to="/register/individual">
+              <Link className="btn-primary" style={heroLinkStyle} to="/register/individual">
                 Criar conta pessoal
               </Link>
-              <Link style={heroLinkStyle} to="/register/company">
+              <Link className="btn-primary" style={heroLinkStyle} to="/register/company">
                 Criar conta empresa
               </Link>
             </div>
@@ -129,6 +129,7 @@ export function PlansPage() {
                 <p style={strikeStyle}>De {plan.regularPrice}</p>
                 <p style={descriptionStyle}>{plan.description}</p>
                 <Link
+                  className="btn-primary"
                   style={buttonLinkStyle}
                   to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}
                 >
@@ -208,6 +209,7 @@ export function PlansPage() {
                   {plan.code === "COMPANY_PRO" || plan.code === "INDIVIDUAL_PRO" ? (
                     <button
                       type="button"
+                      className="btn-primary"
                       style={buttonStyle}
                       disabled={checkoutLoading}
                       onClick={() => openCheckout(plan.code)}
@@ -240,7 +242,7 @@ export function PlansPage() {
                   </button>
                 </>
               ) : (
-                <Link style={buttonLinkStyle} to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}>
+                <Link className="btn-primary" style={buttonLinkStyle} to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}>
                   {plan.code === "COMPANY_START" ? "Criar conta empresa" : "Criar conta pessoal"}
                 </Link>
               )}

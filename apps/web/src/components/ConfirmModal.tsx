@@ -40,6 +40,7 @@ export function ConfirmModal({
           </button>
           <button
             type="button"
+            className={danger ? undefined : "btn-primary"}
             style={danger ? dangerButtonStyle : confirmButtonStyle}
             onClick={onConfirm}
             disabled={loading}

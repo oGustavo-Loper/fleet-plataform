@@ -332,7 +332,7 @@ export function VehicleForm({
       ) : null}
       {error ? <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>Falha ao salvar veículo.</p> : null}
       <div style={footerActionsStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading || limitReached}>
+        <button className="btn-primary" style={primarySubmitStyle} type="submit" disabled={loading || limitReached}>
           {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar veículo"}
         </button>
         {onCancel ? (

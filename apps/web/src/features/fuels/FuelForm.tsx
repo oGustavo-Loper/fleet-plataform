@@ -446,6 +446,7 @@ export function FuelForm({
           <div style={locationActionsStyle}>
             <button
               type="button"
+              className="btn-primary"
               style={locationButtonStyle}
               onClick={handleLocationCapture}
               disabled={locationLoading}
@@ -549,7 +550,7 @@ export function FuelForm({
         </p>
       ) : null}
       <div style={footerActionsStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading}>
+        <button className="btn-primary" style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar abastecimento"}
         </button>
         {onCancel ? (

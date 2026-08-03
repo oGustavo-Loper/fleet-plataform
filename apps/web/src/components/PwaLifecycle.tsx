@@ -62,7 +62,7 @@ export function PwaLifecycle() {
         </div>
         <div style={actionsStyle}>
           {state.kind === "update-ready" ? (
-            <button type="button" style={primaryButtonStyle} onClick={() => void state.update(true)}>
+            <button className="btn-primary" type="button" style={primaryButtonStyle} onClick={() => void state.update(true)}>
               Atualizar agora
             </button>
           ) : null}

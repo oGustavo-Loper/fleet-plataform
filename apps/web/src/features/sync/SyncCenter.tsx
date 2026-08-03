@@ -51,6 +51,7 @@ export function SyncCenter() {
         <h2 style={{ margin: 0 }}>Fila de sincronização</h2>
         <button
           type="button"
+          className="btn-primary"
           style={syncButtonStyle}
           onClick={handleSyncNow}
           disabled={!online || syncing || items.length === 0}

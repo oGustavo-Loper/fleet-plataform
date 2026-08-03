@@ -200,7 +200,7 @@ export function LoginPage() {
                   onChange={(event) => setResetEmail(event.target.value)}
                 />
               </FormField>
-              <button style={buttonStyle} type="submit" disabled={resetRequestLoading}>
+              <button className="btn-primary" style={buttonStyle} type="submit" disabled={resetRequestLoading}>
                 {resetRequestLoading ? "Enviando código..." : "Enviar código"}
               </button>
             </form>
@@ -235,7 +235,7 @@ export function LoginPage() {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                 />
               </FormField>
-              <button style={buttonStyle} type="submit" disabled={resetConfirmLoading}>
+              <button className="btn-primary" style={buttonStyle} type="submit" disabled={resetConfirmLoading}>
                 {resetConfirmLoading ? "Alterando..." : "Alterar senha"}
               </button>
             </form>
@@ -289,7 +289,7 @@ export function LoginPage() {
             </div>
             {error ? <p style={errorStyle}>{error.message}</p> : null}
             {formError ? <p style={errorStyle}>{formError}</p> : null}
-            <button style={buttonStyle} type="submit" disabled={loading}>
+            <button className="btn-primary" style={buttonStyle} type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>

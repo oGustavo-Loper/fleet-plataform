@@ -223,7 +223,7 @@ export function LandingPage() {
           <Link style={ghostLinkStyle} to="/login">
             Entrar
           </Link>
-          <Link style={primaryLinkStyle} to="/plans">
+          <Link className="btn-primary" style={primaryLinkStyle} to="/plans">
             Ver planos
           </Link>
         </div>
@@ -242,7 +242,7 @@ export function LandingPage() {
               login por perfil e sincronização automática quando a conexão volta.
             </p>
             <div style={heroButtonsStyle}>
-              <Link style={primaryLinkStyle} to="/register/company">
+              <Link className="btn-primary" style={primaryLinkStyle} to="/register/company">
                 Criar conta empresa
               </Link>
               <Link style={ghostLinkStyle} to="/register/individual">
@@ -404,6 +404,7 @@ export function LandingPage() {
                   ))}
                 </ul>
                 <Link
+                  className={plan.highlight ? "btn-primary" : undefined}
                   style={plan.highlight ? primaryLinkStyle : ghostLinkStyle}
                   to={plan.name === "Empresa" ? "/register/company" : "/register/individual"}
                 >
@@ -447,7 +448,7 @@ export function LandingPage() {
             <h2 style={ctaTitleStyle}>Abra a conta e teste o fluxo completo.</h2>
           </div>
           <div style={{ ...ctaButtonsStyle, ...(isMobile ? ctaButtonsMobileStyle : null) }}>
-            <Link style={primaryLinkStyle} to="/register/company">
+            <Link className="btn-primary" style={primaryLinkStyle} to="/register/company">
               Começar agora
             </Link>
             <Link style={ghostLinkStyle} to="/login">

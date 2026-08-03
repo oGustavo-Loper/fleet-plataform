@@ -43,6 +43,7 @@ export function FileUploadField({
       <div style={uploadBoxStyle}>
         <button
           type="button"
+          className="btn-primary"
           style={uploadButtonStyle}
           onClick={() => inputRef.current?.click()}
           disabled={loading}

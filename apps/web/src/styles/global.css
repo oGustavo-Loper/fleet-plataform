@@ -67,3 +67,16 @@ input {
 .app-sidebar-link[aria-current="page"]:active {
   border-color: #fbbf24 !important;
 }
+
+.btn-primary {
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.btn-primary:not(:disabled):hover {
+  background: #fcd34d !important;
+}
+
+.app-sidebar-link[aria-current="page"]:not(:disabled):hover {
+  background: #fcd34d !important;
+}

@@ -88,7 +88,7 @@ export function BillingCheckoutPage() {
         </p>
         {validationError ? <p style={errorStyle}>{validationError}</p> : null}
         {error ? <p style={errorStyle}>Falha ao confirmar o pagamento.</p> : null}
-        <button type="submit" style={buttonStyle} disabled={loading}>
+        <button type="submit" className="btn-primary" style={buttonStyle} disabled={loading}>
           {loading ? "Confirmando..." : "Confirmar pagamento"}
         </button>
       </form>

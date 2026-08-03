@@ -335,7 +335,7 @@ export function DriverForm({
       {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao salvar motorista.</p> : null}
       <div style={footerActionsStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading}>
+        <button className="btn-primary" style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar motorista"}
         </button>
         {onCancel ? (

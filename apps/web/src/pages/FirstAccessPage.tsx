@@ -127,7 +127,7 @@ export function FirstAccessPage() {
         </p>
         {localError ? <p style={errorStyle}>{localError}</p> : null}
         {error ? <p style={errorStyle}>{error.message}</p> : null}
-        <button style={buttonStyle} type="submit" disabled={loading}>
+        <button className="btn-primary" style={buttonStyle} type="submit" disabled={loading}>
           {loading ? "Atualizando senha..." : "Salvar nova senha"}
         </button>
       </form>

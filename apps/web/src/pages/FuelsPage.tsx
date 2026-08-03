@@ -39,7 +39,7 @@ export function FuelsPage() {
       subtitle="Registro rápido de abastecimentos, custos e histórico por veículo."
     >
       <div style={quickActionsStyle}>
-        <button style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
+        <button className="btn-primary" style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
           Novo abastecimento
         </button>
         <button style={quickActionGhostStyle} type="button" onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}>

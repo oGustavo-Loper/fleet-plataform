@@ -188,7 +188,7 @@ export function RegisterCompanyPage() {
         </p>
         {validationError ? <p style={errorStyle}>{validationError}</p> : null}
         {error ? <p style={errorStyle}>{error.message}</p> : null}
-        <button style={buttonStyle} type="submit" disabled={loading}>
+        <button className="btn-primary" style={buttonStyle} type="submit" disabled={loading}>
           {loading ? "Criando conta..." : "Criar conta empresa"}
         </button>
         <Link style={linkStyle} to="/login">

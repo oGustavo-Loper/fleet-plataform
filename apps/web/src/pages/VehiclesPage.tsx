@@ -39,6 +39,7 @@ export function VehiclesPage() {
     >
       <div style={actionsStyle}>
         <button
+          className="btn-primary"
           style={primaryButtonStyle}
           type="button"
           onClick={openCreateDrawer}

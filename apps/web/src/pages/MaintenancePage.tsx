@@ -41,7 +41,7 @@ export function MaintenancePage() {
       subtitle="Registro de manutenções preventivas e corretivas, com próxima data ou quilometragem."
     >
       <div style={quickActionsStyle}>
-        <button style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
+        <button className="btn-primary" style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
           Nova manutenção
         </button>
         <button
