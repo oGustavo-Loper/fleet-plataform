@@ -169,6 +169,16 @@ export function AppNavigation() {
           <span>
             {auth?.fullName} • {auth?.email}
           </span>
+          {auth?.driverId ? (
+            <Link
+              to="/profile"
+              className="app-sidebar-control"
+              style={profileLinkStyle}
+              onClick={() => setOpen(false)}
+            >
+              Meu perfil
+            </Link>
+          ) : null}
           {activeTenant?.accountType === "INDIVIDUAL" ? (
             <span style={planBadgeStyle}>
               {activeTenant.planCode} •{" "}
@@ -377,6 +387,13 @@ const userBoxStyle: CSSProperties = {
   paddingTop: "1.5rem",
   justifyItems: "center",
   textAlign: "center"
+};
+
+const profileLinkStyle: CSSProperties = {
+  color: "#94a3b8",
+  fontSize: "0.82rem",
+  textDecoration: "underline",
+  textUnderlineOffset: "0.2rem"
 };
 
 const planBadgeStyle: CSSProperties = {

@@ -34,9 +34,9 @@ export type DriverRecord = {
   fullName: string;
   cpf?: string;
   registrationId?: string;
-  cnh: string;
-  cnhCategory: string;
-  cnhExpiresAt: string;
+  cnh?: string;
+  cnhCategory?: string;
+  cnhExpiresAt?: string;
   loginEmail?: string;
   assignedVehicleIds: string[];
   allowAnyVehicle: boolean;

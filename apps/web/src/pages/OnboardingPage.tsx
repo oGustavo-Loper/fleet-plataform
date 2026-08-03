@@ -4,10 +4,12 @@ import { Link } from "react-router-dom";
 import { AppShell } from "@fleet/ui";
 import type { DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
+import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { DRIVERS_QUERY, VEHICLES_QUERY } from "../lib/queries";
 
 export function OnboardingPage() {
+  const { auth } = useAuth();
   const { activeTenant } = useTenant();
   const tenantId = activeTenant?.id ?? "";
   const vehiclesQuery = useQuery<{ vehicles: VehicleListItem[] }>(VEHICLES_QUERY, {
@@ -22,6 +24,8 @@ export function OnboardingPage() {
   const vehicles = vehiclesQuery.data?.vehicles ?? [];
   const drivers = driversQuery.data?.drivers ?? [];
   const isCompany = activeTenant?.accountType === "COMPANY";
+  const ownDriver = drivers.find((driver) => driver.id === auth?.driverId);
+  const hasPendingCnh = Boolean(ownDriver && !ownDriver.cnh);
 
   return (
     <AppShell
@@ -57,6 +61,14 @@ export function OnboardingPage() {
                 : "Revisar perfil de motorista"
               : "Gerenciar motoristas"}
           </Link>
+          {hasPendingCnh ? (
+            <p style={pendingStyle}>
+              Sua CNH está pendente.{" "}
+              <Link style={linkStyle} to="/profile">
+                Completar em Meu perfil
+              </Link>
+            </p>
+          ) : null}
         </article>
         <article style={cardStyle}>
           <strong>4. Operação</strong>
@@ -102,4 +114,10 @@ const actionsStyle: CSSProperties = {
 
 const linkStyle: CSSProperties = {
   color: "#fbbf24"
+};
+
+const pendingStyle: CSSProperties = {
+  margin: "0.5rem 0 0",
+  color: "#fda4af",
+  fontSize: "0.88rem"
 };

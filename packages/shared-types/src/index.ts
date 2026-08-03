@@ -98,9 +98,9 @@ export interface DriverListItem {
   fullName: string;
   cpf?: string;
   registrationId?: string;
-  cnh: string;
-  cnhCategory: string;
-  cnhExpiresAt: string;
+  cnh?: string;
+  cnhCategory?: string;
+  cnhExpiresAt?: string;
   createdAt: string;
   loginEmail?: string;
   assignedVehicleIds: string[];

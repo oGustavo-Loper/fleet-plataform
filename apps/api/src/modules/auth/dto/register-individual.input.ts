@@ -16,16 +16,4 @@ export class RegisterIndividualInput {
 
   @Field({ nullable: true })
   createDriverProfile?: boolean;
-
-  @Field({ nullable: true })
-  cnh?: string;
-
-  @Field({ nullable: true })
-  cnhCategory?: string;
-
-  @Field({ nullable: true })
-  cnhExpiresAt?: string;
-
-  @Field({ nullable: true })
-  photoDataUrl?: string;
 }

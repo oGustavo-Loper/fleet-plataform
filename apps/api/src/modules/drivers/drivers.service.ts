@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 
+import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
 import { CreateDriverInput } from "./dto/create-driver.input.js";
@@ -27,7 +28,13 @@ export class DriversService {
     };
   }
 
-  async listByTenant(tenantId: string) {
+  private assertValidCnh(cnh?: string) {
+    if (cnh && cnh.replace(/\D/g, "").length !== 11) {
+      throw new BadRequestException(PtBrMessage.CNH_INVALID);
+    }
+  }
+
+  async listByTenant(tenantId: string, user?: AuthenticatedUser) {
     const [drivers, users] = await Promise.all([
       this.prisma.driver.findMany({
         where: { tenantId },
@@ -40,13 +47,17 @@ export class DriversService {
       users.filter((user) => user.driverId).map((user) => [user.driverId, user])
     );
 
-    return drivers.map((driver) => ({
+    const visibleDrivers =
+      user?.role === "DRIVER" ? drivers.filter((driver) => driver.id === user.driverId) : drivers;
+
+    return visibleDrivers.map((driver) => ({
       ...driver,
       ...this.accountInfoFromUser(userByDriverId.get(driver.id) ?? null)
     }));
   }
 
   async create(input: CreateDriverInput) {
+    this.assertValidCnh(input.cnh);
     const employmentStatus =
       input.employmentStatus ?? (input.isActive === false ? "VACATION" : "ACTIVE");
 
@@ -96,6 +107,8 @@ export class DriversService {
     if (actorTenantId && currentDriver.tenantId !== actorTenantId) {
       throw new ForbiddenException(PtBrMessage.DRIVER_ACCESS_DENIED);
     }
+
+    this.assertValidCnh(input.cnh);
 
     const employmentStatus =
       input.employmentStatus ?? (input.isActive === false ? "VACATION" : "ACTIVE");

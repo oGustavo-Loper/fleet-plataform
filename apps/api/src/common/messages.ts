@@ -41,5 +41,6 @@ export enum PtBrMessage {
   JWT_REFRESH_SECRET_REQUIRED = "JWT_REFRESH_SECRET é obrigatória para emitir e validar tokens de renovação.",
   DATABASE_UNAVAILABLE = "Banco de dados indisponível.",
   SYNC_ENTITY_NOT_SUPPORTED = "Entidade não suportada para sincronização offline.",
+  CNH_INVALID = "Informe uma CNH válida, com 11 dígitos.",
   NOT_INFORMED = "Não informado."
 }

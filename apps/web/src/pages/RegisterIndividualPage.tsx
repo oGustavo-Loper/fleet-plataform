@@ -5,13 +5,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { AppShell } from "@fleet/ui";
 
-import { FileUploadField } from "../components/FileUploadField";
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { apolloClient } from "../lib/apollo";
 import { hasMinDigits, isBlank } from "../lib/form-validation";
-import { formatCpf, limitText, onlyDigits } from "../lib/masks";
-import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
+import { formatCpf } from "../lib/masks";
 import { REGISTER_INDIVIDUAL_MUTATION } from "../lib/queries";
 
 export function RegisterIndividualPage() {
@@ -23,14 +21,8 @@ export function RegisterIndividualPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    createDriverProfile: true,
-    cnh: "",
-    cnhCategory: "B",
-    cnhExpiresAt: "",
-    photoDataUrl: ""
+    createDriverProfile: true
   });
-  const [photoLoading, setPhotoLoading] = useState(false);
-  const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [registerMutation, { loading, error }] = useMutation(REGISTER_INDIVIDUAL_MUTATION);
 
@@ -41,8 +33,6 @@ export function RegisterIndividualPage() {
     const fullName = form.fullName.trim();
     const cpf = form.cpf.trim();
     const email = form.email.trim();
-    const cnh = form.cnh.trim();
-    const cnhExpiresAt = form.cnhExpiresAt.trim();
 
     if (isBlank(fullName)) {
       setValidationError("Informe seu nome completo.");
@@ -69,18 +59,6 @@ export function RegisterIndividualPage() {
       return;
     }
 
-    if (form.createDriverProfile) {
-      if (!hasMinDigits(cnh, 5)) {
-        setValidationError("Informe a CNH para criar o perfil de motorista.");
-        return;
-      }
-
-      if (isBlank(cnhExpiresAt)) {
-        setValidationError("Informe a validade da CNH.");
-        return;
-      }
-    }
-
     const { confirmPassword: _confirmPassword, ...registrationForm } = form;
 
     const result = await registerMutation({
@@ -89,9 +67,7 @@ export function RegisterIndividualPage() {
           ...registrationForm,
           fullName,
           cpf,
-          email,
-          cnh,
-          cnhExpiresAt: cnhExpiresAt || undefined
+          email
         }
       }
     });
@@ -178,32 +154,6 @@ export function RegisterIndividualPage() {
             onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
           />
         </FormField>
-        <FileUploadField
-          label="Sua foto"
-          accept="image/*"
-          buttonLabel="Selecionar foto"
-          hint={photoLoading ? "Enviando foto..." : "Imagem usada no perfil pessoal"}
-          error={photoError}
-          loading={photoLoading}
-          previewUrl={resolveMediaUrl(form.photoDataUrl)}
-          previewAlt="Preview do perfil"
-          onSelect={async (file) => {
-            if (!file) {
-              setForm({ ...form, photoDataUrl: "" });
-              return;
-            }
-            setPhotoLoading(true);
-            setPhotoError("");
-            try {
-              const uploaded = await uploadMediaFile(file, "individual-photo");
-              setForm({ ...form, photoDataUrl: uploaded.url });
-            } catch (uploadError) {
-              setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
-            } finally {
-              setPhotoLoading(false);
-            }
-          }}
-        />
         <label style={checkboxLabelStyle}>
           <input
             type="checkbox"
@@ -215,43 +165,10 @@ export function RegisterIndividualPage() {
           Quero me cadastrar também como motorista
         </label>
         {form.createDriverProfile ? (
-          <>
-            <FormField label="CNH">
-              <input
-                style={formInputStyle}
-                placeholder="Ex: 9988776655"
-                value={form.cnh}
-                maxLength={20}
-                required
-                onChange={(event) =>
-                  setForm({ ...form, cnh: limitText(onlyDigits(event.target.value, 20), 20) })
-                }
-              />
-            </FormField>
-            <FormField label="Categoria da CNH">
-              <select
-                style={formInputStyle}
-                value={form.cnhCategory}
-                onChange={(event) => setForm({ ...form, cnhCategory: event.target.value })}
-              >
-                <option value="A">A</option>
-                <option value="AB">AB</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E">E</option>
-              </select>
-            </FormField>
-            <FormField label="Validade da CNH">
-              <input
-                style={formInputStyle}
-                type="date"
-                value={form.cnhExpiresAt}
-                required
-                onChange={(event) => setForm({ ...form, cnhExpiresAt: event.target.value })}
-              />
-            </FormField>
-          </>
+          <p style={hintStyle}>
+            Sua foto e os dados da CNH (número, categoria e validade) ficam pendentes e podem ser
+            completados depois, em "Meu perfil".
+          </p>
         ) : null}
         <p style={hintStyle}>
           Esta conta nasce com plano `ESSENTIAL_FREE` e limite inicial de 3 veículos.
