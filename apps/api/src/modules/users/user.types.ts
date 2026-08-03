@@ -30,4 +30,7 @@ export class UserModel {
 
   @Field()
   isActive!: boolean;
+
+  @Field()
+  hasCompletedFirstLogin!: boolean;
 }

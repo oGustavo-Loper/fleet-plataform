@@ -1,12 +1,21 @@
 import { Injectable } from "@nestjs/common";
 
+import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { getVisibleVehicleIds } from "../../common/vehicle-visibility.js";
 
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listNotifications(tenantId: string) {
+  async listNotifications(tenantId: string, user: AuthenticatedUser) {
+    // The alerts table has no vehicle/driver column, so there is no safe way
+    // to scope it to a single driver — hide it rather than risk leaking
+    // another driver's activity.
+    if (user.role === "DRIVER") {
+      return [];
+    }
+
     const alerts = await this.prisma.alert.findMany({
       where: { tenantId },
       take: 15,
@@ -21,10 +30,11 @@ export class DashboardService {
     }));
   }
 
-  async getSummary(tenantId: string) {
+  async getSummary(tenantId: string, user: AuthenticatedUser) {
     const today = new Date();
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const [vehicles, syncPending, alerts, maintenances, fuelLogs, drivers, activities] =
+    const isDriver = user.role === "DRIVER";
+    const [allVehicles, syncPending, alerts, allMaintenances, allFuelLogs, drivers, activities] =
       await Promise.all([
       this.prisma.vehicle.findMany({
         where: { tenantId },
@@ -55,6 +65,13 @@ export class DashboardService {
         take: 6
       })
     ]);
+
+    const visibleVehicleIds = new Set(
+      getVisibleVehicleIds(user, allVehicles.map((vehicle) => vehicle.id))
+    );
+    const vehicles = allVehicles.filter((vehicle) => visibleVehicleIds.has(vehicle.id));
+    const maintenances = allMaintenances.filter((item) => visibleVehicleIds.has(item.vehicleId));
+    const fuelLogs = allFuelLogs.filter((item) => visibleVehicleIds.has(item.vehicleId));
 
     const generatedAlerts = maintenances.flatMap((item) => {
       const vehicle = item.vehicle as { plate: string; model: string };
@@ -105,7 +122,11 @@ export class DashboardService {
       return rows;
     });
 
-    const driverAlerts = drivers.flatMap((driver) => {
+    const visibleDrivers = isDriver
+      ? drivers.filter((driver) => driver.id === user.driverId)
+      : drivers;
+
+    const driverAlerts = visibleDrivers.flatMap((driver) => {
       const rows: Array<{ id: string; title: string; severity: string }> = [];
       const expiresAt = new Date(driver.cnhExpiresAt);
       const daysUntilDue = Math.ceil(
@@ -192,11 +213,21 @@ export class DashboardService {
       .map(([date, cost]) => ({ date, cost: Number(cost.toFixed(2)) }))
       .sort((left, right) => left.date.localeCompare(right.date));
 
-    const mergedAlerts = [...generatedAlerts, ...driverAlerts, ...kmAlerts, ...alerts.map((alert) => ({
-      id: alert.id,
-      title: alert.title,
-      severity: alert.severity
-    }))].slice(0, 6);
+    // The alerts table and the activity log aren't attributable to a single
+    // vehicle or driver, so a driver only sees the alerts we can actually
+    // compute as theirs (maintenance/CNH/km, already scoped above).
+    const mergedAlerts = [
+      ...generatedAlerts,
+      ...driverAlerts,
+      ...kmAlerts,
+      ...(isDriver
+        ? []
+        : alerts.map((alert) => ({
+            id: alert.id,
+            title: alert.title,
+            severity: alert.severity
+          })))
+    ].slice(0, 6);
 
     return {
       totalVehicles: vehicles.length,
@@ -217,19 +248,21 @@ export class DashboardService {
           dueKm: item.nextMaintenanceKm ?? undefined
         })),
       alerts: mergedAlerts,
-      recentActivity: activities.map((item: {
-        id: string;
-        entity: string;
-        action: string;
-        title: string;
-        createdAt: Date;
-      }) => ({
-        id: item.id,
-        entity: item.entity,
-        action: item.action,
-        title: item.title,
-        createdAt: item.createdAt.toISOString()
-      }))
+      recentActivity: isDriver
+        ? []
+        : activities.map((item: {
+            id: string;
+            entity: string;
+            action: string;
+            title: string;
+            createdAt: Date;
+          }) => ({
+            id: item.id,
+            entity: item.entity,
+            action: item.action,
+            title: item.title,
+            createdAt: item.createdAt.toISOString()
+          }))
     };
   }
 }

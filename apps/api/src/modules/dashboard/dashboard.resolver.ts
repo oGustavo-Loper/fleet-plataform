@@ -16,12 +16,12 @@ export class DashboardResolver {
   @Query(() => DashboardSummaryModel)
   dashboardSummary(@Args("tenantId") tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, tenantId);
-    return this.dashboardService.getSummary(tenantId);
+    return this.dashboardService.getSummary(tenantId, user);
   }
 
   @Query(() => [NotificationItemModel])
   notifications(@Args("tenantId") tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, tenantId);
-    return this.dashboardService.listNotifications(tenantId);
+    return this.dashboardService.listNotifications(tenantId, user);
   }
 }

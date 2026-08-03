@@ -105,6 +105,9 @@ export function DriverList({
               <div style={nameRowStyle}>
                 <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
                 {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
+                {driver.loginEmail && !driver.hasCompletedFirstLogin ? (
+                  <span style={pendingBadgeStyle}>Pendente</span>
+                ) : null}
               </div>
               <p style={mutedStyle}>
                 {isCompany
@@ -177,6 +180,17 @@ const managerBadgeStyle: CSSProperties = {
   borderRadius: "999px",
   background: "rgba(251, 191, 36, 0.14)",
   color: "#fbbf24",
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em"
+};
+
+const pendingBadgeStyle: CSSProperties = {
+  padding: "0.2rem 0.55rem",
+  borderRadius: "999px",
+  background: "rgba(148, 163, 184, 0.14)",
+  color: "#cbd5e1",
   fontSize: "0.72rem",
   fontWeight: 700,
   textTransform: "uppercase",

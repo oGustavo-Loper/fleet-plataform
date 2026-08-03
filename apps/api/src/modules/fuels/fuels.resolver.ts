@@ -17,7 +17,7 @@ export class FuelsResolver {
   @Query(() => [FuelLogModel])
   fuelLogs(@Args("tenantId") tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, tenantId);
-    return this.fuelsService.listByTenant(tenantId);
+    return this.fuelsService.listByTenant(tenantId, user);
   }
 
   @Mutation(() => FuelLogModel)
