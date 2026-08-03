@@ -19,8 +19,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const [identifier, setIdentifier] = useState("demo@fleet.local");
-  const [password, setPassword] = useState("demo1234");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [resetEmail, setResetEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -249,7 +249,7 @@ export function LoginPage() {
               <input
                 style={formInputStyle}
                 type="email"
-                placeholder="Ex: demo@fleet.local"
+                placeholder="Ex: voce@email.com"
                 value={identifier}
                 required
                 onChange={(event) => setIdentifier(event.target.value)}
@@ -259,7 +259,7 @@ export function LoginPage() {
               <input
                 style={formInputStyle}
                 type="password"
-                placeholder="Ex: demo1234"
+                placeholder="Sua senha"
                 value={password}
                 required
                 onChange={(event) => setPassword(event.target.value)}
