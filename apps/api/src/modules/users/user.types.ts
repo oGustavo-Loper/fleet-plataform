@@ -4,7 +4,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   COMPANY = "COMPANY",
   DRIVER = "DRIVER",
-  INDIVIDUAL = "INDIVIDUAL"
+  INDIVIDUAL = "INDIVIDUAL",
+  MANAGER = "MANAGER"
 }
 
 registerEnumType(UserRole, { name: "UserRole" });
@@ -28,4 +29,13 @@ export class UserModel {
 
   @Field()
   isActive!: boolean;
+}
+
+@ObjectType()
+export class InviteUserResult {
+  @Field(() => UserModel)
+  user!: UserModel;
+
+  @Field({ nullable: true })
+  debugPassword?: string;
 }

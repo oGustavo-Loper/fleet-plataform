@@ -566,6 +566,33 @@ export const CREATE_MAINTENANCE_MUTATION = gql`
   }
 `;
 
+export const USERS_QUERY = gql`
+  query Users($tenantId: String!) {
+    users(tenantId: $tenantId) {
+      id
+      fullName
+      email
+      role
+      isActive
+    }
+  }
+`;
+
+export const INVITE_USER_MUTATION = gql`
+  mutation InviteUser($input: InviteUserInput!) {
+    inviteUser(input: $input) {
+      debugPassword
+      user {
+        id
+        fullName
+        email
+        role
+        isActive
+      }
+    }
+  }
+`;
+
 export const PUSH_SYNC_EVENT_MUTATION = gql`
   mutation PushSyncEvent($input: PushSyncInput!) {
     pushSyncEvent(input: $input) {

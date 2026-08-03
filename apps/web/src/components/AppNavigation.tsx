@@ -20,6 +20,7 @@ const links: NavLink[] = [
   { to: "/fuels", label: "Abastecimentos" },
   { to: "/maintenance", label: "Manutenções" },
   { to: "/reports", label: "Relatórios" },
+  { to: "/team", label: "Equipe", roles: ["ADMIN", "MANAGER"] },
   { to: "/plans", label: "Planos" }
 ];
 

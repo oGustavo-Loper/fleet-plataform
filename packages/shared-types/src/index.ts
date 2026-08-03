@@ -1,7 +1,7 @@
 export type AccountType = "COMPANY" | "INDIVIDUAL";
 export type PlanStatus = "TRIAL" | "ACTIVE" | "INACTIVE";
 
-export type UserRole = "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL";
+export type UserRole = "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL" | "MANAGER";
 
 export type DriverEmploymentStatus = "ACTIVE" | "VACATION" | "TERMINATED";
 
