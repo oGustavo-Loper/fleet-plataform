@@ -17,14 +17,14 @@ export class DriverModel {
   @Field({ nullable: true })
   registrationId?: string;
 
-  @Field()
-  cnh!: string;
+  @Field({ nullable: true })
+  cnh?: string;
 
-  @Field()
-  cnhCategory!: string;
+  @Field({ nullable: true })
+  cnhCategory?: string;
 
-  @Field()
-  cnhExpiresAt!: string;
+  @Field({ nullable: true })
+  cnhExpiresAt?: string;
 
   @Field()
   createdAt!: string;

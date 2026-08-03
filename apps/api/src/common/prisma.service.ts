@@ -602,9 +602,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       fullName: String(row.full_name),
       cpf: decryptSensitiveValue(toStringOrUndefined(row.cpf)),
       registrationId: toStringOrUndefined(row.registration_id),
-      cnh: decryptSensitiveValue(String(row.cnh)) ?? "",
-      cnhCategory: String(row.cnh_category),
-      cnhExpiresAt: String(row.cnh_expires_at),
+      cnh: decryptSensitiveValue(toStringOrUndefined(row.cnh)),
+      cnhCategory: toStringOrUndefined(row.cnh_category),
+      cnhExpiresAt: toStringOrUndefined(row.cnh_expires_at),
       loginEmail: toStringOrUndefined(row.login_email),
       assignedVehicleIds: toStringArray(row.assigned_vehicle_ids),
       allowAnyVehicle: Boolean(row.allow_any_vehicle),
@@ -1061,9 +1061,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
             String(args.data.fullName),
             encryptSensitiveValue(args.data.cpf ? String(args.data.cpf) : null),
             args.data.registrationId ? String(args.data.registrationId) : null,
-            encryptSensitiveValue(String(args.data.cnh)),
-            String(args.data.cnhCategory),
-            String(args.data.cnhExpiresAt),
+            encryptSensitiveValue(args.data.cnh ? String(args.data.cnh) : null),
+            args.data.cnhCategory ? String(args.data.cnhCategory) : null,
+            args.data.cnhExpiresAt ? String(args.data.cnhExpiresAt) : null,
             args.data.loginEmail ? String(args.data.loginEmail) : null,
             buildArrayParam(args.data.assignedVehicleIds as string[] | undefined),
             Boolean(args.data.allowAnyVehicle),
@@ -1143,9 +1143,21 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
               : args.data.registrationId
                 ? String(args.data.registrationId)
                 : null,
-            encryptSensitiveValue(String(args.data.cnh ?? current.cnh)),
-            String(args.data.cnhCategory ?? current.cnhCategory),
-            String(args.data.cnhExpiresAt ?? current.cnhExpiresAt),
+            args.data.cnh === undefined
+              ? encryptSensitiveValue(current.cnh ?? null)
+              : args.data.cnh
+                ? encryptSensitiveValue(String(args.data.cnh))
+                : null,
+            args.data.cnhCategory === undefined
+              ? current.cnhCategory ?? null
+              : args.data.cnhCategory
+                ? String(args.data.cnhCategory)
+                : null,
+            args.data.cnhExpiresAt === undefined
+              ? current.cnhExpiresAt ?? null
+              : args.data.cnhExpiresAt
+                ? String(args.data.cnhExpiresAt)
+                : null,
             nextLoginEmail ?? null,
             nextAssignedVehicleIds,
             nextAllowAnyVehicle,

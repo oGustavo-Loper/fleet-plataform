@@ -17,7 +17,7 @@ import {
   UPDATE_DRIVER_MUTATION
 } from "../../lib/queries";
 import { upsertQueryListItem } from "../../lib/apollo-cache";
-import { hasMinDigits, isBlank } from "../../lib/form-validation";
+import { hasExactDigits, hasMinDigits, isBlank } from "../../lib/form-validation";
 import { formatCpf, formatPlate, limitText, onlyDigits } from "../../lib/masks";
 import { resolveMediaUrl, uploadMediaFile } from "../../lib/media";
 import { submitOrQueueOffline } from "../../lib/offline-submit";
@@ -112,8 +112,8 @@ export function DriverForm({
       return;
     }
 
-    if (!hasMinDigits(cnh, 5)) {
-      setValidationError("Informe a CNH do motorista.");
+    if (!hasExactDigits(cnh, 11)) {
+      setValidationError("Informe uma CNH válida (11 dígitos).");
       return;
     }
 
@@ -238,12 +238,12 @@ export function DriverForm({
         <FormField label="CNH">
           <input
             style={formInputStyle}
-            placeholder="Ex: 9988776655"
+            placeholder="Ex: 99887766554"
             value={form.cnh}
-            maxLength={20}
+            maxLength={11}
             required
             onChange={(event) =>
-              setForm({ ...form, cnh: limitText(onlyDigits(event.target.value, 20), 20) })
+              setForm({ ...form, cnh: limitText(onlyDigits(event.target.value, 11), 11) })
             }
           />
         </FormField>

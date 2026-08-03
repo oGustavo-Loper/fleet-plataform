@@ -128,6 +128,10 @@ export class DashboardService {
 
     const driverAlerts = visibleDrivers.flatMap((driver) => {
       const rows: Array<{ id: string; title: string; severity: string }> = [];
+      if (!driver.cnhExpiresAt) {
+        return rows;
+      }
+
       const expiresAt = new Date(driver.cnhExpiresAt);
       const daysUntilDue = Math.ceil(
         (expiresAt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)

@@ -12,3 +12,7 @@ export function parseNumber(value: string) {
 export function hasMinDigits(value: string, min: number) {
   return onlyDigits(value).length >= min;
 }
+
+export function hasExactDigits(value: string, count: number) {
+  return onlyDigits(value).length === count;
+}

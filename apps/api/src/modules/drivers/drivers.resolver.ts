@@ -20,7 +20,7 @@ export class DriversResolver {
   @Query(() => [DriverModel])
   drivers(@Args("tenantId") tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, tenantId);
-    return this.driversService.listByTenant(tenantId);
+    return this.driversService.listByTenant(tenantId, user);
   }
 
   @Mutation(() => DriverModel)

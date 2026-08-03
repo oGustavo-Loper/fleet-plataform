@@ -203,6 +203,15 @@ export const PRISMA_SCHEMA_SQL = `
   ALTER TABLE drivers
     ALTER COLUMN cpf DROP NOT NULL;
 
+  ALTER TABLE drivers
+    ALTER COLUMN cnh DROP NOT NULL;
+
+  ALTER TABLE drivers
+    ALTER COLUMN cnh_category DROP NOT NULL;
+
+  ALTER TABLE drivers
+    ALTER COLUMN cnh_expires_at DROP NOT NULL;
+
   ALTER TABLE vehicles
     DROP CONSTRAINT IF EXISTS vehicles_tenant_id_plate_key;
 

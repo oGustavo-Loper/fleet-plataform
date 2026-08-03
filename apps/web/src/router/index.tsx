@@ -15,6 +15,7 @@ import { LandingPage } from "../pages/LandingPage";
 import { OnboardingPage } from "../pages/OnboardingPage";
 import { ReportsPage } from "../pages/ReportsPage";
 import { PlansPage } from "../pages/PlansPage";
+import { ProfilePage } from "../pages/ProfilePage";
 import { RegisterCompanyPage } from "../pages/RegisterCompanyPage";
 import { RegisterIndividualPage } from "../pages/RegisterIndividualPage";
 import { SuperAdminPage } from "../pages/SuperAdminPage";
@@ -48,6 +49,7 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/fuels" element={<FuelsPage />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
         </Route>

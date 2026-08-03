@@ -334,10 +334,23 @@ export class AuthService {
         documentNumber: input.cpf,
         planCode: "ESSENTIAL_FREE",
         planStatus: "TRIAL",
-        vehicleLimit: 3,
-        photoDataUrl: input.photoDataUrl
+        vehicleLimit: 3
       }
     });
+
+    let driverId: string | undefined;
+    if (input.createDriverProfile) {
+      const driver = await this.prisma.driver.create({
+        data: {
+          tenantId: tenant.id,
+          fullName: input.fullName,
+          cpf: input.cpf,
+          assignedVehicleIds: [],
+          allowAnyVehicle: true
+        }
+      });
+      driverId = driver.id;
+    }
 
     const user = await this.prisma.user.create({
       data: {
@@ -347,38 +360,18 @@ export class AuthService {
         role: "INDIVIDUAL",
         passwordHash: await argon2.hash(input.password),
         mustChangePassword: false,
-        isActive: true
+        isActive: true,
+        driverId
       }
     });
-
-    if (input.createDriverProfile) {
-      if (!input.cnh || !input.cnhCategory || !input.cnhExpiresAt) {
-        throw new BadRequestException(
-          "Para criar o perfil de motorista automaticamente, informe CNH, categoria e validade."
-        );
-      }
-
-      await this.prisma.driver.create({
-        data: {
-          tenantId: tenant.id,
-          fullName: input.fullName,
-          cpf: input.cpf,
-          cnh: input.cnh,
-          cnhCategory: input.cnhCategory,
-          cnhExpiresAt: input.cnhExpiresAt,
-          assignedVehicleIds: [],
-          allowAnyVehicle: true,
-          photoDataUrl: input.photoDataUrl
-        }
-      });
-    }
 
     return this.issueAuthPayload({
       id: user.id,
       tenantId: user.tenantId,
       role: user.role,
       email: user.email,
-      fullName: user.fullName
+      fullName: user.fullName,
+      driverId
     });
   }
 

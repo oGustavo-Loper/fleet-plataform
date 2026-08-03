@@ -14,7 +14,7 @@ function createDriversService() {
           tenantId: "tenant-sol",
           fullName: "Carlos Almeida",
           loginEmail: undefined,
-          cnh: "9988776655",
+          cnh: "99887766550",
           createdAt: new Date("2026-05-01T00:00:00.000Z"),
           updatedAt: new Date("2026-05-01T00:00:00.000Z")
         };
@@ -33,7 +33,7 @@ function createDriversService() {
           tenantId: "tenant-sol",
           fullName: "Carlos Almeida",
           loginEmail: undefined,
-          cnh: "9988776655",
+          cnh: "99887766550",
           createdAt: new Date("2026-05-01T00:00:00.000Z"),
           updatedAt: new Date("2026-05-01T00:00:00.000Z"),
           ...args.data
@@ -47,6 +47,11 @@ function createDriversService() {
       async create(args: { data: Record<string, unknown> }) {
         activityLogCalls.push(args.data);
         return args.data;
+      }
+    },
+    user: {
+      async findMany() {
+        return [];
       }
     }
   };
@@ -65,7 +70,7 @@ test("create defaults active drivers to ACTIVE employment status", async () => {
     fullName: "Carlos Almeida",
     cpf: "123.456.789-10",
     registrationId: "MT-1001",
-    cnh: "9988776655",
+    cnh: "99887766550",
     cnhCategory: "B",
     cnhExpiresAt: "2027-08-10",
     loginEmail: "carlos@fleet.local",
@@ -88,7 +93,7 @@ test("create maps inactive flag to VACATION status", async () => {
     fullName: "Mariana Souza",
     cpf: undefined,
     registrationId: "MT-1002",
-    cnh: "1122334455",
+    cnh: "11223344550",
     cnhCategory: "AB",
     cnhExpiresAt: "2026-12-14",
     loginEmail: undefined,
@@ -111,7 +116,7 @@ test("update preserves LGPD by not logging CNH as activity detail", async () => 
     fullName: "Carlos Almeida",
     cpf: "123.456.789-10",
     registrationId: "MT-1001",
-    cnh: "9988776655",
+    cnh: "99887766550",
     cnhCategory: "B",
     cnhExpiresAt: "2027-08-10",
     loginEmail: undefined,

@@ -39,11 +39,11 @@ export function DriverDetailsPanel({
         </div>
       </div>
       <div style={detailsGridStyle}>
-        <DetailItem label="CNH" value={driver.cnh} />
-        <DetailItem label="Categoria" value={driver.cnhCategory} />
+        <DetailItem label="CNH" value={driver.cnh ?? "Pendente"} />
+        <DetailItem label="Categoria" value={driver.cnhCategory ?? "Pendente"} />
         <DetailItem
           label="Validade da CNH"
-          value={new Date(driver.cnhExpiresAt).toLocaleDateString("pt-BR")}
+          value={driver.cnhExpiresAt ? new Date(driver.cnhExpiresAt).toLocaleDateString("pt-BR") : "Pendente"}
         />
         <DetailItem label="Login" value={driver.loginEmail ?? "Não configurado"} />
         <DetailItem label="Status" value={statusLabelMap[driver.employmentStatus]} />
