@@ -38,6 +38,7 @@ services:
       MERCADO_PAGO_CHECKOUT_URL: https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=demo
       BILLING_WEBHOOK_TOKEN: ${BILLING_WEBHOOK_TOKEN:?Defina BILLING_WEBHOOK_TOKEN no .env}
       MEDIA_STORAGE_DIR: /workspace/apps/api/uploads
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
