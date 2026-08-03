@@ -17,6 +17,7 @@ type StatusFilter = "ALL" | DriverEmploymentStatus;
 export function DriversPage() {
   const { auth } = useAuth();
   const canManageRoles = auth?.role === "ADMIN";
+  const canCreateDriver = auth?.role !== "INDIVIDUAL";
   const {
     activeTenant,
     tenantLoading,
@@ -85,10 +86,18 @@ export function DriversPage() {
             </select>
           </label>
         </div>
-        <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
-          Novo motorista
-        </button>
+        {canCreateDriver ? (
+          <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
+            Novo motorista
+          </button>
+        ) : null}
       </div>
+      {!canCreateDriver ? (
+        <p style={individualNoticeStyle}>
+          Contas de pessoa física têm apenas o próprio perfil de motorista. Complete seus dados em
+          "Meu perfil".
+        </p>
+      ) : null}
       {roleChangeError ? <p style={roleChangeErrorStyle}>{roleChangeError}</p> : null}
       {loading || tenantLoading ? (
         <LoadingState message="Carregando motoristas..." />
@@ -238,6 +247,15 @@ const roleChangeErrorStyle: CSSProperties = {
   background: "rgba(248, 113, 113, 0.12)",
   border: "1px solid rgba(248, 113, 113, 0.3)",
   color: "#fda4af",
+  marginBottom: "1rem"
+};
+
+const individualNoticeStyle: CSSProperties = {
+  padding: "0.9rem 1rem",
+  borderRadius: "0.9rem",
+  background: "rgba(251, 191, 36, 0.1)",
+  border: "1px solid rgba(251, 191, 36, 0.28)",
+  color: "#fbbf24",
   marginBottom: "1rem"
 };
 

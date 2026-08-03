@@ -26,6 +26,11 @@ export class DriversResolver {
   @Mutation(() => DriverModel)
   createDriver(@Args("input") input: CreateDriverInput, @CurrentUser() user: AuthenticatedUser) {
     assertTenantAccess(user, input.tenantId);
+
+    if (user.role === "INDIVIDUAL") {
+      throw new ForbiddenException(PtBrMessage.INDIVIDUAL_ACCOUNT_DRIVER_LIMIT);
+    }
+
     return this.driversService.create(input);
   }
 
