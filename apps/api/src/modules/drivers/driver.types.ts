@@ -52,4 +52,12 @@ export class DriverModel {
 
   @Field()
   hasCompletedFirstLogin!: boolean;
+
+  /**
+   * Only set right after a mutation creates a brand new driver login — the
+   * plain value is never persisted (only its hash is), so this is the one
+   * chance to hand it to the caller.
+   */
+  @Field({ nullable: true })
+  temporaryPassword?: string;
 }

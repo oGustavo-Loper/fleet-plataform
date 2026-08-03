@@ -332,6 +332,7 @@ export const CREATE_DRIVER_MUTATION = gql`
       photoDataUrl
       accountRole
       hasCompletedFirstLogin
+      temporaryPassword
     }
   }
 `;
@@ -355,6 +356,7 @@ export const UPDATE_DRIVER_MUTATION = gql`
       photoDataUrl
       accountRole
       hasCompletedFirstLogin
+      temporaryPassword
     }
   }
 `;

@@ -42,4 +42,43 @@ export class MailService {
 
     return { deliveryMode: "email" };
   }
+
+  async sendDriverCredentials(email: string, temporaryPassword: string, fullName: string) {
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const password = process.env.SMTP_PASSWORD;
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    const from = process.env.MAIL_FROM ?? "Fleet Platform <no-reply@fleet.local>";
+
+    if (!host || !user || !password) {
+      this.logger.warn(`SMTP não configurado. Senha temporária de ${email}: ${temporaryPassword}`);
+      return { deliveryMode: "console", debugPassword: temporaryPassword };
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: Number(process.env.SMTP_PORT ?? 587) === 465,
+      auth: {
+        user,
+        pass: password
+      }
+    });
+
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: "Seu acesso ao Fleet Platform",
+      text: [
+        `Olá, ${fullName}.`,
+        "",
+        "Sua conta de motorista foi cadastrada no Fleet Platform.",
+        `E-mail de acesso: ${email}`,
+        `Senha temporária: ${temporaryPassword}`,
+        "Você precisará trocar a senha no primeiro acesso."
+      ].join("\n")
+    });
+
+    return { deliveryMode: "email" };
+  }
 }

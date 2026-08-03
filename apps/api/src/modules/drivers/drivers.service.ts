@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/com
 
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { MailService } from "../auth/mail.service.js";
 import { CreateDriverInput } from "./dto/create-driver.input.js";
 import { DeleteDriverInput } from "./dto/delete-driver.input.js";
 import { UpdateDriverInput } from "./dto/update-driver.input.js";
@@ -11,9 +12,14 @@ type DriverAccountInfo = {
   hasCompletedFirstLogin: boolean;
 };
 
+type MaybeWithTemporaryPassword = { temporaryPassword?: string };
+
 @Injectable()
 export class DriversService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService
+  ) {}
 
   private async findLinkedUser(driverId: string) {
     const users = await this.prisma.user.findMany({ where: { driverId } });
@@ -25,6 +31,26 @@ export class DriversService {
       accountRole: user?.role,
       hasCompletedFirstLogin: user ? !user.mustChangePassword : false
     };
+  }
+
+  /**
+   * Emails the temporary password when a new driver login was just created.
+   * Only returns it back to the caller (to show on screen) when SMTP isn't
+   * configured and the email couldn't actually be sent — otherwise the
+   * driver already has it and there is no reason to expose plaintext in
+   * the UI too.
+   */
+  private async deliverTemporaryPassword(
+    loginEmail: string | undefined,
+    fullName: string,
+    temporaryPassword: string | undefined
+  ): Promise<string | undefined> {
+    if (!temporaryPassword || !loginEmail) {
+      return undefined;
+    }
+
+    const delivery = await this.mailService.sendDriverCredentials(loginEmail, temporaryPassword, fullName);
+    return delivery.deliveryMode === "console" ? temporaryPassword : undefined;
   }
 
   async listByTenant(tenantId: string) {
@@ -78,8 +104,14 @@ export class DriversService {
       }
     });
 
+    const temporaryPassword = await this.deliverTemporaryPassword(
+      created.loginEmail,
+      created.fullName,
+      (created as MaybeWithTemporaryPassword).temporaryPassword
+    );
+
     const linkedUser = await this.findLinkedUser(created.id);
-    return { ...created, ...this.accountInfoFromUser(linkedUser) };
+    return { ...created, ...this.accountInfoFromUser(linkedUser), temporaryPassword };
   }
 
   async update(input: UpdateDriverInput, actorTenantId?: string) {
@@ -130,8 +162,16 @@ export class DriversService {
       }
     });
 
+    // Editing a driver can be the moment a login e-mail is added for the
+    // first time, which mints a brand new temporary password.
+    const temporaryPassword = await this.deliverTemporaryPassword(
+      updated.loginEmail,
+      updated.fullName,
+      (updated as MaybeWithTemporaryPassword).temporaryPassword
+    );
+
     const linkedUser = await this.findLinkedUser(updated.id);
-    return { ...updated, ...this.accountInfoFromUser(linkedUser) };
+    return { ...updated, ...this.accountInfoFromUser(linkedUser), temporaryPassword };
   }
 
   async delete(input: DeleteDriverInput, actorTenantId?: string) {

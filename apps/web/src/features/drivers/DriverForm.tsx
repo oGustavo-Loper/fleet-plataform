@@ -60,6 +60,7 @@ export function DriverForm({
   const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [queuedMessage, setQueuedMessage] = useState("");
+  const [credentialsMessage, setCredentialsMessage] = useState("");
 
   useEffect(() => {
     setForm(getInitialForm(initialDriver));
@@ -89,6 +90,7 @@ export function DriverForm({
     event.preventDefault();
     setValidationError("");
     setQueuedMessage("");
+    setCredentialsMessage("");
 
     const fullName = form.fullName.trim();
     const registrationId = form.registrationId.trim();
@@ -138,7 +140,7 @@ export function DriverForm({
     };
 
     if (isEditing) {
-      await mutateDriver({
+      const result = await mutateDriver({
         variables: {
           input: {
             id: initialDriver?.id,
@@ -147,8 +149,16 @@ export function DriverForm({
         }
       });
 
+      const temporaryPassword = result.data?.updateDriver?.temporaryPassword;
       setForm(getInitialForm(null));
-      onDone?.();
+
+      if (temporaryPassword) {
+        setCredentialsMessage(
+          `Login criado para o motorista. Senha temporária: ${temporaryPassword} — repasse a ele, ela deixa de valer no primeiro acesso.`
+        );
+      } else {
+        onDone?.();
+      }
       return;
     }
 
@@ -157,7 +167,7 @@ export function DriverForm({
       ...baseInput
     };
 
-    const { queued } = await submitOrQueueOffline({
+    const { queued, result } = await submitOrQueueOffline({
       entity: "driver",
       tenantId,
       payload: input,
@@ -171,9 +181,14 @@ export function DriverForm({
       );
     }
 
+    const temporaryPassword = result?.data?.createDriver?.temporaryPassword;
     setForm(getInitialForm(null));
 
-    if (!queued) {
+    if (temporaryPassword) {
+      setCredentialsMessage(
+        `Motorista cadastrado. Senha temporária: ${temporaryPassword} — repasse a ele, ela deixa de valer no primeiro acesso.`
+      );
+    } else if (!queued) {
       onDone?.();
     }
   }
@@ -329,11 +344,26 @@ export function DriverForm({
       </p>
       {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
       {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
+      {credentialsMessage ? <p style={{ color: "#fbbf24" }}>{credentialsMessage}</p> : null}
       {error ? <p style={{ color: "#fda4af" }}>Falha ao salvar motorista.</p> : null}
       <div style={footerActionsStyle}>
-        <button style={primarySubmitStyle} type="submit" disabled={loading}>
-          {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar motorista"}
-        </button>
+        {credentialsMessage ? (
+          <button
+            type="button"
+            className="btn-primary"
+            style={primarySubmitStyle}
+            onClick={() => {
+              setCredentialsMessage("");
+              onDone?.();
+            }}
+          >
+            Concluir
+          </button>
+        ) : (
+          <button style={primarySubmitStyle} type="submit" disabled={loading}>
+            {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar motorista"}
+          </button>
+        )}
         {onCancel ? (
           <button style={secondaryActionStyle} type="button" onClick={onCancel}>
             Cancelar

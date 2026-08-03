@@ -48,11 +48,22 @@ function createDriversService() {
         activityLogCalls.push(args.data);
         return args.data;
       }
+    },
+    user: {
+      async findMany() {
+        return [];
+      }
+    }
+  };
+
+  const mailService = {
+    async sendDriverCredentials() {
+      return { deliveryMode: "console" as const };
     }
   };
 
   return {
-    service: new DriversService(prisma as never),
+    service: new DriversService(prisma as never, mailService as never),
     activityLogCalls
   };
 }
