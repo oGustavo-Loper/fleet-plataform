@@ -189,6 +189,10 @@ export const DASHBOARD_SUMMARY_QUERY = gql`
       monthlyCost
       averageConsumption
       pendingSyncItems
+      costTrend {
+        date
+        cost
+      }
       upcomingMaintenance {
         id
         vehicleLabel

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import type { DashboardSummary } from "@fleet/shared-types";
 import { PaginationControls } from "../../components/PaginationControls";
+import { formatCurrency } from "../../lib/currency";
 
 const severityLabelMap: Record<string, string> = {
   critical: "Crítico",
@@ -50,6 +51,8 @@ export function DashboardView({
   const [activityPage, setActivityPage] = useState(1);
   const pageSize = 4;
 
+  const maxDailyCost = Math.max(...summary.costTrend.map((point) => point.cost), 1);
+
   const maintenancePages = Math.max(1, Math.ceil(summary.upcomingMaintenance.length / pageSize));
   const alertPages = Math.max(1, Math.ceil(summary.alerts.length / pageSize));
   const activityPages = Math.max(1, Math.ceil(summary.recentActivity.length / pageSize));
@@ -91,9 +94,36 @@ export function DashboardView({
         <MetricCard label="Veículos totais" value={summary.totalVehicles} />
         <MetricCard label="Ativos" value={summary.activeVehicles} />
         <MetricCard label="Em manutenção" value={summary.maintenanceVehicles} />
-        <MetricCard label="Custos do mês" value={`R$ ${summary.monthlyCost.toFixed(2)}`} />
+        <MetricCard label="Custos do mês" value={formatCurrency(summary.monthlyCost)} />
         <MetricCard label="Consumo médio" value={`${summary.averageConsumption} km/l`} />
       </div>
+
+      {summary.costTrend.length > 0 ? (
+        <article style={panelStyle}>
+          <h2 style={panelTitleStyle}>Custos no mês</h2>
+          <div style={trendRowsStyle}>
+            {summary.costTrend.map((point) => (
+              <div key={point.date} style={trendRowStyle}>
+                <span style={trendDateStyle}>
+                  {new Date(`${point.date}T00:00:00`).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit"
+                  })}
+                </span>
+                <div style={trendBarTrackStyle}>
+                  <div
+                    style={{
+                      ...trendBarStyle,
+                      width: `${Math.max(4, (point.cost / maxDailyCost) * 100)}%`
+                    }}
+                  />
+                </div>
+                <span style={trendValueStyle}>{formatCurrency(point.cost)}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+      ) : null}
 
       <article style={panelStyle}>
         <h2 style={panelTitleStyle}>Próximas manutenções</h2>
@@ -251,4 +281,40 @@ const severityStyle: CSSProperties = {
   textTransform: "uppercase",
   color: "#fbbf24",
   fontSize: "0.78rem"
+};
+
+const trendRowsStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.6rem"
+};
+
+const trendRowStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "3.2rem 1fr 5.5rem",
+  alignItems: "center",
+  gap: "0.75rem"
+};
+
+const trendDateStyle: CSSProperties = {
+  color: "#94a3b8",
+  fontSize: "0.85rem"
+};
+
+const trendBarTrackStyle: CSSProperties = {
+  height: "10px",
+  borderRadius: "999px",
+  background: "rgba(148, 163, 184, 0.16)",
+  overflow: "hidden"
+};
+
+const trendBarStyle: CSSProperties = {
+  height: "100%",
+  borderRadius: "999px",
+  background: "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
+};
+
+const trendValueStyle: CSSProperties = {
+  color: "#e2e8f0",
+  fontSize: "0.85rem",
+  textAlign: "right"
 };

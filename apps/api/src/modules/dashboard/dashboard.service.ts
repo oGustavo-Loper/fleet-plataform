@@ -179,6 +179,19 @@ export class DashboardService {
     const averageConsumption =
       totalDistanceKm > 0 && totalLiters > 0 ? Number((totalDistanceKm / totalLiters).toFixed(2)) : 0;
 
+    const costByDate = new Map<string, number>();
+    for (const item of fuelLogsCurrentMonth) {
+      const day = new Date(item.fueledAt).toISOString().slice(0, 10);
+      costByDate.set(day, (costByDate.get(day) ?? 0) + Number(item.totalCost));
+    }
+    for (const item of maintenancesCurrentMonth) {
+      const day = item.performedAt.toISOString().slice(0, 10);
+      costByDate.set(day, (costByDate.get(day) ?? 0) + Number(item.totalCost));
+    }
+    const costTrend = Array.from(costByDate.entries())
+      .map(([date, cost]) => ({ date, cost: Number(cost.toFixed(2)) }))
+      .sort((left, right) => left.date.localeCompare(right.date));
+
     const mergedAlerts = [...generatedAlerts, ...driverAlerts, ...kmAlerts, ...alerts.map((alert) => ({
       id: alert.id,
       title: alert.title,
@@ -192,6 +205,7 @@ export class DashboardService {
       monthlyCost: Number((monthlyFuelCost + monthlyMaintenanceCost).toFixed(2)),
       averageConsumption,
       pendingSyncItems: syncPending,
+      costTrend,
       upcomingMaintenance: maintenances
         .filter((item) => item.nextMaintenanceAt || item.nextMaintenanceKm)
         .map((item) => ({

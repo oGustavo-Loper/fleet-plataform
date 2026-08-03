@@ -50,6 +50,10 @@ export interface DashboardSummary {
   monthlyCost: number;
   averageConsumption: number;
   pendingSyncItems: number;
+  costTrend: Array<{
+    date: string;
+    cost: number;
+  }>;
   upcomingMaintenance: Array<{
     id: string;
     vehicleLabel: string;
