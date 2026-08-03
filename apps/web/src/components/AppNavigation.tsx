@@ -1,10 +1,12 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@apollo/client/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import type { UserRole } from "@fleet/shared-types";
+import type { DriverListItem, UserRole } from "@fleet/shared-types";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
+import { DRIVERS_QUERY } from "../lib/queries";
 import { resolveMediaUrl } from "../lib/media";
 import { planLabel } from "../lib/plans";
 
@@ -33,6 +35,12 @@ export function AppNavigation() {
   const [isDesktop, setIsDesktop] = useState(false);
   const { auth, isAuthenticated, logout } = useAuth();
   const { activeTenant } = useTenant();
+  const driversQuery = useQuery<{ drivers: DriverListItem[] }>(DRIVERS_QUERY, {
+    skip: !auth?.tenantId || !auth?.driverId,
+    variables: { tenantId: auth?.tenantId ?? "" }
+  });
+  const ownDriver = driversQuery.data?.drivers.find((driver) => driver.id === auth?.driverId);
+  const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
   const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
@@ -131,10 +139,10 @@ export function AppNavigation() {
         }}
       >
         <div style={sidebarHeaderStyle}>
-          {activeTenant?.photoDataUrl ? (
+          {ownDriver?.photoDataUrl || activeTenant?.photoDataUrl ? (
             <img
-              src={resolveMediaUrl(activeTenant.photoDataUrl)}
-              alt={activeTenant.name}
+              src={resolveMediaUrl(ownDriver?.photoDataUrl ?? activeTenant?.photoDataUrl)}
+              alt={ownDriver?.fullName ?? activeTenant?.name}
               style={tenantAvatarStyle}
             />
           ) : (
@@ -178,6 +186,12 @@ export function AppNavigation() {
               onClick={() => setOpen(false)}
             >
               Meu perfil
+              {hasPendingCnh ? (
+                <span
+                  style={pendingDotStyle}
+                  title="Dados da CNH pendentes — complete seu perfil"
+                />
+              ) : null}
             </Link>
           ) : null}
           {activeTenant?.accountType === "INDIVIDUAL" ? (
@@ -391,10 +405,21 @@ const userBoxStyle: CSSProperties = {
 };
 
 const profileLinkStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.4rem",
   color: "#94a3b8",
   fontSize: "0.82rem",
   textDecoration: "underline",
   textUnderlineOffset: "0.2rem"
+};
+
+const pendingDotStyle: CSSProperties = {
+  width: "0.5rem",
+  height: "0.5rem",
+  borderRadius: "999px",
+  background: "#fbbf24",
+  display: "inline-block"
 };
 
 const planBadgeStyle: CSSProperties = {
