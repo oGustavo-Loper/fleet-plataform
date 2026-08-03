@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import { useMutation } from "@apollo/client/react";
 import { liveQuery } from "dexie";
 import type { DriverListItem, FuelType, VehicleListItem } from "@fleet/shared-types";
@@ -296,7 +296,7 @@ export function FuelForm({
     }
   }
 
-  async function handleLocationCapture() {
+  const handleLocationCapture = useCallback(async () => {
     setLocationLoading(true);
     setLocationError("");
     try {
@@ -312,7 +312,14 @@ export function FuelForm({
     } finally {
       setLocationLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    handleLocationCapture();
+    // Only on mount — this form is create-only, so there is always exactly
+    // one fueling location to capture per drawer open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <form style={{ ...formPanelStyle, ...drawerFormStyle }} onSubmit={handleSubmit}>
@@ -437,28 +444,33 @@ export function FuelForm({
           />
         </FormField>
         <FormField label="Endereço do abastecimento">
-          <input
-            style={formInputStyle}
-            placeholder="Ex: Avenida Paulista, 1000"
-            value={form.fuelingAddress}
-            onChange={(event) => setForm({ ...form, fuelingAddress: event.target.value })}
-          />
-          <div style={locationActionsStyle}>
+          <div style={addressInputWrapperStyle}>
+            <input
+              style={{ ...formInputStyle, ...addressInputStyle }}
+              placeholder={locationLoading ? "Buscando localização..." : "Ex: Avenida Paulista, 1000"}
+              value={form.fuelingAddress}
+              onChange={(event) => setForm({ ...form, fuelingAddress: event.target.value })}
+            />
             <button
               type="button"
-              style={locationButtonStyle}
+              style={addressCaptureButtonStyle}
               onClick={handleLocationCapture}
               disabled={locationLoading}
+              aria-label="Capturar localização"
+              title="Capturar localização"
             >
-              {locationLoading ? "Capturando localização..." : "Capturar localização"}
+              {locationLoading ? "…" : "📍"}
             </button>
-            {form.fuelingLatitude !== null && form.fuelingLongitude !== null ? (
-              <span style={locationHintStyle}>
-                {form.fuelingLatitude}, {form.fuelingLongitude}
-              </span>
-            ) : null}
           </div>
           {locationError ? <p style={locationErrorStyle}>{locationError}</p> : null}
+        </FormField>
+        <FormField label="Observações" style={fullWidthFieldStyle}>
+          <input
+            style={formInputStyle}
+            placeholder="Ex: Abastecimento de rotina"
+            value={form.notes}
+            onChange={(event) => setForm({ ...form, notes: event.target.value })}
+          />
         </FormField>
         <FileUploadField
           label="Comprovante de pagamento"
@@ -486,14 +498,6 @@ export function FuelForm({
             }
           }}
         />
-        <FormField label="Observações" style={fullWidthFieldStyle}>
-          <input
-            style={formInputStyle}
-            placeholder="Ex: Abastecimento de rotina"
-            value={form.notes}
-            onChange={(event) => setForm({ ...form, notes: event.target.value })}
-          />
-        </FormField>
       </div>
       {selectedVehicle ? (
         <div style={summaryCardStyle}>
@@ -641,28 +645,33 @@ const summaryNoteStyle: CSSProperties = {
   lineHeight: 1.5
 };
 
-const locationActionsStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  alignItems: "center",
-  gap: "0.75rem",
-  marginTop: "0.75rem"
+const addressInputWrapperStyle: CSSProperties = {
+  position: "relative"
 };
 
-const locationButtonStyle = {
+const addressInputStyle: CSSProperties = {
+  width: "100%",
+  paddingRight: "3.1rem"
+};
+
+const addressCaptureButtonStyle: CSSProperties = {
+  position: "absolute",
+  right: "0.45rem",
+  top: "50%",
+  transform: "translateY(-50%)",
+  width: "2.2rem",
+  height: "2.2rem",
+  borderRadius: "0.6rem",
   border: 0,
-  borderRadius: "0.9rem",
-  padding: "0.8rem 0.95rem",
-  background: "#fbbf24",
-  color: "#0f172a",
-  fontWeight: 700
+  background: "rgba(251, 191, 36, 0.16)",
+  color: "#fbbf24",
+  display: "grid",
+  placeItems: "center",
+  fontSize: "1rem",
+  cursor: "pointer"
 };
 
-const locationHintStyle = {
-  color: "#94a3b8"
-};
-
-const locationErrorStyle = {
+const locationErrorStyle: CSSProperties = {
   color: "#fda4af",
   margin: "0.5rem 0 0"
 };
