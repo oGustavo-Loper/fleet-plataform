@@ -113,7 +113,7 @@ const capabilities: Array<{ title: string; text: string; icon: (props: IconProps
   },
   {
     title: "Relatórios e dashboard",
-    text: "Resumo por veículo com custos, consumo, alertas automáticos e exportação futura.",
+    text: "Resumo por veículo com custos, consumo, alertas automáticos e exportação em PDF e CSV.",
     icon: ChartIcon
   },
   {
