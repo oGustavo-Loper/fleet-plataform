@@ -6,6 +6,7 @@ import { ConfirmModal } from "../components/ConfirmModal";
 import { DrawerPanel } from "../components/DrawerPanel";
 import { PaginationControls } from "../components/PaginationControls";
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
+import { useAuth } from "../contexts/AuthContext";
 import { DriverDetailsPanel } from "../features/drivers/DriverDetailsPanel";
 import { DriverForm } from "../features/drivers/DriverForm";
 import { DriverList } from "../features/drivers/DriverList";
@@ -14,6 +15,8 @@ import { useDriversPageState } from "../hooks/useDriversPageState";
 type StatusFilter = "ALL" | DriverEmploymentStatus;
 
 export function DriversPage() {
+  const { auth } = useAuth();
+  const canManageRoles = auth?.role === "ADMIN";
   const {
     activeTenant,
     tenantLoading,
@@ -42,7 +45,10 @@ export function DriversPage() {
     openViewDrawer,
     openEditDrawer,
     closeDrawer,
-    setDriverPendingTermination
+    setDriverPendingTermination,
+    handlePromoteToManager,
+    handleDemoteToDriver,
+    roleChangeError
   } = useDriversPageState();
 
   return (
@@ -83,6 +89,7 @@ export function DriversPage() {
           Novo motorista
         </button>
       </div>
+      {roleChangeError ? <p style={roleChangeErrorStyle}>{roleChangeError}</p> : null}
       {loading || tenantLoading ? (
         <LoadingState message="Carregando motoristas..." />
       ) : error ? (
@@ -100,6 +107,8 @@ export function DriversPage() {
                 onSetVacation={(driver) => handleStatusUpdate(driver, "VACATION")}
                 onActivate={(driver) => handleStatusUpdate(driver, "ACTIVE")}
                 onTerminate={setDriverPendingTermination}
+                onPromoteToManager={canManageRoles ? handlePromoteToManager : undefined}
+                onDemoteToDriver={canManageRoles ? handleDemoteToDriver : undefined}
               />
               <PaginationControls
                 page={page}
@@ -221,6 +230,15 @@ const filterInputStyle: CSSProperties = {
   color: "#f8fafc",
   padding: "0.9rem 1rem",
   outline: "none"
+};
+
+const roleChangeErrorStyle: CSSProperties = {
+  padding: "0.9rem 1rem",
+  borderRadius: "0.9rem",
+  background: "rgba(248, 113, 113, 0.12)",
+  border: "1px solid rgba(248, 113, 113, 0.3)",
+  color: "#fda4af",
+  marginBottom: "1rem"
 };
 
 const primaryButtonStyle: CSSProperties = {

@@ -2,7 +2,14 @@ import { useMutation, useQuery } from "@apollo/client/react";
 import { useMemo, useState } from "react";
 import type { DriverEmploymentStatus, DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
-import { DELETE_DRIVER_MUTATION, DRIVERS_QUERY, UPDATE_DRIVER_MUTATION, VEHICLES_QUERY } from "../lib/queries";
+import {
+  DELETE_DRIVER_MUTATION,
+  DEMOTE_MANAGER_TO_DRIVER_MUTATION,
+  DRIVERS_QUERY,
+  PROMOTE_DRIVER_TO_MANAGER_MUTATION,
+  UPDATE_DRIVER_MUTATION,
+  VEHICLES_QUERY
+} from "../lib/queries";
 import { usePaginatedItems } from "./usePaginatedItems";
 import { useTenant } from "./useTenant";
 import { upsertQueryListItem } from "../lib/apollo-cache";
@@ -35,6 +42,42 @@ export function useDriversPageState() {
   const [terminateDriver, { loading: terminatingDriver }] = useMutation(DELETE_DRIVER_MUTATION, {
     refetchQueries: activeTenant?.id ? [{ query: DRIVERS_QUERY, variables: { tenantId: activeTenant.id } }] : []
   });
+  const [promoteDriverToManager, { loading: promotingDriver, error: promoteError }] = useMutation(
+    PROMOTE_DRIVER_TO_MANAGER_MUTATION,
+    {
+      update(cache, { data }) {
+        if (!activeTenant?.id || !data?.promoteDriverToManager) {
+          return;
+        }
+
+        upsertQueryListItem({
+          cache,
+          query: DRIVERS_QUERY,
+          variables: { tenantId: activeTenant.id },
+          field: "drivers",
+          item: data.promoteDriverToManager
+        });
+      }
+    }
+  );
+  const [demoteManagerToDriver, { loading: demotingDriver, error: demoteError }] = useMutation(
+    DEMOTE_MANAGER_TO_DRIVER_MUTATION,
+    {
+      update(cache, { data }) {
+        if (!activeTenant?.id || !data?.demoteManagerToDriver) {
+          return;
+        }
+
+        upsertQueryListItem({
+          cache,
+          query: DRIVERS_QUERY,
+          variables: { tenantId: activeTenant.id },
+          field: "drivers",
+          item: data.demoteManagerToDriver
+        });
+      }
+    }
+  );
   const driversQuery = useQuery<{ drivers: DriverListItem[] }>(DRIVERS_QUERY, {
     skip: !activeTenant?.id,
     variables: {
@@ -141,6 +184,20 @@ export function useDriversPageState() {
     setSelectedDriver(null);
   }
 
+  async function handlePromoteToManager(driver: DriverListItem) {
+    await promoteDriverToManager({ variables: { driverId: driver.id } });
+  }
+
+  async function handleDemoteToDriver(driver: DriverListItem) {
+    await demoteManagerToDriver({ variables: { driverId: driver.id } });
+  }
+
+  const roleChangeError = promoteError
+    ? promoteError.graphQLErrors?.[0]?.message ?? "Não foi possível promover o motorista."
+    : demoteError
+      ? demoteError.graphQLErrors?.[0]?.message ?? "Não foi possível rebaixar o gestor."
+      : "";
+
   return {
     activeTenant,
     tenantLoading,
@@ -169,6 +226,11 @@ export function useDriversPageState() {
     openViewDrawer,
     openEditDrawer,
     closeDrawer,
-    setDriverPendingTermination
+    setDriverPendingTermination,
+    handlePromoteToManager,
+    handleDemoteToDriver,
+    promotingDriver,
+    demotingDriver,
+    roleChangeError
   };
 }

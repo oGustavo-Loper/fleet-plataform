@@ -46,4 +46,10 @@ export class DriverModel {
 
   @Field({ nullable: true })
   photoDataUrl?: string;
+
+  @Field({ nullable: true })
+  accountRole?: string;
+
+  @Field()
+  hasCompletedFirstLogin!: boolean;
 }

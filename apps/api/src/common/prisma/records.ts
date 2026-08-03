@@ -18,7 +18,7 @@ export type UserRecord = {
   tenantId: string;
   email: string;
   fullName: string;
-  role: "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL";
+  role: "ADMIN" | "COMPANY" | "DRIVER" | "INDIVIDUAL" | "MANAGER" | "SUPER_ADMIN";
   passwordHash?: string;
   demoPassword?: string;
   mustChangePassword: boolean;

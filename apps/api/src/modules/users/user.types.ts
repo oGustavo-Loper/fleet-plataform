@@ -31,12 +31,3 @@ export class UserModel {
   @Field()
   isActive!: boolean;
 }
-
-@ObjectType()
-export class InviteUserResult {
-  @Field(() => UserModel)
-  user!: UserModel;
-
-  @Field({ nullable: true })
-  debugPassword?: string;
-}

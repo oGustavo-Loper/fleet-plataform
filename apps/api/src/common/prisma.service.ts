@@ -768,10 +768,13 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     );
 
     if (existing.rows[0]) {
+      // Preserve a MANAGER promotion across driver edits — this sync would
+      // otherwise silently demote a Gestor back to DRIVER on every save.
       await client.query(
         `
           UPDATE users
-          SET email = $1, tenant_id = $2, full_name = $3, role = 'DRIVER',
+          SET email = $1, tenant_id = $2, full_name = $3,
+              role = CASE WHEN role = 'MANAGER' THEN 'MANAGER' ELSE 'DRIVER' END,
               driver_id = $4, assigned_vehicle_ids = $5, allow_any_vehicle = $6,
               is_active = $7,
               updated_at = NOW()
