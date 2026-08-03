@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import type { DashboardSummary } from "@fleet/shared-types";
 import { PaginationControls } from "../../components/PaginationControls";
+import { formatCurrency } from "../../lib/currency";
 
 const severityLabelMap: Record<string, string> = {
   critical: "Crítico",
@@ -91,7 +92,7 @@ export function DashboardView({
         <MetricCard label="Veículos totais" value={summary.totalVehicles} />
         <MetricCard label="Ativos" value={summary.activeVehicles} />
         <MetricCard label="Em manutenção" value={summary.maintenanceVehicles} />
-        <MetricCard label="Custos do mês" value={`R$ ${summary.monthlyCost.toFixed(2)}`} />
+        <MetricCard label="Custos do mês" value={formatCurrency(summary.monthlyCost)} />
         <MetricCard label="Consumo médio" value={`${summary.averageConsumption} km/l`} />
       </div>
 

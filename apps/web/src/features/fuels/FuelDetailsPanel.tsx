@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import type { FuelLogItem } from "@fleet/shared-types";
+import { formatCurrency } from "../../lib/currency";
 import { resolveMediaUrl } from "../../lib/media";
 
 export function FuelDetailsPanel({ item }: { item: FuelLogItem }) {
@@ -13,11 +14,11 @@ export function FuelDetailsPanel({ item }: { item: FuelLogItem }) {
             {new Date(item.fueledAt).toLocaleDateString("pt-BR")} • {item.fuelType}
           </p>
         </div>
-        <span style={badgeStyle}>R$ {item.totalCost.toFixed(2)}</span>
+        <span style={badgeStyle}>{formatCurrency(item.totalCost)}</span>
       </div>
       <div style={gridStyle}>
         <DetailItem label="Litros" value={item.liters.toFixed(2)} />
-        <DetailItem label="Valor por litro" value={`R$ ${item.pricePerLiter.toFixed(2)}`} />
+        <DetailItem label="Valor por litro" value={formatCurrency(item.pricePerLiter)} />
         <DetailItem label="KM atual" value={item.odometerKm.toLocaleString("pt-BR")} />
         <DetailItem label="Motorista" value={item.driverName ?? "Não informado"} />
         <DetailItem label="KM rodado" value={item.distanceKm.toLocaleString("pt-BR")} />

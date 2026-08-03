@@ -3,6 +3,7 @@ import type { VehicleReportFuelItem } from "@fleet/shared-types";
 
 import { PaginationControls } from "../../components/PaginationControls";
 import { EmptyState } from "../../components/ScreenState";
+import { formatCurrency } from "../../lib/currency";
 
 export function ReportFuelSection({
   items,
@@ -32,7 +33,7 @@ export function ReportFuelSection({
                 • Média {item.averageConsumption.toFixed(2)} km/l
               </p>
               <p style={mutedStyle}>
-                Litros {item.liters.toFixed(2)} • Custo R$ {item.totalCost.toFixed(2)}
+                Litros {item.liters.toFixed(2)} • Custo {formatCurrency(item.totalCost)}
               </p>
             </article>
           ))}

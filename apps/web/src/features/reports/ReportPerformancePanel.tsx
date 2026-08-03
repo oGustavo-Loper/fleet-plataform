@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { EmptyState } from "../../components/ScreenState";
+import { formatCurrency } from "../../lib/currency";
 import type {
   ReportPerformanceInsight,
   ReportPerformanceTrendPoint
@@ -48,7 +49,7 @@ export function ReportPerformancePanel({
                 <header style={trendHeaderStyle}>
                   <strong>{new Date(point.date).toLocaleDateString("pt-BR")}</strong>
                   <span style={trendHeaderDetailStyle}>
-                    R$ {point.totalCost.toFixed(2)} • {point.liters.toFixed(2)} L
+                    {formatCurrency(point.totalCost)} • {point.liters.toFixed(2)} L
                   </span>
                 </header>
                 <div style={metricRowStyle}>

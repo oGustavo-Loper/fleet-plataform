@@ -3,6 +3,7 @@ import type { VehicleReportMaintenanceItem } from "@fleet/shared-types";
 
 import { PaginationControls } from "../../components/PaginationControls";
 import { EmptyState } from "../../components/ScreenState";
+import { formatCurrency } from "../../lib/currency";
 
 export function ReportMaintenanceSection({
   items,
@@ -31,7 +32,7 @@ export function ReportMaintenanceSection({
                 {new Date(item.performedAt).toLocaleDateString("pt-BR")} • KM {item.odometerKm.toLocaleString("pt-BR")}
               </p>
               <p style={mutedStyle}>
-                Custo R$ {item.totalCost.toFixed(2)} • {item.supplierName ?? "Fornecedor não informado"}
+                Custo {formatCurrency(item.totalCost)} • {item.supplierName ?? "Fornecedor não informado"}
               </p>
             </article>
           ))}

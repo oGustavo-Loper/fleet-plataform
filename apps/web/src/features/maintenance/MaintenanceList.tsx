@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 
 import type { MaintenanceItem } from "@fleet/shared-types";
 import { ActionMenu } from "../../components/ActionMenu";
+import { formatCurrency } from "../../lib/currency";
 import { formatMaintenanceType } from "../../lib/maintenance";
 
 export function MaintenanceList({
@@ -21,7 +22,7 @@ export function MaintenanceList({
               <p style={mutedStyle}>{item.vehicleLabel}</p>
             </div>
             <div style={actionsStyle}>
-              <span style={badgeStyle}>R$ {item.totalCost.toFixed(2)}</span>
+              <span style={badgeStyle}>{formatCurrency(item.totalCost)}</span>
               {onView ? <ActionMenu actions={[{ label: "Ver detalhes", onSelect: () => onView(item) }]} /> : null}
             </div>
           </div>

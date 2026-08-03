@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import type { MaintenanceItem } from "@fleet/shared-types";
+import { formatCurrency } from "../../lib/currency";
 import { formatMaintenanceType } from "../../lib/maintenance";
 
 export function MaintenanceDetailsPanel({ item }: { item: MaintenanceItem }) {
@@ -13,7 +14,7 @@ export function MaintenanceDetailsPanel({ item }: { item: MaintenanceItem }) {
             {item.vehicleLabel} • {new Date(item.performedAt).toLocaleDateString("pt-BR")}
           </p>
         </div>
-        <span style={badgeStyle}>R$ {item.totalCost.toFixed(2)}</span>
+        <span style={badgeStyle}>{formatCurrency(item.totalCost)}</span>
       </div>
       <div style={gridStyle}>
         <DetailItem label="Tipo" value={formatMaintenanceType(item.maintenanceType)} />
