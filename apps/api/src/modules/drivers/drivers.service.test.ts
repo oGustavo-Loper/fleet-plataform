@@ -123,6 +123,7 @@ test("create e-mails the temporary password and hides it from the response once 
   assert.equal(sendDriverCredentialsCalls[0]?.email, "carlos@fleet.local");
   assert.equal(sendDriverCredentialsCalls[0]?.temporaryPassword, "654321");
   assert.equal((result as { temporaryPassword?: string }).temporaryPassword, undefined);
+  assert.equal((result as { credentialsEmailSent?: boolean }).credentialsEmailSent, true);
 });
 
 test("create keeps the temporary password visible when no mail provider is configured", async () => {
@@ -144,6 +145,7 @@ test("create keeps the temporary password visible when no mail provider is confi
 
   assert.equal(sendDriverCredentialsCalls.length, 1);
   assert.equal((result as { temporaryPassword?: string }).temporaryPassword, "654321");
+  assert.equal((result as { credentialsEmailSent?: boolean }).credentialsEmailSent, false);
 });
 
 test("create does not fail when the mail provider throws after the driver was already saved", async () => {
@@ -165,6 +167,7 @@ test("create does not fail when the mail provider throws after the driver was al
 
   assert.equal(sendDriverCredentialsCalls.length, 1);
   assert.equal((result as { temporaryPassword?: string }).temporaryPassword, "654321");
+  assert.equal((result as { credentialsEmailSent?: boolean }).credentialsEmailSent, false);
 });
 
 test("create does not attempt to send mail when no login e-mail is set", async () => {

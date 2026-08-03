@@ -55,4 +55,7 @@ export class DriverModel {
 
   @Field({ nullable: true })
   temporaryPassword?: string;
+
+  @Field({ nullable: true })
+  credentialsEmailSent?: boolean;
 }

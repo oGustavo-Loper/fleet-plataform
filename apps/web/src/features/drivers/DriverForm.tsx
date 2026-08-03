@@ -38,6 +38,24 @@ function getInitialForm(driver?: DriverListItem | null) {
   };
 }
 
+function resolveSaveOutcome(
+  driver?: { temporaryPassword?: string; credentialsEmailSent?: boolean } | null
+): { type: "emailed" } | { type: "shown"; password: string } | null {
+  if (!driver) {
+    return null;
+  }
+
+  if (driver.credentialsEmailSent) {
+    return { type: "emailed" };
+  }
+
+  if (driver.temporaryPassword) {
+    return { type: "shown", password: driver.temporaryPassword };
+  }
+
+  return null;
+}
+
 export function DriverForm({
   accountType,
   tenantId,
@@ -60,7 +78,9 @@ export function DriverForm({
   const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [queuedMessage, setQueuedMessage] = useState("");
-  const [temporaryPasswordNotice, setTemporaryPasswordNotice] = useState<string | null>(null);
+  const [saveOutcome, setSaveOutcome] = useState<
+    { type: "emailed" } | { type: "shown"; password: string } | null
+  >(null);
 
   useEffect(() => {
     setForm(getInitialForm(initialDriver));
@@ -150,9 +170,9 @@ export function DriverForm({
 
       setForm(getInitialForm(null));
 
-      const temporaryPassword = result.data?.updateDriver?.temporaryPassword;
-      if (temporaryPassword) {
-        setTemporaryPasswordNotice(temporaryPassword);
+      const outcome = resolveSaveOutcome(result.data?.updateDriver);
+      if (outcome) {
+        setSaveOutcome(outcome);
         return;
       }
 
@@ -185,29 +205,37 @@ export function DriverForm({
       return;
     }
 
-    const temporaryPassword = result?.data?.createDriver?.temporaryPassword;
-    if (temporaryPassword) {
-      setTemporaryPasswordNotice(temporaryPassword);
+    const outcome = resolveSaveOutcome(result?.data?.createDriver);
+    if (outcome) {
+      setSaveOutcome(outcome);
       return;
     }
 
     onDone?.();
   }
 
-  if (temporaryPasswordNotice) {
+  if (saveOutcome) {
     return (
       <div style={formPanelStyle}>
-        <p style={{ color: "#cbd5e1" }}>
-          Motorista salvo. O envio de e-mail não está configurado neste ambiente, então a senha
-          temporária de acesso é exibida abaixo — anote-a, pois ela não será mostrada novamente:
-        </p>
-        <p style={temporaryPasswordStyle}>{temporaryPasswordNotice}</p>
+        {saveOutcome.type === "emailed" ? (
+          <p style={{ color: "#cbd5e1" }}>
+            Motorista salvo. A senha temporária de acesso foi enviada ao colaborador por e-mail.
+          </p>
+        ) : (
+          <>
+            <p style={{ color: "#cbd5e1" }}>
+              Motorista salvo, mas não foi possível enviar a senha por e-mail neste momento. Anote a
+              senha temporária abaixo e repasse ao colaborador — ela não será mostrada novamente:
+            </p>
+            <p style={temporaryPasswordStyle}>{saveOutcome.password}</p>
+          </>
+        )}
         <div style={footerActionsStyle}>
           <button
             style={primarySubmitStyle}
             type="button"
             onClick={() => {
-              setTemporaryPasswordNotice(null);
+              setSaveOutcome(null);
               onDone?.();
             }}
           >
