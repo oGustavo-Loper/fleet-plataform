@@ -17,6 +17,7 @@ import { ReportsPage } from "../pages/ReportsPage";
 import { PlansPage } from "../pages/PlansPage";
 import { RegisterCompanyPage } from "../pages/RegisterCompanyPage";
 import { RegisterIndividualPage } from "../pages/RegisterIndividualPage";
+import { TeamPage } from "../pages/TeamPage";
 import { VehiclesPage } from "../pages/VehiclesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -56,6 +57,9 @@ export function AppRouter() {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["ADMIN", "COMPANY"]} />}>
           <Route path="/admin/report" element={<AdminReportPage />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]} />}>
+          <Route path="/team" element={<TeamPage />} />
         </Route>
       </Routes>
     </>
