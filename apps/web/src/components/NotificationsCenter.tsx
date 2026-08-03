@@ -5,7 +5,12 @@ import { useLocation } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
-import { getSeenNotificationIds, setSeenNotificationIds } from "../lib/notifications";
+import {
+  getNotificationsClearedBefore,
+  getSeenNotificationIds,
+  setNotificationsClearedBefore,
+  setSeenNotificationIds
+} from "../lib/notifications";
 import { NOTIFICATIONS_QUERY } from "../lib/queries";
 
 const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
@@ -16,6 +21,7 @@ export function NotificationsCenter() {
   const [isDesktop, setIsDesktop] = useState(false);
   const [toastItems, setToastItems] = useState<Array<{ id: string; title: string; severity: string }>>([]);
   const [toastShownIds, setToastShownIds] = useState<string[]>([]);
+  const [clearVersion, setClearVersion] = useState(0);
   const { auth, isAuthenticated } = useAuth();
   const { activeTenant } = useTenant();
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
@@ -36,7 +42,24 @@ export function NotificationsCenter() {
     () => (auth?.userId && auth?.tenantId ? getSeenNotificationIds(auth.userId, auth.tenantId) : []),
     [auth?.tenantId, auth?.userId, notifications]
   );
-  const unreadNotifications = notifications.filter((item) => !seenIds.includes(item.id));
+  const clearedBefore = useMemo(
+    () => (auth?.userId && auth?.tenantId ? getNotificationsClearedBefore(auth.userId, auth.tenantId) : null),
+    [auth?.tenantId, auth?.userId, clearVersion]
+  );
+  const visibleNotifications = notifications.filter(
+    (item) => !clearedBefore || item.createdAt > clearedBefore
+  );
+  const unreadNotifications = visibleNotifications.filter((item) => !seenIds.includes(item.id));
+
+  function handleClearAll() {
+    if (!auth?.userId || !auth.tenantId) {
+      return;
+    }
+
+    setNotificationsClearedBefore(auth.userId, auth.tenantId, new Date().toISOString());
+    setSeenNotificationIds(auth.userId, auth.tenantId, notifications.map((item) => item.id));
+    setClearVersion((current) => current + 1);
+  }
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1024px)");
@@ -127,12 +150,19 @@ export function NotificationsCenter() {
         </button>
         {notificationsOpen ? (
           <div style={notificationPanelStyle}>
-            <div style={panelHeaderStyle}>
-              <strong style={{ fontSize: "0.95rem" }}>Notificações</strong>
-              <span style={panelSubtitleStyle}>Últimos abastecimentos</span>
+            <div style={panelHeaderRowStyle}>
+              <div style={panelHeaderStyle}>
+                <strong style={{ fontSize: "0.95rem" }}>Notificações</strong>
+                <span style={panelSubtitleStyle}>Últimos abastecimentos</span>
+              </div>
+              {visibleNotifications.length > 0 ? (
+                <button type="button" style={clearAllButtonStyle} onClick={handleClearAll}>
+                  Limpar tudo
+                </button>
+              ) : null}
             </div>
-            {notifications.length > 0 ? (
-              notifications.map((item) => (
+            {visibleNotifications.length > 0 ? (
+              visibleNotifications.map((item) => (
                 <article key={item.id} style={notificationItemStyle}>
                   <p style={notificationTitleStyle}>{item.title}</p>
                   <span style={notificationTimeStyle}>
@@ -237,9 +267,26 @@ const notificationPanelStyle: CSSProperties = {
   gap: "0.65rem"
 };
 
+const panelHeaderRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: "0.75rem"
+};
+
 const panelHeaderStyle: CSSProperties = {
   display: "grid",
   gap: "0.2rem"
+};
+
+const clearAllButtonStyle: CSSProperties = {
+  border: "none",
+  background: "transparent",
+  color: "#fbbf24",
+  fontSize: "0.82rem",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  padding: "0.2rem 0"
 };
 
 const panelSubtitleStyle: CSSProperties = {
