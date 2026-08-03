@@ -126,7 +126,9 @@ export function PlansPage() {
               >
                 <p style={planNameStyle}>{plan.name}</p>
                 <strong style={priceStyle}>{plan.currentPrice}</strong>
-                <p style={strikeStyle}>De {plan.regularPrice}</p>
+                {plan.regularPrice !== plan.currentPrice ? (
+                  <p style={strikeStyle}>De {plan.regularPrice}</p>
+                ) : null}
                 <p style={descriptionStyle}>{plan.description}</p>
                 <Link
                   style={buttonLinkStyle}
@@ -200,7 +202,9 @@ export function PlansPage() {
           >
             <p style={planNameStyle}>{plan.name}</p>
             <strong style={priceStyle}>{plan.currentPrice}</strong>
-            <p style={strikeStyle}>De {plan.regularPrice}</p>
+            {plan.regularPrice !== plan.currentPrice ? (
+              <p style={strikeStyle}>De {plan.regularPrice}</p>
+            ) : null}
             <p style={descriptionStyle}>{plan.description}</p>
             <div style={cardActionsStyle}>
               {hasTenant ? (
