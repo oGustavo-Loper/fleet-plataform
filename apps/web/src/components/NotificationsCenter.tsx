@@ -19,6 +19,7 @@ export function NotificationsCenter() {
   const { auth, isAuthenticated } = useAuth();
   const { activeTenant } = useTenant();
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
+  const toastTimersRef = useRef<Map<string, number>>(new Map());
   const shouldPollNotifications = Boolean(isAuthenticated && activeTenant?.id && auth?.userId !== undefined && auth?.role !== "DRIVER");
   const notificationsQuery = useQuery<{
     notifications: Array<{ id: string; title: string; severity: string; createdAt: string }>;
@@ -75,19 +76,32 @@ export function NotificationsCenter() {
       return next.slice(0, 3);
     });
     setToastShownIds((current) => [...new Set([...current, ...fresh.map((item) => item.id)])]);
+
+    fresh.forEach((item) => {
+      const timer = window.setTimeout(() => {
+        setToastItems((current) => current.filter((toast) => toast.id !== item.id));
+        toastTimersRef.current.delete(item.id);
+      }, 4500);
+      toastTimersRef.current.set(item.id, timer);
+    });
   }, [auth?.tenantId, auth?.userId, isDesktop, notifications, toastShownIds]);
 
   useEffect(() => {
-    if (!isDesktop || toastItems.length === 0) {
-      return;
+    const timers = toastTimersRef.current;
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
+
+  function dismissToast(id: string) {
+    const timer = toastTimersRef.current.get(id);
+    if (timer !== undefined) {
+      window.clearTimeout(timer);
+      toastTimersRef.current.delete(id);
     }
-
-    const timer = window.setTimeout(() => {
-      setToastItems((current) => current.slice(0, -1));
-    }, 4500);
-
-    return () => window.clearTimeout(timer);
-  }, [toastItems]);
+    setToastItems((current) => current.filter((toast) => toast.id !== id));
+  }
 
   if (!isAuthenticated || publicPaths.has(location.pathname) || auth?.role === "DRIVER") {
     return null;
@@ -142,6 +156,14 @@ export function NotificationsCenter() {
                 borderColor: item.severity === "critical" ? "rgba(248, 113, 113, 0.35)" : "rgba(56, 189, 248, 0.35)"
               }}
             >
+              <button
+                type="button"
+                style={toastCloseButtonStyle}
+                onClick={() => dismissToast(item.id)}
+                aria-label="Dispensar notificação"
+              >
+                ×
+              </button>
               <strong style={{ display: "block", marginBottom: "0.25rem" }}>Novo abastecimento</strong>
               <span style={{ color: "#cbd5e1" }}>{item.title}</span>
             </div>
@@ -259,10 +281,28 @@ const toastStackStyle: CSSProperties = {
 };
 
 const toastStyle: CSSProperties = {
+  position: "relative",
   width: "min(360px, calc(100vw - 2rem))",
-  padding: "0.95rem 1rem",
+  padding: "0.95rem 2.25rem 0.95rem 1rem",
   borderRadius: "1rem",
   border: "1px solid rgba(56, 189, 248, 0.35)",
   background: "rgba(15, 23, 42, 0.96)",
   boxShadow: "0 18px 38px rgba(15, 23, 42, 0.38)"
+};
+
+const toastCloseButtonStyle: CSSProperties = {
+  position: "absolute",
+  top: "0.5rem",
+  right: "0.5rem",
+  width: "1.5rem",
+  height: "1.5rem",
+  borderRadius: "999px",
+  border: "none",
+  background: "transparent",
+  color: "#94a3b8",
+  fontSize: "1.1rem",
+  lineHeight: 1,
+  cursor: "pointer",
+  display: "grid",
+  placeItems: "center"
 };
