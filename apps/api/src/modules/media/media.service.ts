@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
 import { PtBrMessage } from "../../common/messages.js";
@@ -98,6 +98,29 @@ export class MediaService {
     }
 
     return absolutePath;
+  }
+
+  /**
+   * Best-effort cleanup for data-erasure flows (e.g. anonymizing a
+   * terminated driver). Swallows failures — a missing/locked file must
+   * never block the DB-side anonymization that already happened.
+   */
+  async deleteFileByPublicPath(publicPath?: string | null): Promise<void> {
+    if (!publicPath) {
+      return;
+    }
+
+    const match = publicPath.match(/^\/media\/([^/]+)\/([^/]+)$/);
+    if (!match) {
+      return;
+    }
+
+    const [, scope, fileName] = match;
+    const safeScope = this.sanitizeSegment(scope);
+    const safeFileName = basename(fileName);
+    const absolutePath = join(this.storageRoot, safeScope, safeFileName);
+
+    await rm(absolutePath, { force: true }).catch(() => undefined);
   }
 
   private resolveExtension(mimeType: string, originalName: string) {

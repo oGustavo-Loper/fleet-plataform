@@ -8,9 +8,17 @@ function createDriversService(options?: {
   throwOnSend?: boolean;
   tenant?: { accountType?: string; planCode?: string; planStatus?: string };
   existingDriverCount?: number;
+  existingDriver?: Partial<{
+    loginEmail: string | undefined;
+    registrationId: string | undefined;
+    photoDataUrl: string | undefined;
+  }>;
+  linkedUser?: { id: string; role: string; mustChangePassword: boolean } | null;
 }) {
   const activityLogCalls: Array<Record<string, unknown>> = [];
   const sendDriverCredentialsCalls: Array<{ email: string; temporaryPassword: string; fullName: string }> = [];
+  const userUpdateCalls: Array<{ where: { id: string }; data: Record<string, unknown> }> = [];
+  const deleteFileCalls: Array<string | null | undefined> = [];
 
   const prisma = {
     tenant: {
@@ -28,7 +36,9 @@ function createDriversService(options?: {
           id: args.where.id,
           tenantId: "tenant-sol",
           fullName: "Carlos Almeida",
-          loginEmail: undefined,
+          loginEmail: options?.existingDriver?.loginEmail,
+          registrationId: options?.existingDriver?.registrationId,
+          photoDataUrl: options?.existingDriver?.photoDataUrl,
           cnh: "99887766550",
           createdAt: new Date("2026-05-01T00:00:00.000Z"),
           updatedAt: new Date("2026-05-01T00:00:00.000Z")
@@ -71,7 +81,11 @@ function createDriversService(options?: {
     },
     user: {
       async findMany() {
-        return [];
+        return options?.linkedUser ? [options.linkedUser] : [];
+      },
+      async update(args: { where: { id: string }; data: Record<string, unknown> }) {
+        userUpdateCalls.push(args);
+        return { ...options?.linkedUser, ...args.data };
       }
     }
   };
@@ -86,10 +100,18 @@ function createDriversService(options?: {
     }
   };
 
+  const mediaService = {
+    async deleteFileByPublicPath(publicPath?: string | null) {
+      deleteFileCalls.push(publicPath);
+    }
+  };
+
   return {
-    service: new DriversService(prisma as never, mailService as never),
+    service: new DriversService(prisma as never, mailService as never, mediaService as never),
     activityLogCalls,
-    sendDriverCredentialsCalls
+    sendDriverCredentialsCalls,
+    userUpdateCalls,
+    deleteFileCalls
   };
 }
 
@@ -321,4 +343,52 @@ test("delete transitions driver to TERMINATED and blocks access", async () => {
 
   assert.equal(result.employmentStatus, "TERMINATED");
   assert.equal(result.isActive, false);
+});
+
+test("delete anonymizes the driver's personal data (LGPD erasure on termination)", async () => {
+  const { service } = createDriversService();
+
+  const result = await service.delete({
+    id: "driver-1"
+  });
+
+  assert.equal(result.fullName, "Motorista removido");
+  assert.equal(result.cpf, null);
+  assert.equal(result.cnh, null);
+  assert.equal(result.cnhCategory, null);
+  assert.equal(result.cnhExpiresAt, null);
+  assert.equal(result.photoDataUrl, null);
+  assert.equal(result.loginEmail, null);
+});
+
+test("delete anonymizes the linked login and deletes the photo file when the driver had a login", async () => {
+  const { service, userUpdateCalls, deleteFileCalls, activityLogCalls } = createDriversService({
+    existingDriver: {
+      loginEmail: "carlos@fleet.local",
+      registrationId: "MT-1001",
+      photoDataUrl: "/media/driver-photo/1700000000000-uuid.jpg"
+    },
+    linkedUser: { id: "user-1", role: "DRIVER", mustChangePassword: false }
+  });
+
+  await service.delete({ id: "driver-1" });
+
+  assert.equal(userUpdateCalls.length, 1);
+  assert.equal(userUpdateCalls[0]?.where.id, "user-1");
+  assert.equal(userUpdateCalls[0]?.data.fullName, "Motorista removido");
+  assert.equal(userUpdateCalls[0]?.data.isActive, false);
+  assert.notEqual(userUpdateCalls[0]?.data.email, "carlos@fleet.local");
+
+  assert.deepEqual(deleteFileCalls, ["/media/driver-photo/1700000000000-uuid.jpg"]);
+
+  assert.equal(activityLogCalls[0]?.title, "Motorista desligado (matrícula MT-1001)");
+  assert.equal(activityLogCalls[0]?.details, undefined);
+});
+
+test("delete skips anonymizing a login when the driver never had one", async () => {
+  const { service, userUpdateCalls } = createDriversService();
+
+  await service.delete({ id: "driver-1" });
+
+  assert.equal(userUpdateCalls.length, 0);
 });
