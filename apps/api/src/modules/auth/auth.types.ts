@@ -52,7 +52,4 @@ export class PasswordResetRequestModel {
 
   @Field()
   expiresAt!: string;
-
-  @Field({ nullable: true })
-  debugCode?: string;
 }
