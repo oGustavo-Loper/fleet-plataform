@@ -20,6 +20,7 @@ import { RegisterCompanyPage } from "../pages/RegisterCompanyPage";
 import { RegisterIndividualPage } from "../pages/RegisterIndividualPage";
 import { SuperAdminPage } from "../pages/SuperAdminPage";
 import { TeamPage } from "../pages/TeamPage";
+import { TermsPage } from "../pages/TermsPage";
 import { VehiclesPage } from "../pages/VehiclesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -45,6 +46,7 @@ export function AppRouter() {
         <Route path="/register/company" element={<RegisterCompanyPage />} />
         <Route path="/register/individual" element={<RegisterIndividualPage />} />
         <Route path="/plans" element={<PlansPage />} />
+        <Route path="/termos" element={<TermsPage />} />
         <Route path="/billing/checkout" element={<BillingCheckoutPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />

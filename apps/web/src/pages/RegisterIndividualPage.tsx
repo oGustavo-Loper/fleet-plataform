@@ -23,6 +23,7 @@ export function RegisterIndividualPage() {
     confirmPassword: "",
     createDriverProfile: true
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [registerMutation, { loading, error }] = useMutation(REGISTER_INDIVIDUAL_MUTATION);
 
@@ -56,6 +57,11 @@ export function RegisterIndividualPage() {
 
     if (form.password !== form.confirmPassword) {
       setValidationError("As senhas precisam ser iguais.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setValidationError("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
       return;
     }
 
@@ -173,6 +179,18 @@ export function RegisterIndividualPage() {
         <p style={hintStyle}>
           Esta conta nasce com plano `ESSENTIAL_FREE` e limite inicial de 3 veículos.
         </p>
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            required
+            onChange={(event) => setAcceptedTerms(event.target.checked)}
+          />
+          Li e aceito os{" "}
+          <Link style={linkStyle} to="/termos" target="_blank" rel="noreferrer">
+            Termos de Uso e a Política de Privacidade
+          </Link>
+        </label>
         {validationError ? <p style={errorStyle}>{validationError}</p> : null}
         {error ? <p style={errorStyle}>{error.message}</p> : null}
         <button style={buttonStyle} type="submit" disabled={loading}>

@@ -26,6 +26,7 @@ export function RegisterCompanyPage() {
     confirmPassword: "",
     photoDataUrl: ""
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -68,6 +69,11 @@ export function RegisterCompanyPage() {
 
     if (password !== form.confirmPassword) {
       setValidationError("As senhas precisam ser iguais.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setValidationError("Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
       return;
     }
 
@@ -205,6 +211,18 @@ export function RegisterCompanyPage() {
         <p style={hintStyle}>
           Ao concluir, a empresa já entra no sistema com plano inicial e login administrativo.
         </p>
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            required
+            onChange={(event) => setAcceptedTerms(event.target.checked)}
+          />
+          Li e aceito os{" "}
+          <Link style={linkStyle} to="/termos" target="_blank" rel="noreferrer">
+            Termos de Uso e a Política de Privacidade
+          </Link>
+        </label>
         {validationError ? <p style={errorStyle}>{validationError}</p> : null}
         {error ? <p style={errorStyle}>{error.message}</p> : null}
         <button style={buttonStyle} type="submit" disabled={loading}>
@@ -251,4 +269,11 @@ const errorStyle: CSSProperties = {
 
 const linkStyle: CSSProperties = {
   color: "#fbbf24"
+};
+
+const checkboxLabelStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.65rem",
+  color: "#cbd5e1"
 };
