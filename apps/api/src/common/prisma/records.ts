@@ -27,6 +27,8 @@ export type UserRecord = {
   allowAnyVehicle?: boolean;
   isActive: boolean;
   photoDataUrl?: string;
+  termsAcceptedAt?: Date;
+  termsVersion?: string;
 };
 
 export type DriverRecord = {
@@ -129,6 +131,13 @@ export type LoginAttemptRecord = {
   lockedUntil?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+export type MediaFileRecord = {
+  id: string;
+  tenantId: string;
+  path: string;
+  scope: string;
+  createdAt: Date;
 };
 
 export type PasswordResetCodeRecord = {

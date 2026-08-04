@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AppShell } from "@fleet/ui";
+import { TERMS_VERSION } from "@fleet/shared-types";
 
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
@@ -73,7 +74,8 @@ export function RegisterIndividualPage() {
           ...registrationForm,
           fullName,
           cpf,
-          email
+          email,
+          acceptedTermsVersion: TERMS_VERSION
         }
       }
     });

@@ -340,7 +340,9 @@ export class AuthService {
         role: "ADMIN",
         passwordHash: await argon2.hash(input.password),
         mustChangePassword: false,
-        isActive: true
+        isActive: true,
+        termsAcceptedAt: new Date(),
+        termsVersion: input.acceptedTermsVersion
       }
     });
 
@@ -396,7 +398,9 @@ export class AuthService {
         passwordHash: await argon2.hash(input.password),
         mustChangePassword: false,
         isActive: true,
-        driverId
+        driverId,
+        termsAcceptedAt: new Date(),
+        termsVersion: input.acceptedTermsVersion
       }
     });
 

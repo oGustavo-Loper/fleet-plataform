@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { assertTenantAccess } from "../../common/assert-tenant-access.js";
 import { CurrentUser } from "../../common/current-user.js";
 import { GqlJwtAuthGuard } from "../../common/gql-jwt-auth.guard.js";
+import { DeleteMyAccountInput } from "./dto/delete-my-account.input.js";
 import { UpdateMyProfileInput } from "./dto/update-my-profile.input.js";
 import { UserModel } from "./user.types.js";
 import { UsersService } from "./users.service.js";
@@ -23,5 +24,10 @@ export class UsersResolver {
   @Mutation(() => UserModel)
   updateMyProfile(@Args("input") input: UpdateMyProfileInput, @CurrentUser() user: AuthenticatedUser) {
     return this.usersService.updateOwnProfile(user.sub, input);
+  }
+
+  @Mutation(() => Boolean)
+  deleteMyAccount(@Args("input") input: DeleteMyAccountInput, @CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.deleteOwnAccount(user.sub, input);
   }
 }
