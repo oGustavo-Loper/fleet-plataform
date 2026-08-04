@@ -41,7 +41,7 @@ export function AppNavigation() {
   });
   const ownDriver = driversQuery.data?.drivers.find((driver) => driver.id === auth?.driverId);
   const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
-  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
+  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout", "/termos"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
       return false;
