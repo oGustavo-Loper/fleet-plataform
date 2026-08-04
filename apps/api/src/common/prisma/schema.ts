@@ -260,4 +260,8 @@ export const PRISMA_SCHEMA_SQL = `
     END
     ELSE employment_status
   END;
+
+  ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS terms_version TEXT;
 `;

@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { AppShell } from "@fleet/ui";
+import { TERMS_VERSION } from "@fleet/shared-types";
 
 import { FileUploadField } from "../components/FileUploadField";
 import { FormField, formInputStyle } from "../components/FormField";
@@ -86,7 +87,8 @@ export function RegisterCompanyPage() {
             companyName,
             cnpj,
             adminFullName,
-            email
+            email,
+            acceptedTermsVersion: TERMS_VERSION
           }
         }
       });

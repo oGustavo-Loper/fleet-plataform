@@ -196,6 +196,11 @@ export interface VehicleReportItem {
   maintenanceLogs: VehicleReportMaintenanceItem[];
 }
 
+// Bumped whenever the Terms of Use / Privacy Policy content changes
+// materially enough to require re-acceptance. Keep in sync with the
+// "Última atualização" date shown on TermsPage.
+export const TERMS_VERSION = "2026-08-04";
+
 export interface SyncQueueItem<TPayload = unknown> {
   id: string;
   tenantId: string;

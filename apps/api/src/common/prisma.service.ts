@@ -593,7 +593,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       assignedVehicleIds: toStringArray(row.assigned_vehicle_ids),
       allowAnyVehicle: Boolean(row.allow_any_vehicle),
       isActive: Boolean(row.is_active),
-      photoDataUrl: toStringOrUndefined(row.photo_data_url)
+      photoDataUrl: toStringOrUndefined(row.photo_data_url),
+      termsAcceptedAt: row.terms_accepted_at ? new Date(String(row.terms_accepted_at)) : undefined,
+      termsVersion: toStringOrUndefined(row.terms_version)
     };
   }
 
@@ -963,8 +965,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         `
           INSERT INTO users (
             id, tenant_id, email, full_name, role, password_hash, demo_password,
-            must_change_password, driver_id, assigned_vehicle_ids, allow_any_vehicle, is_active, photo_data_url, created_at, updated_at
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW(),NOW())
+            must_change_password, driver_id, assigned_vehicle_ids, allow_any_vehicle, is_active, photo_data_url,
+            terms_accepted_at, terms_version, created_at, updated_at
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW(),NOW())
           RETURNING *
         `,
         [
@@ -980,7 +983,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
           buildArrayParam(args.data.assignedVehicleIds as string[] | undefined),
           Boolean(args.data.allowAnyVehicle),
           args.data.isActive === undefined ? true : Boolean(args.data.isActive),
-          args.data.photoDataUrl ? String(args.data.photoDataUrl) : null
+          args.data.photoDataUrl ? String(args.data.photoDataUrl) : null,
+          args.data.termsAcceptedAt ? new Date(args.data.termsAcceptedAt as string | Date) : null,
+          args.data.termsVersion ? String(args.data.termsVersion) : null
         ]
       );
       return this.mapUserRow(result.rows[0]);
@@ -1007,6 +1012,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
               allow_any_vehicle = $11,
               is_active = $12,
               photo_data_url = $13,
+              terms_accepted_at = $14,
+              terms_version = $15,
               updated_at = NOW()
           WHERE id = $1
           RETURNING *
@@ -1032,6 +1039,14 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
             ? current.photoDataUrl ?? null
             : args.data.photoDataUrl
               ? String(args.data.photoDataUrl)
+              : null,
+          args.data.termsAcceptedAt === undefined
+            ? current.termsAcceptedAt ?? null
+            : new Date(args.data.termsAcceptedAt as string | Date),
+          args.data.termsVersion === undefined
+            ? current.termsVersion ?? null
+            : args.data.termsVersion
+              ? String(args.data.termsVersion)
               : null
         ]
       );

@@ -19,4 +19,7 @@ export class RegisterCompanyInput {
 
   @Field({ nullable: true })
   photoDataUrl?: string;
+
+  @Field()
+  acceptedTermsVersion!: string;
 }
