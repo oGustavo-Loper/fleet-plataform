@@ -10,6 +10,7 @@ import type {
   DriverRecord,
   FuelLogRecord,
   MaintenanceRecord,
+  MediaFileRecord,
   PasswordResetCodeRecord,
   SyncEventRecord,
   TenantRecord,
@@ -754,6 +755,16 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       action: String(row.action),
       title: String(row.title),
       details: toStringOrUndefined(row.details),
+      createdAt: new Date(String(row.created_at))
+    };
+  }
+
+  private mapMediaFileRow(row: Record<string, unknown>): MediaFileRecord {
+    return {
+      id: String(row.id),
+      tenantId: String(row.tenant_id),
+      path: String(row.path),
+      scope: String(row.scope),
       createdAt: new Date(String(row.created_at))
     };
   }
@@ -1513,6 +1524,29 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         ]
       );
       return this.mapActivityRow(result.rows[0]);
+    }
+  };
+
+  mediaFile = {
+    findUnique: async (args: { where: { path: string } }) => {
+      await this.ensureReady();
+      const result = await pool.query("SELECT * FROM media_files WHERE path = $1 LIMIT 1", [
+        args.where.path
+      ]);
+      return result.rows[0] ? this.mapMediaFileRow(result.rows[0]) : null;
+    },
+    create: async (args: CreateArgs<Record<string, unknown>>) => {
+      await this.ensureReady();
+      const result = await pool.query(
+        `
+          INSERT INTO media_files (
+            id, tenant_id, path, scope, created_at
+          ) VALUES ($1,$2,$3,$4,NOW())
+          RETURNING *
+        `,
+        [randomUUID(), String(args.data.tenantId), String(args.data.path), String(args.data.scope)]
+      );
+      return this.mapMediaFileRow(result.rows[0]);
     }
   };
 

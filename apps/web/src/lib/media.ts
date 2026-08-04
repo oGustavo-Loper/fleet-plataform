@@ -29,15 +29,33 @@ export function resolveMediaUrl(source?: string | null) {
 
   const normalizedSource = source.startsWith("/") ? source : `/${source}`;
 
+  // /media/* requires authentication (tenant-scoped access), but <img> tags
+  // and canvas/PDF fetches can't attach an Authorization header — carry the
+  // current access token as a query param instead, same short-lived token
+  // used everywhere else, just also accepted here for this one route.
+  const withToken = normalizedSource.startsWith("/media/")
+    ? appendAccessToken(normalizedSource)
+    : normalizedSource;
+
   // When the API is served from the same origin (the default in production,
   // where VITE_API_URL is a relative "/graphql"), apiBaseUrl is empty and
   // `new URL(path, "/")` throws ("Invalid base URL") — a relative path is
   // already correct in that case, so just return it as-is.
   if (!apiBaseUrl) {
-    return normalizedSource;
+    return withToken;
   }
 
-  return `${apiBaseUrl}${normalizedSource}`;
+  return `${apiBaseUrl}${withToken}`;
+}
+
+function appendAccessToken(path: string) {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    return path;
+  }
+
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}token=${encodeURIComponent(accessToken)}`;
 }
 
 export async function uploadMediaFile(file: File, scope: string): Promise<UploadedMedia> {

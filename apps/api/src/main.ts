@@ -1,8 +1,6 @@
 import "reflect-metadata";
 
 import { NestFactory } from "@nestjs/core";
-import { NestExpressApplication } from "@nestjs/platform-express";
-import { join } from "node:path";
 
 import { AppModule } from "./app.module.js";
 
@@ -13,10 +11,8 @@ async function bootstrap() {
     credentials: true
   });
 
-  const mediaStorageDir = process.env.MEDIA_STORAGE_DIR ?? join(process.cwd(), "uploads");
-  (app as NestExpressApplication).useStaticAssets(mediaStorageDir, {
-    prefix: "/media/"
-  });
+  // Media files are served through MediaController (tenant-scoped, behind
+  // HttpJwtAuthGuard) instead of a public static-assets mount.
 
   const host = process.env.HOST ?? "127.0.0.1";
   const port = Number(process.env.PORT ?? 4000);

@@ -31,6 +31,8 @@ export enum PtBrMessage {
   WEBHOOK_INCOMPLETE_PAYLOAD = "Corpo da requisição incompleto no webhook.",
   IMAGE_FILE_NOT_PROVIDED = "Arquivo de imagem não informado.",
   IMAGE_FILE_REQUIRED = "Envie apenas arquivos de imagem.",
+  MEDIA_FILE_NOT_FOUND = "Arquivo não encontrado.",
+  MEDIA_ACCESS_DENIED = "Acesso negado a este arquivo.",
   PLAN_LIMIT_REACHED = "Limite do plano atual atingido. Assine um plano pago para adicionar mais veículos.",
   ODOMETER_MUST_BE_GREATER_THAN_CURRENT_VEHICLE = "A quilometragem informada deve ser maior que a quilometragem atual anterior do veículo.",
   ODOMETER_MUST_BE_GREATER_THAN_CURRENT_MAINTENANCE = "A quilometragem da manutenção deve ser maior que a quilometragem atual anterior do veículo.",
