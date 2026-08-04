@@ -116,9 +116,9 @@ export function useDriversPageState() {
     });
   }, [drivers, search, statusFilter]);
 
-  const isIndividual = activeTenant?.accountType === "INDIVIDUAL";
+  const isFreeIndividual = activeTenant?.planCode === "ESSENTIAL_FREE";
   const isCompanyTrial = activeTenant?.accountType === "COMPANY" && activeTenant?.planStatus !== "ACTIVE";
-  const driverLimit = isIndividual || isCompanyTrial ? FREE_TIER_DRIVER_LIMIT : null;
+  const driverLimit = isFreeIndividual || isCompanyTrial ? FREE_TIER_DRIVER_LIMIT : null;
   const activeDriverCount = drivers.filter((driver) => driver.employmentStatus !== "TERMINATED").length;
   const driverLimitReached = driverLimit !== null && activeDriverCount >= driverLimit;
 
