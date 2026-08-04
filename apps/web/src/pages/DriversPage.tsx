@@ -53,40 +53,46 @@ export function DriversPage() {
     roleChangeError
   } = useDriversPageState();
 
+  const isIndividualAccount = activeTenant?.accountType === "INDIVIDUAL";
+
   return (
     <AppShell
       title="Motoristas"
       subtitle="Cadastro, status de acesso e histórico dos motoristas vinculados à conta."
     >
       <div style={toolbarStyle}>
-        <div style={filtersStyle}>
-          <label style={filterLabelStyle}>
-            Buscar por nome ou {activeTenant?.accountType === "COMPANY" ? "matrícula" : "CPF"}
-            <input
-              style={filterInputStyle}
-              placeholder={
-                activeTenant?.accountType === "COMPANY"
-                  ? "Ex: Carlos ou MT-1024"
-                  : "Ex: Carlos ou 12345678910"
-              }
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-          <label style={filterLabelStyle}>
-            Status
-            <select
-              style={filterInputStyle}
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-            >
-              <option value="ALL">Todos</option>
-              <option value="ACTIVE">Ativos</option>
-              <option value="VACATION">Em férias</option>
-              <option value="TERMINATED">Desligados</option>
-            </select>
-          </label>
-        </div>
+        {isIndividualAccount ? (
+          <div />
+        ) : (
+          <div style={filtersStyle}>
+            <label style={filterLabelStyle}>
+              Buscar por nome ou {activeTenant?.accountType === "COMPANY" ? "matrícula" : "CPF"}
+              <input
+                style={filterInputStyle}
+                placeholder={
+                  activeTenant?.accountType === "COMPANY"
+                    ? "Ex: Carlos ou MT-1024"
+                    : "Ex: Carlos ou 12345678910"
+                }
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+            <label style={filterLabelStyle}>
+              Status
+              <select
+                style={filterInputStyle}
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+              >
+                <option value="ALL">Todos</option>
+                <option value="ACTIVE">Ativos</option>
+                <option value="VACATION">Em férias</option>
+                <option value="TERMINATED">Desligados</option>
+              </select>
+            </label>
+          </div>
+        )}
         <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
           Novo motorista
         </button>
