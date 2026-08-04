@@ -28,7 +28,16 @@ export function resolveMediaUrl(source?: string | null) {
   }
 
   const normalizedSource = source.startsWith("/") ? source : `/${source}`;
-  return new URL(normalizedSource, `${apiBaseUrl}/`).toString();
+
+  // When the API is served from the same origin (the default in production,
+  // where VITE_API_URL is a relative "/graphql"), apiBaseUrl is empty and
+  // `new URL(path, "/")` throws ("Invalid base URL") — a relative path is
+  // already correct in that case, so just return it as-is.
+  if (!apiBaseUrl) {
+    return normalizedSource;
+  }
+
+  return `${apiBaseUrl}${normalizedSource}`;
 }
 
 export async function uploadMediaFile(file: File, scope: string): Promise<UploadedMedia> {
