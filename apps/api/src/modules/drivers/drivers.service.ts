@@ -4,6 +4,7 @@ import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
 import { MailService } from "../auth/mail.service.js";
+import { MediaService } from "../media/media.service.js";
 import { CreateDriverInput } from "./dto/create-driver.input.js";
 import { DeleteDriverInput } from "./dto/delete-driver.input.js";
 import { UpdateDriverInput } from "./dto/update-driver.input.js";
@@ -13,11 +14,14 @@ type DriverAccountInfo = {
   hasCompletedFirstLogin: boolean;
 };
 
+const ANONYMIZED_DRIVER_NAME = "Motorista removido";
+
 @Injectable()
 export class DriversService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly mediaService: MediaService
   ) {}
 
   private async findLinkedUser(driverId: string) {
@@ -221,18 +225,46 @@ export class DriversService {
         id: input.id
       },
       data: {
+        fullName: ANONYMIZED_DRIVER_NAME,
+        cpf: null,
+        cnh: null,
+        cnhCategory: null,
+        cnhExpiresAt: null,
+        photoDataUrl: null,
+        loginEmail: null,
         employmentStatus: "TERMINATED",
         isActive: false
       }
     });
+
+    // Nulling loginEmail above stops driver.update's own sync from touching
+    // the linked login, since it has nothing left to sync — anonymize that
+    // row explicitly here instead, or its name/e-mail would survive intact.
+    if (currentDriver.loginEmail) {
+      const linkedAccount = await this.findLinkedUser(input.id);
+      if (linkedAccount) {
+        await this.prisma.user.update({
+          where: { id: linkedAccount.id },
+          data: {
+            fullName: ANONYMIZED_DRIVER_NAME,
+            email: `motorista-removido-${input.id}@anonimizado.fleet.local`,
+            photoDataUrl: null,
+            isActive: false
+          }
+        });
+      }
+    }
+
+    await this.mediaService.deleteFileByPublicPath(currentDriver.photoDataUrl);
 
     await this.prisma.activityLog.create({
       data: {
         tenantId: deleted.tenantId,
         entity: "driver",
         action: "update",
-        title: `Motorista desligado: ${deleted.fullName}`,
-        details: deleted.loginEmail ?? undefined
+        title: currentDriver.registrationId
+          ? `Motorista desligado (matrícula ${currentDriver.registrationId})`
+          : "Motorista desligado"
       }
     });
 
