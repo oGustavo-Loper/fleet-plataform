@@ -188,6 +188,9 @@ export const PRISMA_SCHEMA_SQL = `
   ALTER TABLE users
     ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
 
+  ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS photo_data_url TEXT;
+
   ALTER TABLE drivers
     ADD COLUMN IF NOT EXISTS registration_id TEXT;
 
