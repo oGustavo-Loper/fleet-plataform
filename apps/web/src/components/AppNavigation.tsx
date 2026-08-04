@@ -6,9 +6,11 @@ import type { DriverListItem, UserRole } from "@fleet/shared-types";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
-import { DRIVERS_QUERY } from "../lib/queries";
+import { DRIVERS_QUERY, USERS_QUERY } from "../lib/queries";
 import { resolveMediaUrl } from "../lib/media";
 import { planLabel } from "../lib/plans";
+
+type SelfUser = { id: string; photoDataUrl?: string };
 
 type NavLink = {
   to: string;
@@ -35,13 +37,20 @@ export function AppNavigation() {
   const [isDesktop, setIsDesktop] = useState(false);
   const { auth, isAuthenticated, logout } = useAuth();
   const { activeTenant } = useTenant();
+  const isIndividualAccount = activeTenant?.accountType === "INDIVIDUAL";
   const driversQuery = useQuery<{ drivers: DriverListItem[] }>(DRIVERS_QUERY, {
-    skip: !auth?.tenantId || !auth?.driverId,
+    skip: !auth?.tenantId || (!auth?.driverId && !isIndividualAccount),
+    variables: { tenantId: auth?.tenantId ?? "" }
+  });
+  const usersQuery = useQuery<{ users: SelfUser[] }>(USERS_QUERY, {
+    skip: !auth?.tenantId || Boolean(auth?.driverId),
     variables: { tenantId: auth?.tenantId ?? "" }
   });
   const ownDriver = driversQuery.data?.drivers.find((driver) => driver.id === auth?.driverId);
+  const ownUser = usersQuery.data?.users.find((user) => user.id === auth?.userId);
   const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
-  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout", "/termos"]);
+  const isFamilyAccount = isIndividualAccount && (driversQuery.data?.drivers.length ?? 0) > 1;
+  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
       return false;
@@ -139,9 +148,9 @@ export function AppNavigation() {
         }}
       >
         <div style={sidebarHeaderStyle}>
-          {ownDriver?.photoDataUrl || activeTenant?.photoDataUrl ? (
+          {ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl ? (
             <img
-              src={resolveMediaUrl(ownDriver?.photoDataUrl ?? activeTenant?.photoDataUrl)}
+              src={resolveMediaUrl(ownDriver?.photoDataUrl ?? ownUser?.photoDataUrl ?? activeTenant?.photoDataUrl)}
               alt={ownDriver?.fullName ?? activeTenant?.name}
               style={tenantAvatarStyle}
             />
@@ -152,7 +161,7 @@ export function AppNavigation() {
             <p style={sidebarEyebrowStyle}>Fleet Platform</p>
             <span style={betaBadgeStyle}>Beta</span>
             <p style={tenantMetaStyle}>
-              {activeTenant?.accountType === "INDIVIDUAL" ? "Pessoa física" : "Empresa"}
+              {isFamilyAccount ? "Frota familiar" : isIndividualAccount ? "Pessoa física" : "Empresa"}
             </p>
             <strong>{activeTenant?.name ?? "Conta"}</strong>
           </div>
@@ -178,7 +187,7 @@ export function AppNavigation() {
           <span>
             {auth?.fullName} • {auth?.email}
           </span>
-          {auth?.driverId ? (
+          {auth ? (
             <Link
               to="/profile"
               className="app-sidebar-control"

@@ -43,5 +43,7 @@ export enum PtBrMessage {
   SYNC_ENTITY_NOT_SUPPORTED = "Entidade não suportada para sincronização offline.",
   CNH_INVALID = "Informe uma CNH válida, com 11 dígitos.",
   DRIVER_PLAN_LIMIT_REACHED = "Limite de motoristas do plano gratuito atingido (2 motoristas). Assine um plano pago para cadastrar mais motoristas.",
+  CURRENT_PASSWORD_REQUIRED = "Informe a senha atual para definir uma nova senha.",
+  CURRENT_PASSWORD_INVALID = "Senha atual incorreta.",
   NOT_INFORMED = "Não informado."
 }

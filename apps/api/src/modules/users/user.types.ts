@@ -33,4 +33,7 @@ export class UserModel {
 
   @Field()
   hasCompletedFirstLogin!: boolean;
+
+  @Field({ nullable: true })
+  photoDataUrl?: string;
 }
