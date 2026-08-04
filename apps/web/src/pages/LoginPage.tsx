@@ -114,11 +114,7 @@ export function LoginPage() {
       return;
     }
 
-    setResetMessage(
-      payload.debugCode
-        ? `Código de teste: ${payload.debugCode} (expira em ${new Date(payload.expiresAt).toLocaleTimeString("pt-BR")})`
-        : `Código enviado para ${email}.`
-    );
+    setResetMessage(`Código enviado para ${email}.`);
   }
 
   async function handleConfirmReset(event: FormEvent<HTMLFormElement>) {

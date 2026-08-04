@@ -102,7 +102,6 @@ export const REQUEST_PASSWORD_RESET_MUTATION = gql`
     requestPasswordReset(input: $input) {
       deliveryHint
       expiresAt
-      debugCode
     }
   }
 `;

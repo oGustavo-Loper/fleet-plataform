@@ -220,8 +220,7 @@ export class AuthService {
 
     return {
       deliveryHint: PtBrMessage.PASSWORD_RESET_DELIVERY_HINT,
-      expiresAt: expiresAt.toISOString(),
-      debugCode: process.env.NODE_ENV === "production" ? undefined : code
+      expiresAt: expiresAt.toISOString()
     };
   }
 
