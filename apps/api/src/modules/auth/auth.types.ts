@@ -52,4 +52,7 @@ export class PasswordResetRequestModel {
 
   @Field()
   expiresAt!: string;
+
+  @Field()
+  retryAfterSeconds!: number;
 }

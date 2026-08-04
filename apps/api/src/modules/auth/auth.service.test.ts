@@ -25,10 +25,21 @@ type MockUser = {
 function createAuthService(options?: {
   users?: MockUser[];
   drivers?: Array<{ id: string; cpf?: string; loginEmail?: string; registrationId?: string }>;
+  existingLoginAttempt?: { failedCount: number; lockedUntil?: Date | null } | null;
+  existingResetCode?: { createdAt: Date; expiresAt: Date } | null;
 }) {
   const users = options?.users ?? [];
   const drivers = options?.drivers ?? [];
   let updatedUserPayload: Record<string, unknown> | null = null;
+  const loginAttemptCalls = {
+    registerFailure: 0,
+    lock: [] as Array<{ identifier: string; lockedUntil: Date }>,
+    clear: [] as string[]
+  };
+  const passwordResetCalls = {
+    create: 0,
+    sendPasswordResetCode: 0
+  };
 
   const prisma = {
     user: {
@@ -61,16 +72,32 @@ function createAuthService(options?: {
     },
     passwordResetCode: {
       async create() {
+        passwordResetCalls.create += 1;
         throw new Error("not implemented in test");
       },
       async findLatestByEmail() {
-        return null;
+        return options?.existingResetCode ?? null;
       },
       async incrementAttempts() {
         return undefined;
       },
       async markUsed() {
         return undefined;
+      }
+    },
+    loginAttempt: {
+      async findByIdentifier() {
+        return options?.existingLoginAttempt ?? null;
+      },
+      async registerFailure() {
+        loginAttemptCalls.registerFailure += 1;
+        return { failedCount: loginAttemptCalls.registerFailure };
+      },
+      async lock(identifier: string, lockedUntil: Date) {
+        loginAttemptCalls.lock.push({ identifier, lockedUntil });
+      },
+      async clear(identifier: string) {
+        loginAttemptCalls.clear.push(identifier);
       }
     },
     tenant: {}
@@ -91,13 +118,16 @@ function createAuthService(options?: {
 
   const mailService = {
     async sendPasswordResetCode() {
+      passwordResetCalls.sendPasswordResetCode += 1;
       return undefined;
     }
   };
 
   return {
     service: new AuthService(prisma as never, jwtService as never, mailService as never),
-    getUpdatedUserPayload: () => updatedUserPayload
+    getUpdatedUserPayload: () => updatedUserPayload,
+    loginAttemptCalls,
+    passwordResetCalls
   };
 }
 
@@ -265,6 +295,120 @@ test("login rejects CPF when driver is not linked to a login account", async () 
       error instanceof UnauthorizedException &&
       error.message === PtBrMessage.INVALID_CREDENTIALS
   );
+});
+
+test("login registers each failed attempt but only locks out after the 5th failure", async () => {
+  const { service, loginAttemptCalls } = createAuthService({
+    users: [
+      {
+        id: "user-admin",
+        tenantId: "tenant-sol",
+        email: "demo@fleet.local",
+        fullName: "Administrador Demo",
+        role: "ADMIN",
+        demoPassword: "demo1234",
+        mustChangePassword: false,
+        isActive: true
+      }
+    ]
+  });
+
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    await assert.rejects(() =>
+      service.login({ identifier: "demo@fleet.local", password: "senha-errada" })
+    );
+  }
+
+  assert.equal(loginAttemptCalls.registerFailure, 5);
+  assert.equal(loginAttemptCalls.lock.length, 1);
+  assert.equal(loginAttemptCalls.lock[0]?.identifier, "demo@fleet.local");
+  assert.ok(loginAttemptCalls.lock[0]!.lockedUntil.getTime() > Date.now());
+});
+
+test("login rejects credentials outright once the identifier is already locked out", async () => {
+  const { service, loginAttemptCalls } = createAuthService({
+    users: [
+      {
+        id: "user-admin",
+        tenantId: "tenant-sol",
+        email: "demo@fleet.local",
+        fullName: "Administrador Demo",
+        role: "ADMIN",
+        demoPassword: "demo1234",
+        mustChangePassword: false,
+        isActive: true
+      }
+    ],
+    existingLoginAttempt: {
+      failedCount: 5,
+      lockedUntil: new Date(Date.now() + 60_000)
+    }
+  });
+
+  await assert.rejects(
+    () =>
+      service.login({
+        identifier: "demo@fleet.local",
+        password: "demo1234"
+      }),
+    (error: unknown) =>
+      error instanceof UnauthorizedException &&
+      error.message === PtBrMessage.LOGIN_TOO_MANY_ATTEMPTS
+  );
+
+  assert.equal(loginAttemptCalls.registerFailure, 0);
+});
+
+test("login clears prior failed attempts once credentials succeed", async () => {
+  const { service, loginAttemptCalls } = createAuthService({
+    users: [
+      {
+        id: "user-admin",
+        tenantId: "tenant-sol",
+        email: "demo@fleet.local",
+        fullName: "Administrador Demo",
+        role: "ADMIN",
+        demoPassword: "demo1234",
+        mustChangePassword: false,
+        isActive: true
+      }
+    ],
+    existingLoginAttempt: {
+      failedCount: 2,
+      lockedUntil: null
+    }
+  });
+
+  await service.login({ identifier: "demo@fleet.local", password: "demo1234" });
+
+  assert.deepEqual(loginAttemptCalls.clear, ["demo@fleet.local"]);
+});
+
+test("requestPasswordReset stays in cooldown and skips sending a new code when one was just issued", async () => {
+  const { service, passwordResetCalls } = createAuthService({
+    users: [
+      {
+        id: "user-admin",
+        tenantId: "tenant-sol",
+        email: "demo@fleet.local",
+        fullName: "Administrador Demo",
+        role: "ADMIN",
+        demoPassword: "demo1234",
+        mustChangePassword: false,
+        isActive: true
+      }
+    ],
+    existingResetCode: {
+      createdAt: new Date(Date.now() - 5_000),
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    }
+  });
+
+  const result = await service.requestPasswordReset({ email: "demo@fleet.local" });
+
+  assert.equal(passwordResetCalls.create, 0);
+  assert.equal(passwordResetCalls.sendPasswordResetCode, 0);
+  assert.ok(result.retryAfterSeconds > 0 && result.retryAfterSeconds <= 60);
 });
 
 test("completeFirstLogin clears the temporary password requirement", async () => {

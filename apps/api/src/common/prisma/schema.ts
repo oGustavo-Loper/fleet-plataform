@@ -161,6 +161,14 @@ export const PRISMA_SCHEMA_SQL = `
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
+  CREATE TABLE IF NOT EXISTS login_attempts (
+    id TEXT PRIMARY KEY,
+    identifier TEXT NOT NULL UNIQUE,
+    failed_count INT NOT NULL DEFAULT 0,
+    locked_until TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
   CREATE TABLE IF NOT EXISTS media_files (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

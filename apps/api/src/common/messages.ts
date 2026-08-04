@@ -49,5 +49,6 @@ export enum PtBrMessage {
   DRIVER_PLAN_LIMIT_REACHED = "Limite de motoristas do plano gratuito atingido (2 motoristas). Assine um plano pago para cadastrar mais motoristas.",
   CURRENT_PASSWORD_REQUIRED = "Informe a senha atual para definir uma nova senha.",
   CURRENT_PASSWORD_INVALID = "Senha atual incorreta.",
+  LOGIN_TOO_MANY_ATTEMPTS = "Muitas tentativas de login. Tente novamente em alguns minutos.",
   NOT_INFORMED = "Não informado."
 }

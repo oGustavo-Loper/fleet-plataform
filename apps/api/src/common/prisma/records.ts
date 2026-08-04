@@ -124,6 +124,14 @@ export type ActivityLogRecord = {
   createdAt: Date;
 };
 
+export type LoginAttemptRecord = {
+  id: string;
+  identifier: string;
+  failedCount: number;
+  lockedUntil?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 export type MediaFileRecord = {
   id: string;
   tenantId: string;
