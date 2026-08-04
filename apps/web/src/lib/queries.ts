@@ -605,6 +605,19 @@ export const USERS_QUERY = gql`
       role
       isActive
       hasCompletedFirstLogin
+      photoDataUrl
+    }
+  }
+`;
+
+export const UPDATE_MY_PROFILE_MUTATION = gql`
+  mutation UpdateMyProfile($input: UpdateMyProfileInput!) {
+    updateMyProfile(input: $input) {
+      id
+      fullName
+      email
+      role
+      photoDataUrl
     }
   }
 `;

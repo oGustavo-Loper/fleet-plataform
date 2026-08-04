@@ -9,10 +9,10 @@ import { AvatarPickerField } from "../components/AvatarPickerField";
 import { FormField, formGridStyle, formInputStyle, formPanelStyle, primarySubmitStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
-import { hasExactDigits } from "../lib/form-validation";
+import { hasExactDigits, isBlank } from "../lib/form-validation";
 import { limitText, onlyDigits } from "../lib/masks";
 import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
-import { DRIVERS_QUERY, UPDATE_DRIVER_MUTATION } from "../lib/queries";
+import { DRIVERS_QUERY, UPDATE_DRIVER_MUTATION, UPDATE_MY_PROFILE_MUTATION, USERS_QUERY } from "../lib/queries";
 
 function getInitialForm(driver?: DriverListItem | null) {
   return {
@@ -24,6 +24,16 @@ function getInitialForm(driver?: DriverListItem | null) {
 }
 
 export function ProfilePage() {
+  const { auth } = useAuth();
+
+  if (!auth?.driverId) {
+    return <AccountProfileForm />;
+  }
+
+  return <DriverProfileForm />;
+}
+
+function DriverProfileForm() {
   const { auth } = useAuth();
   const { activeTenant } = useTenant();
   const tenantId = activeTenant?.id ?? "";
@@ -82,14 +92,10 @@ export function ProfilePage() {
     setSuccessMessage("Perfil atualizado com sucesso.");
   }
 
-  if (!auth?.driverId || !driver) {
+  if (!driver) {
     return (
       <AppShell title="Meu perfil" subtitle="Gerencie sua foto e os dados da sua CNH.">
-        <p style={mutedStyle}>
-          {auth?.driverId
-            ? "Carregando seu perfil..."
-            : "Esta conta não possui um perfil de motorista vinculado."}
-        </p>
+        <p style={mutedStyle}>Carregando seu perfil...</p>
       </AppShell>
     );
   }
@@ -160,6 +166,168 @@ export function ProfilePage() {
         {validationError ? <p style={errorStyle}>{validationError}</p> : null}
         {successMessage ? <p style={hintStyle}>{successMessage}</p> : null}
         {error ? <p style={errorStyle}>Falha ao salvar perfil.</p> : null}
+        <button style={primarySubmitStyle} type="submit" disabled={loading}>
+          {loading ? "Salvando..." : "Salvar alterações"}
+        </button>
+      </form>
+    </AppShell>
+  );
+}
+
+function AccountProfileForm() {
+  const { auth, login } = useAuth();
+  const { activeTenant } = useTenant();
+  const tenantId = activeTenant?.id ?? "";
+
+  const usersQuery = useQuery<{ users: { id: string; fullName: string; photoDataUrl?: string }[] }>(
+    USERS_QUERY,
+    {
+      skip: !tenantId,
+      variables: { tenantId }
+    }
+  );
+
+  const ownUser = usersQuery.data?.users.find((item) => item.id === auth?.userId) ?? null;
+
+  const [fullName, setFullName] = useState(auth?.fullName ?? "");
+  const [photoDataUrl, setPhotoDataUrl] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (ownUser) {
+      setFullName(ownUser.fullName);
+      setPhotoDataUrl(ownUser.photoDataUrl ?? "");
+    }
+  }, [ownUser?.id]);
+
+  const [mutateProfile, { loading, error }] = useMutation(UPDATE_MY_PROFILE_MUTATION);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setValidationError("");
+    setSuccessMessage("");
+
+    const trimmedName = fullName.trim();
+    if (isBlank(trimmedName)) {
+      setValidationError("Informe seu nome completo.");
+      return;
+    }
+
+    if (newPassword || currentPassword || confirmNewPassword) {
+      if (isBlank(currentPassword)) {
+        setValidationError("Informe sua senha atual para trocar a senha.");
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        setValidationError("A nova senha deve ter no mínimo 8 caracteres.");
+        return;
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        setValidationError("As senhas novas precisam ser iguais.");
+        return;
+      }
+    }
+
+    const result = await mutateProfile({
+      variables: {
+        input: {
+          fullName: trimmedName,
+          photoDataUrl,
+          currentPassword: newPassword ? currentPassword : undefined,
+          newPassword: newPassword || undefined
+        }
+      }
+    });
+
+    const updated = result.data?.updateMyProfile;
+    if (updated && auth) {
+      login({ ...auth, fullName: updated.fullName });
+    }
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setSuccessMessage("Perfil atualizado com sucesso.");
+  }
+
+  return (
+    <AppShell title="Meu perfil" subtitle="Gerencie seus dados de acesso.">
+      <form style={formPanelStyle} onSubmit={handleSubmit}>
+        <AvatarPickerField
+          photoUrl={resolveMediaUrl(photoDataUrl)}
+          alt="Sua foto"
+          loading={photoLoading}
+          error={photoError}
+          onSelect={async (file) => {
+            if (!file) {
+              setPhotoDataUrl("");
+              return;
+            }
+            setPhotoLoading(true);
+            setPhotoError("");
+            try {
+              const uploaded = await uploadMediaFile(file, "user-photo");
+              setPhotoDataUrl(uploaded.url);
+            } catch (uploadError) {
+              setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
+            } finally {
+              setPhotoLoading(false);
+            }
+          }}
+        />
+        <div style={formGridStyle}>
+          <FormField label="Nome completo">
+            <input
+              style={formInputStyle}
+              value={fullName}
+              required
+              onChange={(event) => setFullName(event.target.value)}
+            />
+          </FormField>
+          <FormField label="E-mail">
+            <input style={formInputStyle} value={auth?.email ?? ""} disabled />
+          </FormField>
+        </div>
+        <p style={{ color: "#94a3b8", marginTop: "1rem", marginBottom: 0 }}>
+          Para trocar sua senha, preencha os três campos abaixo. Deixe em branco para manter a senha atual.
+        </p>
+        <div style={formGridStyle}>
+          <FormField label="Senha atual">
+            <input
+              style={formInputStyle}
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+            />
+          </FormField>
+          <FormField label="Nova senha">
+            <input
+              style={formInputStyle}
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+          </FormField>
+          <FormField label="Confirmar nova senha">
+            <input
+              style={formInputStyle}
+              type="password"
+              value={confirmNewPassword}
+              onChange={(event) => setConfirmNewPassword(event.target.value)}
+            />
+          </FormField>
+        </div>
+        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
+        {successMessage ? <p style={hintStyle}>{successMessage}</p> : null}
+        {error ? <p style={errorStyle}>{error.graphQLErrors?.[0]?.message ?? "Falha ao salvar perfil."}</p> : null}
         <button style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
