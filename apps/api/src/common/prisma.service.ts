@@ -1587,6 +1587,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     clear: async (identifier: string) => {
       await this.ensureReady();
       await pool.query("DELETE FROM login_attempts WHERE identifier = $1", [identifier]);
+    }
+  };
+
   mediaFile = {
     findUnique: async (args: { where: { path: string } }) => {
       await this.ensureReady();
