@@ -142,13 +142,8 @@ export function DriverForm({
       return;
     }
 
-    if (!hasExactDigits(cnh, 11)) {
-      setValidationError("Informe uma CNH válida (11 dígitos).");
-      return;
-    }
-
-    if (isBlank(cnhExpiresAt)) {
-      setValidationError("Informe a validade da CNH.");
+    if (cnh && !hasExactDigits(cnh, 11)) {
+      setValidationError("Informe uma CNH válida (11 dígitos) ou deixe o campo em branco.");
       return;
     }
 
@@ -156,9 +151,9 @@ export function DriverForm({
       fullName,
       cpf: isCompany ? undefined : cpf,
       registrationId: isCompany ? registrationId : undefined,
-      cnh,
-      cnhCategory: form.cnhCategory,
-      cnhExpiresAt,
+      cnh: cnh || undefined,
+      cnhCategory: cnh ? form.cnhCategory : undefined,
+      cnhExpiresAt: cnhExpiresAt || undefined,
       loginEmail: loginEmail || undefined,
       assignedVehicleIds: form.assignedVehicleId ? [form.assignedVehicleId] : [],
       allowAnyVehicle: form.allowAnyVehicle,
@@ -312,13 +307,12 @@ export function DriverForm({
             />
           </FormField>
         )}
-        <FormField label="CNH">
+        <FormField label="CNH (opcional)">
           <input
             style={formInputStyle}
             placeholder="Ex: 99887766554"
             value={form.cnh}
             maxLength={11}
-            required
             onChange={(event) =>
               setForm({ ...form, cnh: limitText(onlyDigits(event.target.value, 11), 11) })
             }
@@ -338,13 +332,12 @@ export function DriverForm({
             <option value="E">E</option>
           </select>
         </FormField>
-        <FormField label="Validade da CNH">
+        <FormField label="Validade da CNH (opcional)">
           <input
             style={formInputStyle}
             type="date"
             placeholder="Ex: 2027-08-10"
             value={form.cnhExpiresAt}
-            required
             onChange={(event) => setForm({ ...form, cnhExpiresAt: event.target.value })}
           />
         </FormField>
@@ -401,6 +394,11 @@ export function DriverForm({
         />
         Permitir abastecer qualquer veículo
       </label>
+      {!isEditing ? (
+        <p style={{ color: "#94a3b8", marginBottom: 0, marginTop: "0.8rem" }}>
+          Os dados da CNH podem ficar em branco — o próprio motorista preenche isso depois, em "Meu perfil", no primeiro acesso.
+        </p>
+      ) : null}
       <p style={{ color: "#94a3b8", marginBottom: 0, marginTop: "0.8rem" }}>
         Motoristas em férias ou desligados perdem o acesso ao sistema, mas o histórico permanece salvo.
       </p>
