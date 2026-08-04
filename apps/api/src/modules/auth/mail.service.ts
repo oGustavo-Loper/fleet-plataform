@@ -68,8 +68,7 @@ export class MailService {
     const delivery = await this.deliverEmail(email, "Código de recuperação de senha - Fleet Platform", text);
 
     if (delivery.deliveryMode === "console") {
-      this.logger.warn(`E-mail não configurado. Código de reset para ${email}: ${code}`);
-      return { deliveryMode: "console" as const, debugCode: code };
+      this.logger.warn(`E-mail não configurado. Código de reset não enviado para ${email}.`);
     }
 
     return { deliveryMode: delivery.deliveryMode };
@@ -88,8 +87,7 @@ export class MailService {
     const delivery = await this.deliverEmail(email, "Seu acesso ao Fleet Platform", text);
 
     if (delivery.deliveryMode === "console") {
-      this.logger.warn(`E-mail não configurado. Senha temporária de ${email}: ${temporaryPassword}`);
-      return { deliveryMode: "console" as const, debugPassword: temporaryPassword };
+      this.logger.warn(`E-mail não configurado. Senha temporária de ${email} não enviada por e-mail.`);
     }
 
     return { deliveryMode: delivery.deliveryMode };
