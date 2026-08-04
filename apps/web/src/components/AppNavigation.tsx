@@ -35,12 +35,14 @@ export function AppNavigation() {
   const [isDesktop, setIsDesktop] = useState(false);
   const { auth, isAuthenticated, logout } = useAuth();
   const { activeTenant } = useTenant();
+  const isIndividualAccount = activeTenant?.accountType === "INDIVIDUAL";
   const driversQuery = useQuery<{ drivers: DriverListItem[] }>(DRIVERS_QUERY, {
-    skip: !auth?.tenantId || !auth?.driverId,
+    skip: !auth?.tenantId || (!auth?.driverId && !isIndividualAccount),
     variables: { tenantId: auth?.tenantId ?? "" }
   });
   const ownDriver = driversQuery.data?.drivers.find((driver) => driver.id === auth?.driverId);
   const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
+  const isFamilyAccount = isIndividualAccount && (driversQuery.data?.drivers.length ?? 0) > 1;
   const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
@@ -152,7 +154,7 @@ export function AppNavigation() {
             <p style={sidebarEyebrowStyle}>Fleet Platform</p>
             <span style={betaBadgeStyle}>Beta</span>
             <p style={tenantMetaStyle}>
-              {activeTenant?.accountType === "INDIVIDUAL" ? "Pessoa física" : "Empresa"}
+              {isFamilyAccount ? "Frota familiar" : isIndividualAccount ? "Pessoa física" : "Empresa"}
             </p>
             <strong>{activeTenant?.name ?? "Conta"}</strong>
           </div>

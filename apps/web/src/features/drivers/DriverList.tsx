@@ -65,7 +65,7 @@ export function DriverList({
               actions={[
                 ...(onView ? [{ label: "Visualizar motorista", onSelect: () => onView(driver) }] : []),
                 ...(onEdit ? [{ label: "Editar motorista", onSelect: () => onEdit(driver) }] : []),
-                ...(driver.employmentStatus === "ACTIVE" && onSetVacation
+                ...(isCompany && driver.employmentStatus === "ACTIVE" && onSetVacation
                   ? [
                       {
                         label: "Colocar em férias",
@@ -73,10 +73,10 @@ export function DriverList({
                       }
                     ]
                   : []),
-                ...(driver.employmentStatus !== "ACTIVE" && onActivate
+                ...(isCompany && driver.employmentStatus !== "ACTIVE" && onActivate
                   ? [{ label: "Reativar motorista", onSelect: () => onActivate(driver) }]
                   : []),
-                ...(driver.employmentStatus !== "TERMINATED" && onTerminate
+                ...(isCompany && driver.employmentStatus !== "TERMINATED" && onTerminate
                   ? [{ label: "Desligar motorista", danger: true, onSelect: () => onTerminate(driver) }]
                   : []),
                 ...(driver.accountRole === "MANAGER" && onDemoteToDriver
