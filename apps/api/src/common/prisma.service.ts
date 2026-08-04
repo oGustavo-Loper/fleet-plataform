@@ -926,6 +926,10 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         ]
       );
       return this.mapTenantRow(result.rows[0]);
+    },
+    delete: async (args: { where: { id: string } }) => {
+      await this.ensureReady();
+      await pool.query("DELETE FROM tenants WHERE id = $1", [args.where.id]);
     }
   };
 
