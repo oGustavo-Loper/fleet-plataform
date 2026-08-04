@@ -1,9 +1,11 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { basename, extname, join } from "node:path";
 
 import { PtBrMessage } from "../../common/messages.js";
+import { PrismaService } from "../../common/prisma.service.js";
 
 type UploadedMedia = {
   url: string;
@@ -22,9 +24,13 @@ const mimeExtensions: Record<string, string> = {
   "image/avif": "avif"
 };
 
+const DIACRITICS_PATTERN = new RegExp("[\\u0300-\\u036f]", "g");
+
 @Injectable()
 export class MediaService {
   private readonly storageRoot = process.env.MEDIA_STORAGE_DIR ?? join(process.cwd(), "uploads");
+
+  constructor(private readonly prisma: PrismaService) {}
 
   async storeImage(
     file:
@@ -35,7 +41,8 @@ export class MediaService {
           size: number;
         }
       | undefined,
-    scope: string
+    scope: string,
+    tenantId: string
   ): Promise<UploadedMedia> {
     if (!file) {
       throw new BadRequestException(PtBrMessage.IMAGE_FILE_NOT_PROVIDED);
@@ -54,7 +61,12 @@ export class MediaService {
     const filePath = join(directory, fileName);
     await writeFile(filePath, file.buffer);
 
-    const publicPath = `/media/${safeScope}/${fileName}`;
+    const relativePath = `${safeScope}/${fileName}`;
+    await this.prisma.mediaFile.create({
+      data: { tenantId, path: relativePath, scope: safeScope }
+    });
+
+    const publicPath = `/media/${relativePath}`;
 
     return {
       url: publicPath,
@@ -63,6 +75,29 @@ export class MediaService {
       mimeType: file.mimetype,
       size: file.size
     };
+  }
+
+  /**
+   * Files uploaded before this record existed have no media_files row —
+   * allowed through for any authenticated user rather than broken links,
+   * since their names are already unguessable (timestamp + UUID).
+   */
+  async resolveAuthorizedFilePath(scope: string, fileName: string, requesterTenantId: string) {
+    const safeScope = this.sanitizeSegment(scope);
+    const safeFileName = basename(fileName);
+    const relativePath = `${safeScope}/${safeFileName}`;
+
+    const record = await this.prisma.mediaFile.findUnique({ where: { path: relativePath } });
+    if (record && record.tenantId !== requesterTenantId) {
+      throw new ForbiddenException(PtBrMessage.MEDIA_ACCESS_DENIED);
+    }
+
+    const absolutePath = join(this.storageRoot, relativePath);
+    if (!existsSync(absolutePath)) {
+      throw new NotFoundException(PtBrMessage.MEDIA_FILE_NOT_FOUND);
+    }
+
+    return absolutePath;
   }
 
   private resolveExtension(mimeType: string, originalName: string) {
@@ -78,7 +113,7 @@ export class MediaService {
   private sanitizeSegment(value: string) {
     const normalized = value
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(DIACRITICS_PATTERN, "")
       .toLowerCase()
       .replace(/[^a-z0-9-_]+/g, "-")
       .replace(/^-+|-+$/g, "");

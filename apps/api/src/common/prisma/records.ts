@@ -122,6 +122,14 @@ export type ActivityLogRecord = {
   createdAt: Date;
 };
 
+export type MediaFileRecord = {
+  id: string;
+  tenantId: string;
+  path: string;
+  scope: string;
+  createdAt: Date;
+};
+
 export type PasswordResetCodeRecord = {
   id: string;
   userId: string;
