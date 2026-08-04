@@ -1,18 +1,28 @@
 import type { CSSProperties, FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
+import { useNavigate } from "react-router-dom";
 import type { DriverListItem } from "@fleet/shared-types";
 
 import { AppShell } from "@fleet/ui";
 
 import { AvatarPickerField } from "../components/AvatarPickerField";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { FormField, formGridStyle, formInputStyle, formPanelStyle, primarySubmitStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { hasExactDigits, isBlank } from "../lib/form-validation";
 import { limitText, onlyDigits } from "../lib/masks";
 import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
-import { DRIVERS_QUERY, UPDATE_DRIVER_MUTATION, UPDATE_MY_PROFILE_MUTATION, USERS_QUERY } from "../lib/queries";
+import {
+  DELETE_MY_ACCOUNT_MUTATION,
+  DRIVERS_QUERY,
+  UPDATE_DRIVER_MUTATION,
+  UPDATE_MY_PROFILE_MUTATION,
+  USERS_QUERY
+} from "../lib/queries";
+
+const ACCOUNT_OWNER_ROLES = new Set(["ADMIN", "INDIVIDUAL"]);
 
 function getInitialForm(driver?: DriverListItem | null) {
   return {
@@ -25,12 +35,20 @@ function getInitialForm(driver?: DriverListItem | null) {
 
 export function ProfilePage() {
   const { auth } = useAuth();
+  const isDriverProfile = Boolean(auth?.driverId);
+  const canDeleteAccount = Boolean(auth?.role && ACCOUNT_OWNER_ROLES.has(auth.role));
 
-  if (!auth?.driverId) {
-    return <AccountProfileForm />;
-  }
-
-  return <DriverProfileForm />;
+  return (
+    <AppShell
+      title="Meu perfil"
+      subtitle={
+        isDriverProfile ? "Gerencie sua foto e os dados da sua CNH." : "Gerencie seus dados de acesso."
+      }
+    >
+      {isDriverProfile ? <DriverProfileForm /> : <AccountProfileForm />}
+      {canDeleteAccount ? <DeleteAccountSection /> : null}
+    </AppShell>
+  );
 }
 
 function DriverProfileForm() {
@@ -93,15 +111,11 @@ function DriverProfileForm() {
   }
 
   if (!driver) {
-    return (
-      <AppShell title="Meu perfil" subtitle="Gerencie sua foto e os dados da sua CNH.">
-        <p style={mutedStyle}>Carregando seu perfil...</p>
-      </AppShell>
-    );
+    return <p style={mutedStyle}>Carregando seu perfil...</p>;
   }
 
   return (
-    <AppShell title="Meu perfil" subtitle="Gerencie sua foto e os dados da sua CNH.">
+    <>
       <form style={formPanelStyle} onSubmit={handleSubmit}>
         <AvatarPickerField
           photoUrl={resolveMediaUrl(form.photoDataUrl)}
@@ -170,7 +184,7 @@ function DriverProfileForm() {
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
       </form>
-    </AppShell>
+    </>
   );
 }
 
@@ -259,10 +273,9 @@ function AccountProfileForm() {
   }
 
   return (
-    <AppShell title="Meu perfil" subtitle="Gerencie seus dados de acesso.">
-      <form style={formPanelStyle} onSubmit={handleSubmit}>
-        <AvatarPickerField
-          photoUrl={resolveMediaUrl(photoDataUrl)}
+    <form style={formPanelStyle} onSubmit={handleSubmit}>
+      <AvatarPickerField
+        photoUrl={resolveMediaUrl(photoDataUrl)}
           alt="Sua foto"
           loading={photoLoading}
           error={photoError}
@@ -331,13 +344,117 @@ function AccountProfileForm() {
         <button style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
+    </form>
+  );
+}
+
+function DeleteAccountSection() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const [password, setPassword] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [validationError, setValidationError] = useState("");
+  const [deleteMyAccount, { loading, error }] = useMutation(DELETE_MY_ACCOUNT_MUTATION);
+
+  function handleRequestDeletion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setValidationError("");
+
+    if (isBlank(password)) {
+      setValidationError("Informe sua senha para confirmar a exclusão.");
+      return;
+    }
+
+    setConfirmOpen(true);
+  }
+
+  async function handleConfirmDeletion() {
+    const result = await deleteMyAccount({ variables: { input: { password } } });
+    if (!result.data?.deleteMyAccount) {
+      return;
+    }
+
+    logout();
+    navigate("/landing", { replace: true });
+  }
+
+  return (
+    <section style={dangerZoneStyle}>
+      <h3 style={dangerTitleStyle}>Excluir minha conta</h3>
+      <p style={dangerDescriptionStyle}>
+        Essa ação exclui permanentemente sua conta e todos os dados vinculados a ela (veículos,
+        motoristas, abastecimentos, manutenções e histórico). Não é possível desfazer.
+      </p>
+      <form style={dangerFormStyle} onSubmit={handleRequestDeletion}>
+        <FormField label="Confirme sua senha">
+          <input
+            style={formInputStyle}
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </FormField>
+        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
+        {error ? <p style={errorStyle}>{error.graphQLErrors?.[0]?.message ?? "Falha ao excluir a conta."}</p> : null}
+        <button type="submit" style={dangerButtonStyle}>
+          Excluir minha conta
+        </button>
       </form>
-    </AppShell>
+      <ConfirmModal
+        open={confirmOpen}
+        title="Excluir conta"
+        description={
+          <p style={{ margin: 0 }}>
+            Tem certeza que deseja excluir sua conta? Todos os dados serão apagados permanentemente
+            e essa ação não pode ser desfeita.
+          </p>
+        }
+        confirmLabel="Excluir permanentemente"
+        cancelLabel="Cancelar"
+        danger
+        loading={loading}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={handleConfirmDeletion}
+      />
+    </section>
   );
 }
 
 const mutedStyle: CSSProperties = {
   color: "#94a3b8"
+};
+
+const dangerZoneStyle: CSSProperties = {
+  marginTop: "2rem",
+  padding: "1.25rem",
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(248, 113, 113, 0.35)",
+  background: "rgba(127, 29, 29, 0.12)"
+};
+
+const dangerTitleStyle: CSSProperties = {
+  margin: "0 0 0.5rem",
+  color: "#fca5a5"
+};
+
+const dangerDescriptionStyle: CSSProperties = {
+  margin: "0 0 1rem",
+  color: "#cbd5e1"
+};
+
+const dangerFormStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.75rem",
+  maxWidth: "320px"
+};
+
+const dangerButtonStyle: CSSProperties = {
+  border: "1px solid rgba(248, 113, 113, 0.5)",
+  borderRadius: "0.75rem",
+  padding: "0.75rem 1rem",
+  background: "rgba(127, 29, 29, 0.35)",
+  color: "#fecaca",
+  fontWeight: 600
 };
 
 const hintStyle: CSSProperties = {

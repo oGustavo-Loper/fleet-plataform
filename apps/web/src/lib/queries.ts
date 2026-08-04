@@ -621,6 +621,12 @@ export const UPDATE_MY_PROFILE_MUTATION = gql`
   }
 `;
 
+export const DELETE_MY_ACCOUNT_MUTATION = gql`
+  mutation DeleteMyAccount($input: DeleteMyAccountInput!) {
+    deleteMyAccount(input: $input)
+  }
+`;
+
 export const PROMOTE_DRIVER_TO_MANAGER_MUTATION = gql`
   mutation PromoteDriverToManager($driverId: String!) {
     promoteDriverToManager(driverId: $driverId) {

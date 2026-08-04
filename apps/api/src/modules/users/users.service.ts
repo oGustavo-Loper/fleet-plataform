@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
 import * as argon2 from "argon2";
 
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { DeleteMyAccountInput } from "./dto/delete-my-account.input.js";
 import { UpdateMyProfileInput } from "./dto/update-my-profile.input.js";
+
+const ACCOUNT_OWNER_ROLES = new Set(["ADMIN", "INDIVIDUAL"]);
 
 @Injectable()
 export class UsersService {
@@ -53,5 +56,24 @@ export class UsersService {
     });
 
     return { ...updated, hasCompletedFirstLogin: !updated.mustChangePassword };
+  }
+
+  async deleteOwnAccount(userId: string, input: DeleteMyAccountInput) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException(PtBrMessage.USER_NOT_FOUND);
+    }
+
+    if (!ACCOUNT_OWNER_ROLES.has(user.role)) {
+      throw new ForbiddenException(PtBrMessage.ACCOUNT_DELETION_NOT_ALLOWED);
+    }
+
+    const isPasswordValid = user.passwordHash && (await argon2.verify(user.passwordHash, input.password));
+    if (!isPasswordValid) {
+      throw new BadRequestException(PtBrMessage.ACCOUNT_DELETION_PASSWORD_INVALID);
+    }
+
+    await this.prisma.tenant.delete({ where: { id: user.tenantId } });
+    return true;
   }
 }

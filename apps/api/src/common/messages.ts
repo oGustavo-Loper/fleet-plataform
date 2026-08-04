@@ -39,6 +39,8 @@ export enum PtBrMessage {
   DATA_ENCRYPTION_KEY_REQUIRED = "DATA_ENCRYPTION_KEY é obrigatória para criptografar e descriptografar dados sensíveis.",
   JWT_ACCESS_SECRET_REQUIRED = "JWT_ACCESS_SECRET é obrigatória para emitir e validar tokens de acesso.",
   JWT_REFRESH_SECRET_REQUIRED = "JWT_REFRESH_SECRET é obrigatória para emitir e validar tokens de renovação.",
+  ACCOUNT_DELETION_NOT_ALLOWED = "Apenas o responsável pela conta pode excluí-la. Peça para o administrador remover seu acesso.",
+  ACCOUNT_DELETION_PASSWORD_INVALID = "Senha incorreta. Não foi possível confirmar a exclusão da conta.",
   DATABASE_UNAVAILABLE = "Banco de dados indisponível.",
   SYNC_ENTITY_NOT_SUPPORTED = "Entidade não suportada para sincronização offline.",
   CNH_INVALID = "Informe uma CNH válida, com 11 dígitos.",
