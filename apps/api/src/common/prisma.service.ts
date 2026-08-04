@@ -9,6 +9,7 @@ import type {
   AlertRecord,
   DriverRecord,
   FuelLogRecord,
+  LoginAttemptRecord,
   MaintenanceRecord,
   PasswordResetCodeRecord,
   SyncEventRecord,
@@ -755,6 +756,17 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       title: String(row.title),
       details: toStringOrUndefined(row.details),
       createdAt: new Date(String(row.created_at))
+    };
+  }
+
+  private mapLoginAttemptRow(row: Record<string, unknown>): LoginAttemptRecord {
+    return {
+      id: String(row.id),
+      identifier: String(row.identifier),
+      failedCount: Number(row.failed_count),
+      lockedUntil: row.locked_until ? new Date(String(row.locked_until)) : null,
+      createdAt: new Date(String(row.created_at)),
+      updatedAt: new Date(String(row.updated_at))
     };
   }
 
@@ -1513,6 +1525,39 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         ]
       );
       return this.mapActivityRow(result.rows[0]);
+    }
+  };
+
+  loginAttempt = {
+    findByIdentifier: async (identifier: string) => {
+      await this.ensureReady();
+      const result = await pool.query("SELECT * FROM login_attempts WHERE identifier = $1 LIMIT 1", [identifier]);
+      return result.rows[0] ? this.mapLoginAttemptRow(result.rows[0]) : null;
+    },
+    registerFailure: async (identifier: string) => {
+      await this.ensureReady();
+      const result = await pool.query(
+        `
+          INSERT INTO login_attempts (id, identifier, failed_count, created_at, updated_at)
+          VALUES ($1, $2, 1, NOW(), NOW())
+          ON CONFLICT (identifier)
+          DO UPDATE SET failed_count = login_attempts.failed_count + 1, updated_at = NOW()
+          RETURNING *
+        `,
+        [randomUUID(), identifier]
+      );
+      return this.mapLoginAttemptRow(result.rows[0]);
+    },
+    lock: async (identifier: string, lockedUntil: Date) => {
+      await this.ensureReady();
+      await pool.query(
+        "UPDATE login_attempts SET locked_until = $2, updated_at = NOW() WHERE identifier = $1",
+        [identifier, lockedUntil]
+      );
+    },
+    clear: async (identifier: string) => {
+      await this.ensureReady();
+      await pool.query("DELETE FROM login_attempts WHERE identifier = $1", [identifier]);
     }
   };
 

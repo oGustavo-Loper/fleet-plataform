@@ -18,6 +18,9 @@ import { MailService } from "./mail.service.js";
 import { RefreshSessionInput } from "./dto/refresh-session.input.js";
 
 const MAX_PASSWORD_RESET_ATTEMPTS = 5;
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
+const PASSWORD_RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -77,12 +80,21 @@ export class AuthService {
   }
 
   async login(input: LoginInput) {
-    const user = await this.findUserByLoginIdentifier(input.identifier);
+    const identifier = String(input.identifier).trim().toLowerCase();
+
+    const existingAttempt = await this.prisma.loginAttempt.findByIdentifier(identifier);
+    if (existingAttempt?.lockedUntil && existingAttempt.lockedUntil.getTime() > Date.now()) {
+      throw new UnauthorizedException(PtBrMessage.LOGIN_TOO_MANY_ATTEMPTS);
+    }
+
+    const user = await this.findUserByLoginIdentifier(identifier);
     if (!user) {
+      await this.registerLoginFailure(identifier);
       throw new UnauthorizedException(PtBrMessage.INVALID_CREDENTIALS);
     }
 
     if (!user.isActive) {
+      await this.registerLoginFailure(identifier);
       throw new UnauthorizedException(PtBrMessage.ACCOUNT_INACTIVE);
     }
 
@@ -94,8 +106,11 @@ export class AuthService {
       passwordHash && (await argon2.verify(passwordHash, input.password));
 
     if (!isDemoMatch && !isHashMatch) {
+      await this.registerLoginFailure(identifier);
       throw new UnauthorizedException(PtBrMessage.INVALID_CREDENTIALS);
     }
+
+    await this.prisma.loginAttempt.clear(identifier);
 
     const authUser = user as {
       id: string;
@@ -110,6 +125,13 @@ export class AuthService {
     };
 
     return this.issueAuthPayload(authUser);
+  }
+
+  private async registerLoginFailure(identifier: string) {
+    const attempt = await this.prisma.loginAttempt.registerFailure(identifier);
+    if (attempt.failedCount >= MAX_LOGIN_ATTEMPTS) {
+      await this.prisma.loginAttempt.lock(identifier, new Date(Date.now() + LOGIN_LOCKOUT_MS));
+    }
   }
 
   async refreshSession(input: RefreshSessionInput) {
@@ -202,8 +224,21 @@ export class AuthService {
     if (!user) {
       return {
         deliveryHint: PtBrMessage.PASSWORD_RESET_DELIVERY_HINT,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        retryAfterSeconds: Math.ceil(PASSWORD_RESET_REQUEST_COOLDOWN_MS / 1000)
       };
+    }
+
+    const latestCode = await this.prisma.passwordResetCode.findLatestByEmail(user.email);
+    if (latestCode) {
+      const elapsedMs = Date.now() - latestCode.createdAt.getTime();
+      if (elapsedMs < PASSWORD_RESET_REQUEST_COOLDOWN_MS) {
+        return {
+          deliveryHint: PtBrMessage.PASSWORD_RESET_DELIVERY_HINT,
+          expiresAt: latestCode.expiresAt.toISOString(),
+          retryAfterSeconds: Math.ceil((PASSWORD_RESET_REQUEST_COOLDOWN_MS - elapsedMs) / 1000)
+        };
+      }
     }
 
     const code = this.generateResetCode();
@@ -220,7 +255,8 @@ export class AuthService {
 
     return {
       deliveryHint: PtBrMessage.PASSWORD_RESET_DELIVERY_HINT,
-      expiresAt: expiresAt.toISOString()
+      expiresAt: expiresAt.toISOString(),
+      retryAfterSeconds: Math.ceil(PASSWORD_RESET_REQUEST_COOLDOWN_MS / 1000)
     };
   }
 

@@ -1,5 +1,5 @@
 import type { CSSProperties, FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -29,11 +29,26 @@ export function LoginPage() {
   const [showReset, setShowReset] = useState(false);
   const [resetMessage, setResetMessage] = useState("");
   const [formError, setFormError] = useState("");
+  const [resetCooldownSeconds, setResetCooldownSeconds] = useState(0);
   const [requestPasswordReset, { loading: resetRequestLoading, error: resetRequestError }] =
     useMutation(REQUEST_PASSWORD_RESET_MUTATION);
   const [confirmPasswordReset, { loading: resetConfirmLoading, error: resetConfirmError }] =
     useMutation(CONFIRM_PASSWORD_RESET_MUTATION);
   const [loginMutation, { loading, error }] = useMutation(LOGIN_MUTATION);
+
+  const isResetCooldownActive = resetCooldownSeconds > 0;
+
+  useEffect(() => {
+    if (!isResetCooldownActive) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setResetCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isResetCooldownActive]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -101,6 +116,10 @@ export function LoginPage() {
       return;
     }
 
+    if (isResetCooldownActive) {
+      return;
+    }
+
     const result = await requestPasswordReset({
       variables: {
         input: {
@@ -114,6 +133,7 @@ export function LoginPage() {
       return;
     }
 
+    setResetCooldownSeconds(payload.retryAfterSeconds ?? 0);
     setResetMessage(`Código enviado para ${email}.`);
   }
 
@@ -196,8 +216,12 @@ export function LoginPage() {
                   onChange={(event) => setResetEmail(event.target.value)}
                 />
               </FormField>
-              <button style={buttonStyle} type="submit" disabled={resetRequestLoading}>
-                {resetRequestLoading ? "Enviando código..." : "Enviar código"}
+              <button style={buttonStyle} type="submit" disabled={resetRequestLoading || isResetCooldownActive}>
+                {resetRequestLoading
+                  ? "Enviando código..."
+                  : isResetCooldownActive
+                    ? `Aguarde ${resetCooldownSeconds}s para reenviar`
+                    : "Enviar código"}
               </button>
             </form>
             <form style={resetFormStyle} onSubmit={handleConfirmReset}>
