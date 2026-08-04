@@ -27,6 +27,8 @@ export type UserRecord = {
   allowAnyVehicle?: boolean;
   isActive: boolean;
   photoDataUrl?: string;
+  termsAcceptedAt?: Date;
+  termsVersion?: string;
 };
 
 export type DriverRecord = {

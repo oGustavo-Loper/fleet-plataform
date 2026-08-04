@@ -16,4 +16,7 @@ export class RegisterIndividualInput {
 
   @Field({ nullable: true })
   createDriverProfile?: boolean;
+
+  @Field()
+  acceptedTermsVersion!: string;
 }
