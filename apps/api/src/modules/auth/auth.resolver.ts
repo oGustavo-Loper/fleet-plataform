@@ -13,7 +13,6 @@ import {
 } from "./auth.types.js";
 import { CreateCheckoutSessionInput } from "./dto/create-checkout-session.input.js";
 import { CompleteFirstLoginInput } from "./dto/complete-first-login.input.js";
-import { ConfirmBillingPaymentInput } from "./dto/confirm-billing-payment.input.js";
 import { ConfirmPasswordResetInput } from "./dto/confirm-password-reset.input.js";
 import { LoginInput } from "./dto/login.input.js";
 import { RefreshSessionInput } from "./dto/refresh-session.input.js";
@@ -70,17 +69,12 @@ export class AuthResolver {
   }
 
   @Mutation(() => CheckoutSessionModel)
-  createCheckoutSession(@Args("input") input: CreateCheckoutSessionInput) {
-    return this.authService.createCheckoutSession(input);
-  }
-
-  @Mutation(() => TenantModel)
   @UseGuards(GqlJwtAuthGuard)
-  confirmBillingPayment(
-    @Args("input") input: ConfirmBillingPaymentInput,
+  createCheckoutSession(
+    @Args("input") input: CreateCheckoutSessionInput,
     @CurrentUser() user: AuthenticatedUser
   ) {
     assertTenantAccess(user, input.tenantId);
-    return this.authService.confirmBillingPayment(input);
+    return this.authService.createCheckoutSession(input, user.email);
   }
 }

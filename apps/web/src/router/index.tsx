@@ -10,7 +10,6 @@ import { FirstAccessPage } from "../pages/FirstAccessPage";
 import { FuelsPage } from "../pages/FuelsPage";
 import { LoginPage } from "../pages/LoginPage";
 import { MaintenancePage } from "../pages/MaintenancePage";
-import { BillingCheckoutPage } from "../pages/BillingCheckoutPage";
 import { LandingPage } from "../pages/LandingPage";
 import { OnboardingPage } from "../pages/OnboardingPage";
 import { ReportsPage } from "../pages/ReportsPage";
@@ -47,7 +46,6 @@ export function AppRouter() {
         <Route path="/register/individual" element={<RegisterIndividualPage />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/termos" element={<TermsPage />} />
-        <Route path="/billing/checkout" element={<BillingCheckoutPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />

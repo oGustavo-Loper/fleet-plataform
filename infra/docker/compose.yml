@@ -35,8 +35,8 @@ services:
       PORT: 4000
       BILLING_PROVIDER: mercado_pago
       WEB_BASE_URL: ${WEB_BASE_URL:-https://fleet.gustavoloper.xyz}
-      MERCADO_PAGO_CHECKOUT_URL: https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=demo
-      BILLING_WEBHOOK_TOKEN: ${BILLING_WEBHOOK_TOKEN:?Defina BILLING_WEBHOOK_TOKEN no .env}
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
+      MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
       MEDIA_STORAGE_DIR: /workspace/apps/api/uploads
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}

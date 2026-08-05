@@ -11,6 +11,7 @@ export type TenantRecord = {
   billingCustomerId?: string;
   billingSubscriptionId?: string;
   billingActivatedAt?: Date;
+  billingSubscriptionStatus?: string;
   retentionPurgedAt?: Date;
 };
 
@@ -139,6 +140,14 @@ export type MediaFileRecord = {
   path: string;
   scope: string;
   createdAt: Date;
+};
+
+export type BillingWebhookEventRecord = {
+  id: string;
+  notificationId: string;
+  eventType: string;
+  resourceId: string;
+  processedAt: Date;
 };
 
 export type PasswordResetCodeRecord = {

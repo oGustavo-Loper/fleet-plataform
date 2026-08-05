@@ -618,6 +618,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       billingCustomerId: toStringOrUndefined(row.billing_customer_id),
       billingSubscriptionId: toStringOrUndefined(row.billing_subscription_id),
       billingActivatedAt: toDateOrUndefined(row.billing_activated_at),
+      billingSubscriptionStatus: toStringOrUndefined(row.billing_subscription_status),
       retentionPurgedAt: toDateOrUndefined(row.retention_purged_at)
     };
   }
@@ -955,6 +956,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
               billing_customer_id = $10,
               billing_subscription_id = $11,
               billing_activated_at = $12,
+              billing_subscription_status = $13,
               updated_at = NOW()
           WHERE id = $1
           RETURNING *
@@ -975,7 +977,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
           args.data.billingProvider === undefined ? current.billingProvider ?? null : args.data.billingProvider ? String(args.data.billingProvider) : null,
           args.data.billingCustomerId === undefined ? current.billingCustomerId ?? null : args.data.billingCustomerId ? String(args.data.billingCustomerId) : null,
           args.data.billingSubscriptionId === undefined ? current.billingSubscriptionId ?? null : args.data.billingSubscriptionId ? String(args.data.billingSubscriptionId) : null,
-          args.data.billingActivatedAt === undefined ? current.billingActivatedAt ?? null : args.data.billingActivatedAt ? new Date(String(args.data.billingActivatedAt)) : null
+          args.data.billingActivatedAt === undefined ? current.billingActivatedAt ?? null : args.data.billingActivatedAt ? new Date(String(args.data.billingActivatedAt)) : null,
+          args.data.billingSubscriptionStatus === undefined ? current.billingSubscriptionStatus ?? null : args.data.billingSubscriptionStatus ? String(args.data.billingSubscriptionStatus) : null
         ]
       );
       return this.mapTenantRow(result.rows[0]);
@@ -1656,6 +1659,32 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         [randomUUID(), String(args.data.tenantId), String(args.data.path), String(args.data.scope)]
       );
       return this.mapMediaFileRow(result.rows[0]);
+    }
+  };
+
+  billingWebhookEvent = {
+    /**
+     * Mercado Pago retries undelivered webhooks; the notification's own id
+     * (distinct from the resource id in data.id) stays stable across
+     * retries of the same event, so it's the idempotency key.
+     */
+    wasProcessed: async (notificationId: string): Promise<boolean> => {
+      await this.ensureReady();
+      const result = await pool.query("SELECT 1 FROM billing_webhook_events WHERE notification_id = $1", [
+        notificationId
+      ]);
+      return result.rows.length > 0;
+    },
+    markProcessed: async (input: { notificationId: string; eventType: string; resourceId: string }) => {
+      await this.ensureReady();
+      await pool.query(
+        `
+          INSERT INTO billing_webhook_events (id, notification_id, event_type, resource_id, processed_at)
+          VALUES ($1, $2, $3, $4, NOW())
+          ON CONFLICT (notification_id) DO NOTHING
+        `,
+        [randomUUID(), input.notificationId, input.eventType, input.resourceId]
+      );
     }
   };
 

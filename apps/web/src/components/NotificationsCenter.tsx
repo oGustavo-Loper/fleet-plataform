@@ -13,7 +13,7 @@ import {
 } from "../lib/notifications";
 import { NOTIFICATIONS_QUERY } from "../lib/queries";
 
-const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
+const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual"]);
 
 export function NotificationsCenter() {
   const location = useLocation();

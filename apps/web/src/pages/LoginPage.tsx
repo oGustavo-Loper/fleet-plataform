@@ -295,7 +295,7 @@ export function LoginPage() {
             </label>
             <div style={actionsStyle}>
               <Link style={linkStyle} to="/register/company">
-                Criar conta empresa
+                Criar conta empresarial
               </Link>
               <Link style={linkStyle} to="/register/individual">
                 Criar conta pessoal

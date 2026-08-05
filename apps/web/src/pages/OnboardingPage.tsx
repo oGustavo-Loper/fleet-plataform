@@ -30,7 +30,7 @@ export function OnboardingPage() {
 
   return (
     <AppShell
-      title="Onboarding Inicial"
+      title="Primeiros Passos"
       subtitle="Configure os primeiros dados da conta para começar a operar no Fleet Platform."
     >
       <section style={gridStyle}>

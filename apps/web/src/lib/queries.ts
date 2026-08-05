@@ -182,20 +182,6 @@ export const CREATE_CHECKOUT_SESSION_MUTATION = gql`
   }
 `;
 
-export const CONFIRM_BILLING_PAYMENT_MUTATION = gql`
-  mutation ConfirmBillingPayment($input: ConfirmBillingPaymentInput!) {
-    confirmBillingPayment(input: $input) {
-      id
-      name
-      accountType
-      documentNumber
-      planCode
-      planStatus
-      vehicleLimit
-    }
-  }
-`;
-
 export const DASHBOARD_SUMMARY_QUERY = gql`
   query DashboardSummary($tenantId: String!) {
     dashboardSummary(tenantId: $tenantId) {

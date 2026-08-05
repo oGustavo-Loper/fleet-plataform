@@ -1,18 +1,48 @@
 import type { CSSProperties } from "react";
-import { useMutation } from "@apollo/client/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { CenteredShell } from "../components/CenteredShell";
 import { useAuth } from "../contexts/AuthContext";
+
+/**
+ * Pricing temporarily disabled until real Mercado Pago payment is fully
+ * working end-to-end (checkout creation + webhook activation confirmed in
+ * production, not just locally). The full plans/pricing UI is preserved
+ * in the commented block below — restore it (and re-enable PLAN_ACTIONS_ENABLED
+ * where relevant) once billing is live.
+ */
+export function PlansPage() {
+  const { auth } = useAuth();
+
+  return (
+    <CenteredShell title="Planos" subtitle="Em breve.">
+      <p style={placeholderTextStyle}>
+        A tela de planos está temporariamente indisponível enquanto finalizamos a
+        integração de pagamento. Sua conta continua funcionando normalmente no
+        plano atual.
+      </p>
+      <Link style={placeholderLinkStyle} to={auth ? "/dashboard" : "/"}>
+        {auth ? "Voltar para o painel" : "Voltar para a home"}
+      </Link>
+    </CenteredShell>
+  );
+}
+
+const placeholderTextStyle: CSSProperties = {
+  color: "#cbd5e1"
+};
+
+const placeholderLinkStyle: CSSProperties = {
+  color: "#fbbf24",
+  fontWeight: 700
+};
+
+/*
+import { useMutation } from "@apollo/client/react";
+
 import { useTenant } from "../hooks/useTenant";
-import { upsertQueryListItem } from "../lib/apollo-cache";
 import { planLabel } from "../lib/plans";
-import {
-  CREATE_CHECKOUT_SESSION_MUTATION,
-  TENANT_QUERY,
-  TENANTS_QUERY,
-  UPGRADE_PLAN_MUTATION
-} from "../lib/queries";
+import { CREATE_CHECKOUT_SESSION_MUTATION } from "../lib/queries";
 
 // Billing isn't live yet for this initial launch — plan changes are
 // disabled and this flag is the single place to turn them back on.
@@ -59,39 +89,12 @@ const plans: PlanCard[] = [
   }
 ];
 
-export function PlansPage() {
-  const navigate = useNavigate();
+export function PlansPageReal() {
   const { auth } = useAuth();
   const { activeTenant } = useTenant();
   const [createCheckoutSession, { loading: checkoutLoading }] = useMutation(
     CREATE_CHECKOUT_SESSION_MUTATION
   );
-  const [upgradePlan, { loading: demoLoading }] = useMutation(UPGRADE_PLAN_MUTATION, {
-    update(cache, { data }) {
-      const tenant = data?.upgradePlan;
-      if (!tenant) {
-        return;
-      }
-
-      cache.updateQuery<{ tenant: typeof tenant | null }>(
-        { query: TENANT_QUERY, variables: { id: tenant.id } },
-        (current) => ({
-          tenant: {
-            ...(current?.tenant ?? {}),
-            ...tenant
-          }
-        })
-      );
-
-      upsertQueryListItem({
-        cache,
-        query: TENANTS_QUERY,
-        variables: {},
-        field: "tenants",
-        item: tenant
-      });
-    }
-  });
 
   const hasTenant = Boolean(activeTenant?.id);
   const activePlanCode = activeTenant?.planCode;
@@ -115,7 +118,7 @@ export function PlansPage() {
                 Criar conta pessoal
               </Link>
               <Link style={heroLinkStyle} to="/register/company">
-                Criar conta empresa
+                Criar conta empresarial
               </Link>
             </div>
           </article>
@@ -139,7 +142,7 @@ export function PlansPage() {
                   style={buttonLinkStyle}
                   to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}
                 >
-                  {plan.code === "COMPANY_START" ? "Criar conta empresa" : "Criar conta pessoal"}
+                  {plan.code === "COMPANY_START" ? "Criar conta empresarial" : "Criar conta pessoal"}
                 </Link>
               </article>
             ))}
@@ -155,29 +158,18 @@ export function PlansPage() {
       return;
     }
 
-    try {
-      const result = await createCheckoutSession({
-        variables: {
-          input: {
-            tenantId,
-            planCode
-          }
+    const result = await createCheckoutSession({
+      variables: {
+        input: {
+          tenantId,
+          planCode
         }
-      });
-      const url = result.data?.createCheckoutSession?.checkoutUrl;
-      if (url) {
-        window.open(url, "_blank", "noopener,noreferrer");
-        return;
       }
-    } catch {
-      // Fallback para o checkout local quando o servidor ainda não expuser a URL externa.
+    });
+    const url = result.data?.createCheckoutSession?.checkoutUrl;
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
     }
-
-    const fallbackUrl = new URL("/billing/checkout", window.location.origin);
-    fallbackUrl.searchParams.set("tenantId", tenantId);
-    fallbackUrl.searchParams.set("planCode", planCode);
-    fallbackUrl.searchParams.set("customerName", activeTenant?.name ?? "");
-    navigate(`${fallbackUrl.pathname}?${fallbackUrl.searchParams.toString()}`);
   }
 
   return (
@@ -213,42 +205,19 @@ export function PlansPage() {
             <p style={descriptionStyle}>{plan.description}</p>
             <div style={cardActionsStyle}>
               {hasTenant ? (
-                PLAN_ACTIONS_ENABLED ? (
-                  <>
-                    {plan.code === "COMPANY_PRO" || plan.code === "INDIVIDUAL_PRO" ? (
-                      <button
-                        type="button"
-                        style={buttonStyle}
-                        disabled={checkoutLoading}
-                        onClick={() => openCheckout(plan.code)}
-                      >
-                        {checkoutLoading ? "Abrindo checkout..." : "Assinar agora"}
-                      </button>
-                    ) : (
-                      <span style={mutedLabelStyle}>Plano base</span>
-                    )}
+                PLAN_ACTIONS_ENABLED && activePlanCode !== plan.code ? (
+                  plan.code === "COMPANY_PRO" || plan.code === "INDIVIDUAL_PRO" ? (
                     <button
                       type="button"
-                      style={ghostButtonStyle}
-                      disabled={demoLoading || activePlanCode === plan.code}
-                      onClick={() =>
-                        upgradePlan({
-                          variables: {
-                            input: {
-                              tenantId: activeTenant?.id ?? "",
-                              planCode: plan.code
-                            }
-                          }
-                        })
-                      }
+                      style={buttonStyle}
+                      disabled={checkoutLoading}
+                      onClick={() => openCheckout(plan.code)}
                     >
-                      {demoLoading
-                        ? "Atualizando..."
-                        : activePlanCode === plan.code
-                          ? "Plano atual"
-                          : "Ativar demo"}
+                      {checkoutLoading ? "Abrindo checkout..." : "Assinar agora"}
                     </button>
-                  </>
+                  ) : (
+                    <span style={mutedLabelStyle}>Plano base</span>
+                  )
                 ) : (
                   <span style={mutedLabelStyle}>
                     {activePlanCode === plan.code ? "Plano atual" : "Em breve"}
@@ -256,7 +225,7 @@ export function PlansPage() {
                 )
               ) : (
                 <Link style={buttonLinkStyle} to={plan.code === "COMPANY_START" ? "/register/company" : "/register/individual"}>
-                  {plan.code === "COMPANY_START" ? "Criar conta empresa" : "Criar conta pessoal"}
+                  {plan.code === "COMPANY_START" ? "Criar conta empresarial" : "Criar conta pessoal"}
                 </Link>
               )}
             </div>
@@ -404,14 +373,6 @@ const buttonStyle: CSSProperties = {
   fontWeight: 700
 };
 
-const ghostButtonStyle: CSSProperties = {
-  borderRadius: "0.9rem",
-  padding: "0.9rem 1rem",
-  background: "transparent",
-  color: "#f8fafc",
-  border: "1px solid rgba(148, 163, 184, 0.22)"
-};
-
 const buttonLinkStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -427,3 +388,4 @@ const mutedLabelStyle: CSSProperties = {
   color: "#94a3b8",
   alignSelf: "center"
 };
+*/
