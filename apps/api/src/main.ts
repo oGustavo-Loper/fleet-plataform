@@ -1,5 +1,6 @@
 import "reflect-metadata";
 
+import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module.js";
@@ -10,6 +11,12 @@ async function bootstrap() {
     origin: true,
     credentials: true
   });
+
+  // Not whitelist/forbidNonWhitelisted: most DTOs only carry @Field()
+  // (GraphQL schema shape), not class-validator decorators, so whitelist
+  // mode would silently strip almost every input field. This activates
+  // validation only where a DTO actually opts in with decorators.
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   // Media files are served through MediaController (tenant-scoped, behind
   // HttpJwtAuthGuard) instead of a public static-assets mount.
