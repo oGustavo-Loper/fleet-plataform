@@ -78,9 +78,11 @@ export class MediaService {
   }
 
   /**
-   * Files uploaded before this record existed have no media_files row —
-   * allowed through for any authenticated user rather than broken links,
-   * since their names are already unguessable (timestamp + UUID).
+   * A startup backfill (see backfillLegacyMediaFiles in prisma.service.ts)
+   * creates media_files rows for every legacy file still referenced by a
+   * tenant/user/driver/fuel_log photo column, so a missing row here means
+   * the file is either unreferenced or was never uploaded through this
+   * tenant — deny rather than fail open.
    */
   async resolveAuthorizedFilePath(scope: string, fileName: string, requesterTenantId: string) {
     const safeScope = this.sanitizeSegment(scope);
@@ -88,7 +90,7 @@ export class MediaService {
     const relativePath = `${safeScope}/${safeFileName}`;
 
     const record = await this.prisma.mediaFile.findUnique({ where: { path: relativePath } });
-    if (record && record.tenantId !== requesterTenantId) {
+    if (!record || record.tenantId !== requesterTenantId) {
       throw new ForbiddenException(PtBrMessage.MEDIA_ACCESS_DENIED);
     }
 

@@ -272,4 +272,10 @@ export const PRISMA_SCHEMA_SQL = `
   ALTER TABLE users
     ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS terms_version TEXT;
+
+  ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+
+  ALTER TABLE tenants
+    ADD COLUMN IF NOT EXISTS retention_purged_at TIMESTAMPTZ;
 `;

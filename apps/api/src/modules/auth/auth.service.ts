@@ -111,6 +111,7 @@ export class AuthService {
     }
 
     await this.prisma.loginAttempt.clear(identifier);
+    await this.prisma.user.recordLogin(user.id);
 
     const authUser = user as {
       id: string;
@@ -156,6 +157,8 @@ export class AuthService {
     if (!user.isActive) {
       throw new UnauthorizedException(PtBrMessage.ACCOUNT_INACTIVE);
     }
+
+    await this.prisma.user.recordLogin(user.id);
 
     return this.issueAuthPayload({
       id: user.id,
@@ -212,6 +215,8 @@ export class AuthService {
         mustChangePassword: false
       }
     });
+
+    await this.prisma.user.recordLogin(updated.id);
 
     return this.issueAuthPayload(updated);
   }
@@ -300,6 +305,7 @@ export class AuthService {
     });
 
     await this.prisma.passwordResetCode.markUsed(resetCode.id);
+    await this.prisma.user.recordLogin(user.id);
     return this.issueAuthPayload({
       id: user.id,
       tenantId: user.tenantId,
