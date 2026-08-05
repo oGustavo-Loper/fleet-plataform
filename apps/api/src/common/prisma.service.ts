@@ -219,6 +219,46 @@ async function reencryptLegacySensitiveData(client: PoolClient) {
   }
 }
 
+const LEGACY_MEDIA_SOURCES: Array<{ table: string; tenantColumn: string; photoColumn: string }> = [
+  { table: "tenants", tenantColumn: "id", photoColumn: "photo_data_url" },
+  { table: "users", tenantColumn: "tenant_id", photoColumn: "photo_data_url" },
+  { table: "drivers", tenantColumn: "tenant_id", photoColumn: "photo_data_url" },
+  { table: "fuel_logs", tenantColumn: "tenant_id", photoColumn: "receipt_photo_data_url" }
+];
+
+/**
+ * media_files only started being written on upload after access control was
+ * added; files uploaded before that have no row and used to be served to
+ * any authenticated user (see media.service.ts). Backfill a row for every
+ * such file still referenced by a photo column so ownership can be checked
+ * without fail-open: ON CONFLICT (path) keeps this idempotent across boots.
+ */
+async function backfillLegacyMediaFiles(client: PoolClient) {
+  for (const source of LEGACY_MEDIA_SOURCES) {
+    const result = await client.query<{ tenant_id: string; photo_path: string }>(
+      `SELECT ${source.tenantColumn} AS tenant_id, ${source.photoColumn} AS photo_path FROM ${source.table} WHERE ${source.photoColumn} IS NOT NULL`
+    );
+
+    for (const row of result.rows) {
+      const match = row.photo_path.match(/^\/media\/([^/]+)\/([^/]+)$/);
+      if (!match) {
+        continue;
+      }
+
+      const [, scope, fileName] = match;
+      const path = `${scope}/${fileName}`;
+      await client.query(
+        `
+          INSERT INTO media_files (id, tenant_id, path, scope, created_at)
+          VALUES ($1, $2, $3, $4, NOW())
+          ON CONFLICT (path) DO NOTHING
+        `,
+        [randomUUID(), row.tenant_id, path, scope]
+      );
+    }
+  }
+}
+
 async function seedDatabase(client: PoolClient) {
   const tenantCount = await client.query<{ count: string }>("SELECT COUNT(*)::text AS count FROM tenants");
   if (Number(tenantCount.rows[0]?.count ?? "0") > 0) {
@@ -554,6 +594,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         await ensureSchema(client);
         await seedDatabase(client);
         await reencryptLegacySensitiveData(client);
+        await backfillLegacyMediaFiles(client);
       });
     }
 
@@ -576,7 +617,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       billingProvider: toStringOrUndefined(row.billing_provider),
       billingCustomerId: toStringOrUndefined(row.billing_customer_id),
       billingSubscriptionId: toStringOrUndefined(row.billing_subscription_id),
-      billingActivatedAt: toDateOrUndefined(row.billing_activated_at)
+      billingActivatedAt: toDateOrUndefined(row.billing_activated_at),
+      retentionPurgedAt: toDateOrUndefined(row.retention_purged_at)
     };
   }
 
@@ -1066,6 +1108,10 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         ]
       );
       return this.mapUserRow(result.rows[0]);
+    },
+    recordLogin: async (userId: string) => {
+      await this.ensureReady();
+      await pool.query("UPDATE users SET last_login_at = NOW() WHERE id = $1", [userId]);
     }
   };
 
@@ -1610,6 +1656,41 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
         [randomUUID(), String(args.data.tenantId), String(args.data.path), String(args.data.scope)]
       );
       return this.mapMediaFileRow(result.rows[0]);
+    }
+  };
+
+  retention = {
+    /**
+     * A tenant is inactive when every one of its users' last activity
+     * (login, or account creation if never logged in) falls before the
+     * cutoff, it hasn't already been purged, and it isn't on a currently
+     * active paid plan — a paying customer's data must never be silently
+     * anonymized just because nobody opened the dashboard.
+     */
+    findInactiveTenantIds: async (cutoff: Date): Promise<string[]> => {
+      await this.ensureReady();
+      const result = await pool.query<{ id: string }>(
+        `
+          SELECT t.id
+          FROM tenants t
+          WHERE t.retention_purged_at IS NULL
+            AND t.plan_status <> 'ACTIVE'
+            AND NOT EXISTS (
+              SELECT 1 FROM users u
+              WHERE u.tenant_id = t.id
+                AND COALESCE(u.last_login_at, u.created_at) >= $1
+            )
+        `,
+        [cutoff]
+      );
+      return result.rows.map((row) => row.id);
+    },
+    markTenantPurged: async (tenantId: string) => {
+      await this.ensureReady();
+      await pool.query(
+        "UPDATE tenants SET retention_purged_at = NOW(), updated_at = NOW() WHERE id = $1",
+        [tenantId]
+      );
     }
   };
 

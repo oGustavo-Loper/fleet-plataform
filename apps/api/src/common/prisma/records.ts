@@ -11,6 +11,7 @@ export type TenantRecord = {
   billingCustomerId?: string;
   billingSubscriptionId?: string;
   billingActivatedAt?: Date;
+  retentionPurgedAt?: Date;
 };
 
 export type UserRecord = {

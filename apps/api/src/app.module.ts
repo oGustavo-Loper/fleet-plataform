@@ -13,6 +13,7 @@ import { FuelsModule } from "./modules/fuels/fuels.module.js";
 import { MaintenanceModule } from "./modules/maintenance/maintenance.module.js";
 import { MediaModule } from "./modules/media/media.module.js";
 import { ReportsModule } from "./modules/reports/reports.module.js";
+import { RetentionModule } from "./modules/retention/retention.module.js";
 import { SyncModule } from "./modules/sync/sync.module.js";
 import { TenantsModule } from "./modules/tenants/tenants.module.js";
 import { UsersModule } from "./modules/users/users.module.js";
@@ -42,7 +43,8 @@ import { VehiclesModule } from "./modules/vehicles/vehicles.module.js";
     ReportsModule,
     VehiclesModule,
     DashboardModule,
-    SyncModule
+    SyncModule,
+    RetentionModule
   ],
   providers: [PrismaService]
 })

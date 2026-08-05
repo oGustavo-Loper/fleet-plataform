@@ -4,11 +4,12 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module.js";
+import { resolveCorsOrigins } from "./common/cors.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: true,
+    origin: resolveCorsOrigins(),
     credentials: true
   });
 

@@ -3,6 +3,7 @@ import * as argon2 from "argon2";
 
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
+import { MediaService } from "../media/media.service.js";
 import { DeleteMyAccountInput } from "./dto/delete-my-account.input.js";
 import { UpdateMyProfileInput } from "./dto/update-my-profile.input.js";
 
@@ -10,7 +11,10 @@ const ACCOUNT_OWNER_ROLES = new Set(["ADMIN", "INDIVIDUAL"]);
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService
+  ) {}
 
   async listByTenant(tenantId: string) {
     const users = await this.prisma.user.findMany({
@@ -73,7 +77,26 @@ export class UsersService {
       throw new BadRequestException(PtBrMessage.ACCOUNT_DELETION_PASSWORD_INVALID);
     }
 
+    await this.deleteTenantPhotoFiles(user.tenantId);
     await this.prisma.tenant.delete({ where: { id: user.tenantId } });
     return true;
+  }
+
+  private async deleteTenantPhotoFiles(tenantId: string) {
+    const [tenant, users, drivers, fuelLogs] = await Promise.all([
+      this.prisma.tenant.findUnique({ where: { id: tenantId } }),
+      this.prisma.user.findMany({ where: { tenantId } }),
+      this.prisma.driver.findMany({ where: { tenantId } }),
+      this.prisma.fuelLog.findMany({ where: { tenantId } })
+    ]);
+
+    const photoPaths = [
+      tenant?.photoDataUrl,
+      ...users.map((record) => record.photoDataUrl),
+      ...drivers.map((record) => record.photoDataUrl),
+      ...fuelLogs.map((record) => record.receiptPhotoDataUrl)
+    ];
+
+    await Promise.all(photoPaths.map((path) => this.mediaService.deleteFileByPublicPath(path)));
   }
 }

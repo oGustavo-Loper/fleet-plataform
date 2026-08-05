@@ -63,6 +63,9 @@ function createAuthService(options?: {
           ...args.data
         };
         return updated;
+      },
+      async recordLogin() {
+        return undefined;
       }
     },
     driver: {
