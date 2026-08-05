@@ -95,62 +95,71 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-const capabilities: Array<{ title: string; text: string; icon: (props: IconProps) => ReactNode }> = [
+const capabilities: Array<{ title: string; text: string; icon: (props: IconProps) => ReactNode; accent: string }> = [
   {
     title: "Gestão de veículos",
     text: "Cadastro completo, status operacional, quilometragem e limites por plano.",
-    icon: CarIcon
+    icon: CarIcon,
+    accent: "#fbbf24"
   },
   {
     title: "Motoristas com login",
     text: "Perfis com vínculo a veículo, permissão para abastecer qualquer veículo e restrição por conta.",
-    icon: IdBadgeIcon
+    icon: IdBadgeIcon,
+    accent: "#38bdf8"
   },
   {
     title: "Abastecimento e manutenção",
     text: "Registro rápido com cálculo de KM rodado, média, custos e campos dinâmicos por tipo de manutenção.",
-    icon: FuelIcon
+    icon: FuelIcon,
+    accent: "#fb923c"
   },
   {
-    title: "Relatórios e dashboard",
+    title: "Relatórios e painel",
     text: "Resumo por veículo com custos, consumo, alertas automáticos e exportação futura.",
-    icon: ChartIcon
+    icon: ChartIcon,
+    accent: "#4ade80"
   },
   {
     title: "PWA offline",
     text: "Uso em campo com fila local, sincronização automática e experiência mobile-first.",
-    icon: CloudSyncIcon
+    icon: CloudSyncIcon,
+    accent: "#a78bfa"
   },
   {
-    title: "Billing recorrente",
+    title: "Cobrança recorrente",
     text: "Planos Free, Pro e Empresa com checkout hospedado e ativação após confirmação.",
-    icon: CardIcon
+    icon: CardIcon,
+    accent: "#f472b6"
   }
 ];
 
-const plans = [
-  {
-    name: "Free",
-    price: "R$ 0,00",
-    period: "",
-    features: ["Até 3 veículos", "1 usuário administrador", "Abastecimentos e manutenções ilimitados"]
-  },
-  {
-    name: "Pro",
-    price: "R$ 19,90",
-    period: "/mês",
-    oldPrice: "R$ 29,90",
-    highlight: true,
-    features: ["Até 20 veículos", "Motoristas com login próprio", "Relatórios por veículo e período"]
-  },
-  {
-    name: "Empresa",
-    price: "R$ 59,90",
-    period: "/mês",
-    oldPrice: "R$ 79,90",
-    features: ["Veículos ilimitados", "Multiusuário com permissões", "Suporte prioritário"]
-  }
-];
+// Planos/preços escondidos temporariamente até o pagamento real (Mercado
+// Pago) estar 100% funcionando — reative junto com a seção de preços e os
+// links "/plans" mais abaixo neste arquivo.
+// const plans = [
+//   {
+//     name: "Free",
+//     price: "R$ 0,00",
+//     period: "",
+//     features: ["Até 3 veículos", "1 usuário administrador", "Abastecimentos e manutenções ilimitados"]
+//   },
+//   {
+//     name: "Pro",
+//     price: "R$ 19,90",
+//     period: "/mês",
+//     oldPrice: "R$ 29,90",
+//     highlight: true,
+//     features: ["Até 20 veículos", "Motoristas com login próprio", "Relatórios por veículo e período"]
+//   },
+//   {
+//     name: "Empresa",
+//     price: "R$ 59,90",
+//     period: "/mês",
+//     oldPrice: "R$ 79,90",
+//     features: ["Veículos ilimitados", "Multiusuário com permissões", "Suporte prioritário"]
+//   }
+// ];
 
 const steps = [
   "Crie a conta da empresa ou pessoa física.",
@@ -187,14 +196,15 @@ const faqs = [
     question: "O motorista vê todos os veículos?",
     answer: "Não. Se estiver vinculado a um veículo, ele fica restrito a ele, salvo permissão especial da empresa."
   },
-  {
-    question: "Como funciona o pagamento?",
-    answer: "A cobrança usa checkout hospedado com ativação automática após confirmação via Mercado Pago."
-  },
-  {
-    question: "Dá para trocar de plano depois?",
-    answer: "Sim, o upgrade é feito a qualquer momento direto na tela de planos, sem perder o histórico já registrado."
-  }
+  // Escondidas junto com a seção de preços — reative junto.
+  // {
+  //   question: "Como funciona o pagamento?",
+  //   answer: "A cobrança usa checkout hospedado com ativação automática após confirmação via Mercado Pago."
+  // },
+  // {
+  //   question: "Dá para trocar de plano depois?",
+  //   answer: "Sim, o upgrade é feito a qualquer momento direto na tela de planos, sem perder o histórico já registrado."
+  // }
 ];
 
 export function LandingPage() {
@@ -223,9 +233,11 @@ export function LandingPage() {
           <Link style={ghostLinkStyle} to="/login">
             Entrar
           </Link>
+          {/* Reative junto com a seção de preços abaixo.
           <Link style={primaryLinkStyle} to="/plans">
             Ver planos
           </Link>
+          */}
         </div>
       </header>
 
@@ -243,7 +255,7 @@ export function LandingPage() {
             </p>
             <div style={heroButtonsStyle}>
               <Link style={primaryLinkStyle} to="/register/company">
-                Criar conta empresa
+                Criar conta empresarial
               </Link>
               <Link style={ghostLinkStyle} to="/register/individual">
                 Criar conta pessoal
@@ -322,11 +334,18 @@ export function LandingPage() {
             <p style={sectionKickerStyle}>Funcionalidades</p>
             <h2 style={sectionTitleStyle}>Tudo que a operação de frota precisa, em um só lugar</h2>
           </div>
-          <div style={{ ...cardGridStyle, ...(isMobile ? responsiveSingleColumnStyle : null) }}>
-            {capabilities.map((item) => (
-              <article key={item.title} style={featureCardStyle}>
-                <span style={featureIconStyle}>
-                  <item.icon />
+          <div style={{ ...featureGridStyle, ...(isMobile ? responsiveSingleColumnStyle : null) }}>
+            {capabilities.map((item, index) => (
+              <article
+                key={item.title}
+                style={{
+                  ...featureCardStyle,
+                  borderTopColor: item.accent,
+                  ...(!isMobile ? lastRowCenteringStyle(index, capabilities.length) : null)
+                }}
+              >
+                <span style={featureIconStyle(item.accent)}>
+                  <item.icon size={28} />
                 </span>
                 <strong style={featureTitleStyle}>{item.title}</strong>
                 <p style={featureTextStyle}>{item.text}</p>
@@ -368,6 +387,11 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        {/*
+          Seção de preços escondida temporariamente até o pagamento real
+          (Mercado Pago) estar 100% funcionando. Reative junto com o
+          array `plans` e os links "/plans" no topo/rodapé deste arquivo.
 
         <section style={sectionStyle}>
           <div style={sectionHeadingStyle}>
@@ -413,6 +437,8 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        */}
 
         <section style={sectionStyle}>
           <div style={sectionHeadingStyle}>
@@ -466,9 +492,11 @@ export function LandingPage() {
           </div>
         </div>
         <nav style={footerLinksStyle}>
+          {/* Reative junto com a seção de preços acima.
           <Link style={footerLinkStyle} to="/plans">
             Planos
           </Link>
+          */}
           <Link style={footerLinkStyle} to="/login">
             Entrar
           </Link>
@@ -842,24 +870,53 @@ const responsiveSingleColumnStyle: CSSProperties = {
   gridTemplateColumns: "minmax(0, 1fr)"
 };
 
+const FEATURE_GRID_COLUMNS = 4;
+
+const featureGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: `repeat(${FEATURE_GRID_COLUMNS}, minmax(0, 1fr))`,
+  gap: "1rem"
+};
+
+// Centers a trailing partial row (e.g. 6 items in a 4-column grid leaves 2
+// orphaned on their own row, flush left by default) by placing those items
+// under the middle column(s) instead of column 1.
+function lastRowCenteringStyle(index: number, total: number): CSSProperties {
+  const itemsInLastRow = total % FEATURE_GRID_COLUMNS;
+  const lastRowStart = total - itemsInLastRow;
+  if (itemsInLastRow === 0 || index < lastRowStart) {
+    return {};
+  }
+
+  const positionInRow = index - lastRowStart;
+  const startColumn = Math.floor((FEATURE_GRID_COLUMNS - itemsInLastRow) / 2) + 1 + positionInRow;
+  return { gridColumn: `${startColumn} / ${startColumn + 1}` };
+}
+
 const featureCardStyle: CSSProperties = {
   padding: "1.35rem",
   borderRadius: "1.1rem",
   background: "rgba(15, 23, 42, 0.72)",
-  border: "1px solid rgba(148, 163, 184, 0.16)"
+  border: "1px solid rgba(148, 163, 184, 0.16)",
+  borderTopWidth: "3px",
+  borderTopStyle: "solid"
 };
 
-const featureIconStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "2.6rem",
-  height: "2.6rem",
-  borderRadius: "0.85rem",
-  background: "rgba(251, 191, 36, 0.12)",
-  color: "#fbbf24",
-  marginBottom: "0.9rem"
-};
+function featureIconStyle(color: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "3.6rem",
+    height: "3.6rem",
+    borderRadius: "1.1rem",
+    background: `linear-gradient(160deg, ${color}33, ${color}0d)`,
+    border: `1px solid ${color}40`,
+    boxShadow: `0 10px 26px -14px ${color}b3`,
+    color,
+    marginBottom: "1rem"
+  };
+}
 
 const featureTitleStyle: CSSProperties = {
   display: "block",

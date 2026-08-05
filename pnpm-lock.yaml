@@ -64,6 +64,9 @@ importers:
       graphql:
         specifier: ^16.11.0
         version: 16.13.2
+      mercadopago:
+        specifier: ^3.3.0
+        version: 3.3.0
       nodemailer:
         specifier: ^8.0.6
         version: 8.0.6
@@ -3365,6 +3368,10 @@ packages:
     resolution: {integrity: sha512-UERzLsxzllchadvbPs5aolHh65ISpKpM+ccLbOJ8/vvpBKmAWf+la7dXFy7Mr0ySHbdHrFv5kGFCUHHe6GFEmw==}
     engines: {node: '>= 4.0.0'}
 
+  mercadopago@3.3.0:
+    resolution: {integrity: sha512-TVtMopL6+CQOzU9hIVGVYxTO1DwOL9x3OmSdh7Qi/tawoLMSooQM0m/ttCC67vYsje+rjgZqNPoT9ItDQPm6Pg==}
+    engines: {node: '>=18'}
+
   merge-descriptors@1.0.3:
     resolution: {integrity: sha512-gaNvAS7TZ897/rVaZ0nMtAyxNyi/pdbjbAwUpFQpN70GqnVfOiXpeUUMKRBmzXaSQ8DdTX4/0ms62r2K+hE6mQ==}
 
@@ -4348,6 +4355,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -8034,6 +8042,8 @@ snapshots:
   memfs@3.5.3:
     dependencies:
       fs-monkey: 1.1.0
+
+  mercadopago@3.3.0: {}
 
   merge-descriptors@1.0.3: {}
 

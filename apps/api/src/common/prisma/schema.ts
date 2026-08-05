@@ -278,4 +278,15 @@ export const PRISMA_SCHEMA_SQL = `
 
   ALTER TABLE tenants
     ADD COLUMN IF NOT EXISTS retention_purged_at TIMESTAMPTZ;
+
+  ALTER TABLE tenants
+    ADD COLUMN IF NOT EXISTS billing_subscription_status TEXT;
+
+  CREATE TABLE IF NOT EXISTS billing_webhook_events (
+    id TEXT PRIMARY KEY,
+    notification_id TEXT NOT NULL UNIQUE,
+    event_type TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
 `;

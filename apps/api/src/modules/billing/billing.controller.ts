@@ -1,45 +1,31 @@
-import { BadRequestException, Controller, Headers, Post, Req } from "@nestjs/common";
+import { Controller, Headers, Post, Query, Req } from "@nestjs/common";
 
-import { PtBrMessage } from "../../common/messages.js";
-import { AuthService } from "../auth/auth.service.js";
+import { BillingService } from "./billing.service.js";
+
+type MercadoPagoWebhookRequest = {
+  body: {
+    id?: number | string;
+    type?: string;
+    data?: { id?: string };
+  };
+};
 
 @Controller("billing")
 export class BillingController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly billingService: BillingService) {}
 
   @Post("webhooks/mercado-pago")
   async mercadoPagoWebhook(
-    @Req() request: any,
-    @Headers("x-billing-token") billingToken?: string
+    @Req() request: MercadoPagoWebhookRequest,
+    @Headers("x-signature") xSignature: string | undefined,
+    @Headers("x-request-id") xRequestId: string | undefined,
+    @Query("data.id") dataId: string | undefined
   ) {
-    const expectedToken = process.env.BILLING_WEBHOOK_TOKEN;
-    if (!expectedToken || billingToken !== expectedToken) {
-      throw new BadRequestException(PtBrMessage.WEBHOOK_INVALID);
-    }
-
-    const body = request.body as {
-      tenantId?: string;
-      planCode?: string;
-      paymentId?: string;
-      status?: string;
-    };
-
-    if (!body.tenantId || !body.planCode) {
-      throw new BadRequestException(PtBrMessage.WEBHOOK_INCOMPLETE_PAYLOAD);
-    }
-
-    const tenant = await this.authService.confirmBillingPayment({
-      tenantId: body.tenantId,
-      planCode: body.planCode,
-      paymentId: body.paymentId,
-      status: body.status ?? "approved"
+    return this.billingService.processWebhook({
+      xSignature,
+      xRequestId,
+      dataId,
+      body: request.body
     });
-
-    return {
-      ok: true,
-      tenantId: tenant.id,
-      planCode: tenant.planCode,
-      planStatus: tenant.planStatus
-    };
   }
 }

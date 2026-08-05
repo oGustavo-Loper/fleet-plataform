@@ -5,6 +5,8 @@ import * as argon2 from "argon2";
 
 import { PtBrMessage } from "../../common/messages.js";
 import { getJwtAccessSecret, getJwtRefreshSecret } from "../../common/jwt-secrets.js";
+import { MercadoPagoClient } from "../../common/mercado-pago.client.js";
+import { FREE_PLAN_CODES, PAID_PLAN_CODES, PLAN_PRICES_BRL, vehicleLimitForPlanCode } from "../../common/plans.js";
 import { PrismaService } from "../../common/prisma.service.js";
 import { LoginInput } from "./dto/login.input.js";
 import { CreateCheckoutSessionInput } from "./dto/create-checkout-session.input.js";
@@ -27,7 +29,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly mercadoPagoClient: MercadoPagoClient
   ) {}
 
   private async issueAuthPayload(authUser: {
@@ -420,7 +423,21 @@ export class AuthService {
     });
   }
 
+  /**
+   * Only ever moves a tenant to a free plan. Paid plans can only be
+   * activated by BillingService reacting to a verified Mercado Pago
+   * webhook — never directly by a client request, or anyone could grant
+   * themselves a paid plan for free.
+   */
   async upgradePlan(input: UpgradePlanInput) {
+    if (PAID_PLAN_CODES.has(input.planCode)) {
+      throw new BadRequestException(PtBrMessage.PLAN_UPGRADE_REQUIRES_PAYMENT);
+    }
+
+    if (!FREE_PLAN_CODES.has(input.planCode)) {
+      throw new BadRequestException(PtBrMessage.CHECKOUT_PLAN_NOT_SUPPORTED);
+    }
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: input.tenantId }
     });
@@ -434,19 +451,12 @@ export class AuthService {
       data: {
         planCode: input.planCode,
         planStatus: "ACTIVE",
-        vehicleLimit:
-          input.planCode === "INDIVIDUAL_PRO"
-            ? 20
-            : input.planCode === "COMPANY_PRO"
-              ? null
-              : 3,
-        billingProvider: "mercado_pago",
-        billingActivatedAt: new Date()
+        vehicleLimit: vehicleLimitForPlanCode(input.planCode)
       }
     });
   }
 
-  async createCheckoutSession(input: CreateCheckoutSessionInput) {
+  async createCheckoutSession(input: CreateCheckoutSessionInput, payerEmail: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: input.tenantId }
     });
@@ -455,58 +465,44 @@ export class AuthService {
       throw new BadRequestException(PtBrMessage.ACCOUNT_NOT_FOUND);
     }
 
-    if (input.planCode !== "INDIVIDUAL_PRO" && input.planCode !== "COMPANY_PRO") {
+    if (!PAID_PLAN_CODES.has(input.planCode)) {
       throw new BadRequestException(PtBrMessage.CHECKOUT_PLAN_NOT_SUPPORTED);
     }
 
-    const externalUrl = process.env.MERCADO_PAGO_CHECKOUT_URL;
-    const fallbackBase = process.env.WEB_BASE_URL ?? "http://127.0.0.1:4173";
-    const url = externalUrl
-      ? new URL(externalUrl)
-      : new URL("/billing/checkout", fallbackBase);
-    url.searchParams.set("tenantId", tenant.id);
-    url.searchParams.set("planCode", input.planCode);
-    url.searchParams.set("customerName", tenant.name);
-    url.searchParams.set("recurring", "true");
-    url.searchParams.set("provider", "mercado_pago");
-
-    return {
-      checkoutUrl: url.toString(),
-      provider: process.env.BILLING_PROVIDER ?? "mercado_pago",
-      planCode: input.planCode
-    };
-  }
-
-  async confirmBillingPayment(input: {
-    tenantId: string;
-    planCode: string;
-    paymentId?: string;
-    status?: string;
-  }) {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: input.tenantId }
-    });
-
-    if (!tenant) {
-      throw new BadRequestException(PtBrMessage.ACCOUNT_NOT_FOUND);
-    }
-
-    if (input.status && input.status !== "approved" && input.status !== "paid") {
-      throw new BadRequestException(PtBrMessage.PAYMENT_NOT_CONFIRMED);
-    }
-
-    const planCode = input.planCode === "COMPANY_PRO" ? "COMPANY_PRO" : "INDIVIDUAL_PRO";
-
-    return this.prisma.tenant.update({
-      where: { id: input.tenantId },
-      data: {
-        planCode,
-        planStatus: "ACTIVE",
-        vehicleLimit: planCode === "INDIVIDUAL_PRO" ? 20 : null,
-        billingProvider: "mercado_pago",
-        billingSubscriptionId: input.paymentId ?? undefined,
-        billingActivatedAt: new Date()
+    const webBaseUrl = process.env.WEB_BASE_URL ?? "http://127.0.0.1:5173";
+    const subscription = await this.mercadoPagoClient.createSubscription({
+      reason: `Fleet Platform - ${input.planCode === "COMPANY_PRO" ? "Empresa Pro" : "Plano Pro"}`,
+      // tenantId:planCode — Mercado Pago has no separate metadata field on
+      // PreApproval, so the plan is encoded alongside the tenant here and
+      // parsed back out of the webhook notification.
+      external_reference: `${tenant.id}:${input.planCode}`,
+      payer_email: payerEmail,
+      back_url: new URL("/plans", webBaseUrl).toString(),
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: "months",
+        transaction_amount: PLAN_PRICES_BRL[input.planCode],
+        currency_id: "BRL"
       }
     });
+
+    if (!subscription.init_point || !subscription.id) {
+      throw new BadRequestException(PtBrMessage.BILLING_SUBSCRIPTION_NOT_FOUND);
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenant.id },
+      data: {
+        billingProvider: "mercado_pago",
+        billingSubscriptionId: subscription.id,
+        billingSubscriptionStatus: subscription.status ?? "pending"
+      }
+    });
+
+    return {
+      checkoutUrl: subscription.init_point,
+      provider: "mercado_pago",
+      planCode: input.planCode
+    };
   }
 }

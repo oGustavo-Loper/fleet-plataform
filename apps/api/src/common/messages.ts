@@ -50,5 +50,9 @@ export enum PtBrMessage {
   CURRENT_PASSWORD_REQUIRED = "Informe a senha atual para definir uma nova senha.",
   CURRENT_PASSWORD_INVALID = "Senha atual incorreta.",
   LOGIN_TOO_MANY_ATTEMPTS = "Muitas tentativas de login. Tente novamente em alguns minutos.",
-  NOT_INFORMED = "Não informado."
+  NOT_INFORMED = "Não informado.",
+  PLAN_UPGRADE_REQUIRES_PAYMENT = "Planos pagos só podem ser ativados após confirmação de pagamento pelo checkout.",
+  BILLING_NOT_CONFIGURED = "Cobrança ainda não configurada neste ambiente.",
+  BILLING_SUBSCRIPTION_NOT_FOUND = "Assinatura não encontrada no provedor de pagamento.",
+  WEBHOOK_SIGNATURE_INVALID = "Assinatura do webhook inválida."
 }

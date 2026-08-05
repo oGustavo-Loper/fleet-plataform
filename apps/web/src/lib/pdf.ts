@@ -282,9 +282,9 @@ function formatPlanBadge(tenant: TenantSummary | null, role?: UserRole | null) {
 
 function getVisibleModules(role?: UserRole | null) {
   if (role === "DRIVER") {
-    return "Dashboard, Abastecimentos, Manutenções";
+    return "Painel, Abastecimentos, Manutenções";
   }
-  return "Dashboard, Veículos, Motoristas, Abastecimentos, Manutenções, Relatórios, Planos";
+  return "Painel, Veículos, Motoristas, Abastecimentos, Manutenções, Relatórios, Planos";
 }
 
 function createPage() {

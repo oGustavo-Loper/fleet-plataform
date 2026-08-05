@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import * as argon2 from "argon2";
 
 import { PtBrMessage } from "../../common/messages.js";
@@ -27,10 +27,12 @@ function createAuthService(options?: {
   drivers?: Array<{ id: string; cpf?: string; loginEmail?: string; registrationId?: string }>;
   existingLoginAttempt?: { failedCount: number; lockedUntil?: Date | null } | null;
   existingResetCode?: { createdAt: Date; expiresAt: Date } | null;
+  tenant?: { id: string; name?: string } | null;
 }) {
   const users = options?.users ?? [];
   const drivers = options?.drivers ?? [];
   let updatedUserPayload: Record<string, unknown> | null = null;
+  let updatedTenantPayload: Record<string, unknown> | null = null;
   const loginAttemptCalls = {
     registerFailure: 0,
     lock: [] as Array<{ identifier: string; lockedUntil: Date }>,
@@ -103,7 +105,18 @@ function createAuthService(options?: {
         loginAttemptCalls.clear.push(identifier);
       }
     },
-    tenant: {}
+    tenant: {
+      async findUnique(args: { where: { id: string } }) {
+        if (options?.tenant && options.tenant.id === args.where.id) {
+          return { id: options.tenant.id, name: options.tenant.name ?? "Tenant de teste" };
+        }
+        return null;
+      },
+      async update(args: { where: { id: string }; data: Record<string, unknown> }) {
+        updatedTenantPayload = args.data;
+        return { id: args.where.id, ...args.data };
+      }
+    }
   };
 
   const jwtService = {
@@ -126,11 +139,25 @@ function createAuthService(options?: {
     }
   };
 
+  const mercadoPagoSubscriptionCalls: Array<Record<string, unknown>> = [];
+  const mercadoPagoClient = {
+    async createSubscription(body: Record<string, unknown>) {
+      mercadoPagoSubscriptionCalls.push(body);
+      return {
+        id: "mp-subscription-1",
+        status: "pending",
+        init_point: "https://mercadopago.example.com/checkout/mp-subscription-1"
+      };
+    }
+  };
+
   return {
-    service: new AuthService(prisma as never, jwtService as never, mailService as never),
+    service: new AuthService(prisma as never, jwtService as never, mailService as never, mercadoPagoClient as never),
     getUpdatedUserPayload: () => updatedUserPayload,
+    getUpdatedTenantPayload: () => updatedTenantPayload,
     loginAttemptCalls,
-    passwordResetCalls
+    passwordResetCalls,
+    mercadoPagoSubscriptionCalls
   };
 }
 
@@ -516,4 +543,52 @@ test("refreshSession rejects inactive users", async () => {
     (error: unknown) =>
       error instanceof UnauthorizedException && error.message === PtBrMessage.ACCOUNT_INACTIVE
   );
+});
+
+test("upgradePlan rejects a paid plan code — paid plans can only be activated by a verified webhook", async () => {
+  const { service } = createAuthService({ tenant: { id: "tenant-sol" } });
+
+  await assert.rejects(
+    () => service.upgradePlan({ tenantId: "tenant-sol", planCode: "COMPANY_PRO" }),
+    (error: unknown) =>
+      error instanceof BadRequestException && error.message === PtBrMessage.PLAN_UPGRADE_REQUIRES_PAYMENT
+  );
+});
+
+test("upgradePlan allows moving to a free plan", async () => {
+  const { service, getUpdatedTenantPayload } = createAuthService({ tenant: { id: "tenant-sol" } });
+
+  await service.upgradePlan({ tenantId: "tenant-sol", planCode: "COMPANY_START" });
+
+  assert.equal(getUpdatedTenantPayload()?.planCode, "COMPANY_START");
+  assert.equal(getUpdatedTenantPayload()?.planStatus, "ACTIVE");
+  assert.equal(getUpdatedTenantPayload()?.vehicleLimit, 3);
+});
+
+test("createCheckoutSession rejects a plan the hosted checkout doesn't support", async () => {
+  const { service } = createAuthService({ tenant: { id: "tenant-sol" } });
+
+  await assert.rejects(
+    () => service.createCheckoutSession({ tenantId: "tenant-sol", planCode: "ESSENTIAL_FREE" }, "owner@fleet.local"),
+    (error: unknown) =>
+      error instanceof BadRequestException && error.message === PtBrMessage.CHECKOUT_PLAN_NOT_SUPPORTED
+  );
+});
+
+test("createCheckoutSession creates a real Mercado Pago subscription and returns its init_point", async () => {
+  const { service, mercadoPagoSubscriptionCalls, getUpdatedTenantPayload } = createAuthService({
+    tenant: { id: "tenant-sol", name: "Frota Sol" }
+  });
+
+  const result = await service.createCheckoutSession(
+    { tenantId: "tenant-sol", planCode: "COMPANY_PRO" },
+    "owner@fleet.local"
+  );
+
+  assert.equal(result.checkoutUrl, "https://mercadopago.example.com/checkout/mp-subscription-1");
+  assert.equal(mercadoPagoSubscriptionCalls.length, 1);
+  assert.equal(mercadoPagoSubscriptionCalls[0]?.external_reference, "tenant-sol:COMPANY_PRO");
+  assert.equal(mercadoPagoSubscriptionCalls[0]?.payer_email, "owner@fleet.local");
+  assert.equal(getUpdatedTenantPayload()?.billingSubscriptionId, "mp-subscription-1");
+  assert.equal(getUpdatedTenantPayload()?.billingSubscriptionStatus, "pending");
 });

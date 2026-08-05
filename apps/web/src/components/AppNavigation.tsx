@@ -19,14 +19,15 @@ type NavLink = {
 };
 
 const links: NavLink[] = [
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/dashboard", label: "Painel" },
   { to: "/vehicles", label: "Veículos", roles: ["ADMIN", "COMPANY", "INDIVIDUAL"] },
   { to: "/drivers", label: "Motoristas", roles: ["ADMIN", "COMPANY", "INDIVIDUAL"] },
   { to: "/fuels", label: "Abastecimentos" },
   { to: "/maintenance", label: "Manutenções" },
   { to: "/reports", label: "Relatórios" },
   { to: "/team", label: "Equipe", roles: ["ADMIN", "MANAGER"] },
-  { to: "/plans", label: "Planos" },
+  // Escondido temporariamente junto com a tela de preços — reative junto.
+  // { to: "/plans", label: "Planos" },
   { to: "/super-admin", label: "Todas as contas", roles: ["SUPER_ADMIN"] }
 ];
 
@@ -38,10 +39,12 @@ export function AppNavigation() {
   const { auth, isAuthenticated, logout } = useAuth();
   const { activeTenant } = useTenant();
   const isIndividualAccount = activeTenant?.accountType === "INDIVIDUAL";
+  const isCompanyAccount = activeTenant?.accountType === "COMPANY";
   const driversQuery = useQuery<{ drivers: DriverListItem[] }>(DRIVERS_QUERY, {
-    skip: !auth?.tenantId || (!auth?.driverId && !isIndividualAccount),
+    skip: !auth?.tenantId,
     variables: { tenantId: auth?.tenantId ?? "" }
   });
+  const driversCount = driversQuery.data?.drivers.length ?? 0;
   const usersQuery = useQuery<{ users: SelfUser[] }>(USERS_QUERY, {
     skip: !auth?.tenantId || Boolean(auth?.driverId),
     variables: { tenantId: auth?.tenantId ?? "" }
@@ -49,8 +52,8 @@ export function AppNavigation() {
   const ownDriver = driversQuery.data?.drivers.find((driver) => driver.id === auth?.driverId);
   const ownUser = usersQuery.data?.users.find((user) => user.id === auth?.userId);
   const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
-  const isFamilyAccount = isIndividualAccount && (driversQuery.data?.drivers.length ?? 0) > 1;
-  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual", "/billing/checkout"]);
+  const isFamilyAccount = isIndividualAccount && driversCount > 1;
+  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
       return false;
@@ -58,6 +61,10 @@ export function AppNavigation() {
 
     if (auth.role === "DRIVER") {
       return ["/dashboard", "/fuels", "/maintenance"].includes(link.to);
+    }
+
+    if (link.to === "/team") {
+      return isCompanyAccount && driversCount > 1 && (link.roles?.includes(auth.role) ?? true);
     }
 
     if (link.roles) {
