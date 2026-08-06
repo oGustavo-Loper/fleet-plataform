@@ -196,8 +196,16 @@ export function RegisterIndividualPage() {
             Termos de Uso e a Política de Privacidade
           </Link>
         </label>
-        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
-        {error ? <p style={errorStyle}>{error.message}</p> : null}
+        {validationError ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {validationError}
+          </p>
+        ) : null}
+        {error ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {error.message}
+          </p>
+        ) : null}
         <button style={buttonStyle} type="submit" disabled={loading}>
           {loading ? "Criando conta..." : "Criar conta pessoal"}
         </button>

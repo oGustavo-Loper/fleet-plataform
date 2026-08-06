@@ -403,14 +403,22 @@ export function DriverForm({
         Motoristas em férias ou desligados perdem o acesso ao sistema, mas o histórico permanece salvo.
       </p>
       {limitReached ? (
-        <p style={{ color: "#fda4af" }}>
+        <p style={{ color: "#fda4af" }} role="alert" aria-live="assertive">
           Limite de {driverLimit} motoristas do plano gratuito atingido. Assine um plano pago para
           cadastrar mais motoristas.
         </p>
       ) : null}
-      {validationError ? <p style={{ color: "#fda4af" }}>{validationError}</p> : null}
+      {validationError ? (
+        <p style={{ color: "#fda4af" }} role="alert" aria-live="assertive">
+          {validationError}
+        </p>
+      ) : null}
       {queuedMessage ? <p style={{ color: "#fbbf24" }}>{queuedMessage}</p> : null}
-      {error ? <p style={{ color: "#fda4af" }}>Falha ao salvar motorista.</p> : null}
+      {error ? (
+        <p style={{ color: "#fda4af" }} role="alert" aria-live="assertive">
+          Falha ao salvar motorista.
+        </p>
+      ) : null}
       <div style={footerActionsStyle}>
         <button style={primarySubmitStyle} type="submit" disabled={loading || limitReached}>
           {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar motorista"}

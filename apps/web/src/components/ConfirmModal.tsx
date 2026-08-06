@@ -1,4 +1,6 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
+
+import { useModalA11y } from "../hooks/useModalA11y";
 
 type Props = {
   open: boolean;
@@ -23,15 +25,27 @@ export function ConfirmModal({
   onConfirm,
   onCancel
 }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useModalA11y({ open, onClose: onCancel, containerRef });
+
   if (!open) {
     return null;
   }
 
   return (
     <div style={overlayStyle} onClick={onCancel}>
-      <div style={modalStyle} onClick={(event) => event.stopPropagation()}>
+      <div
+        ref={containerRef}
+        style={modalStyle}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div style={headerStyle}>
-          <strong style={titleStyle}>{title}</strong>
+          <strong id="confirm-modal-title" style={titleStyle}>
+            {title}
+          </strong>
         </div>
         <div style={bodyStyle}>{description}</div>
         <div style={actionsStyle}>

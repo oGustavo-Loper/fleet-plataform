@@ -182,9 +182,17 @@ function DriverProfileForm() {
         {!driver.cnh ? (
           <p style={hintStyle}>Seus dados de CNH estão pendentes. Complete-os para liberar o histórico completo do seu perfil.</p>
         ) : null}
-        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
+        {validationError ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {validationError}
+          </p>
+        ) : null}
         {successMessage ? <p style={hintStyle}>{successMessage}</p> : null}
-        {error ? <p style={errorStyle}>Falha ao salvar perfil.</p> : null}
+        {error ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            Falha ao salvar perfil.
+          </p>
+        ) : null}
         <button style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
@@ -347,9 +355,17 @@ function AccountProfileForm() {
             />
           </FormField>
         </div>
-        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
+        {validationError ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {validationError}
+          </p>
+        ) : null}
         {successMessage ? <p style={hintStyle}>{successMessage}</p> : null}
-        {error ? <p style={errorStyle}>{error.graphQLErrors?.[0]?.message ?? "Falha ao salvar perfil."}</p> : null}
+        {error ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {error.graphQLErrors?.[0]?.message ?? "Falha ao salvar perfil."}
+          </p>
+        ) : null}
         <button style={primarySubmitStyle} type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
@@ -435,7 +451,7 @@ function DeleteAccountSection() {
 
   return (
     <section style={dangerZoneStyle}>
-      <h3 style={dangerTitleStyle}>Excluir minha conta</h3>
+      <h2 style={dangerTitleStyle}>Excluir minha conta</h2>
       <p style={dangerDescriptionStyle}>
         Essa ação exclui permanentemente sua conta e todos os dados vinculados a ela (veículos,
         motoristas, abastecimentos, manutenções e histórico). Não é possível desfazer.
@@ -449,8 +465,16 @@ function DeleteAccountSection() {
             onChange={(event) => setPassword(event.target.value)}
           />
         </FormField>
-        {validationError ? <p style={errorStyle}>{validationError}</p> : null}
-        {error ? <p style={errorStyle}>{error.graphQLErrors?.[0]?.message ?? "Falha ao excluir a conta."}</p> : null}
+        {validationError ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {validationError}
+          </p>
+        ) : null}
+        {error ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {error.graphQLErrors?.[0]?.message ?? "Falha ao excluir a conta."}
+          </p>
+        ) : null}
         <button type="submit" style={dangerButtonStyle}>
           Excluir minha conta
         </button>
@@ -489,6 +513,7 @@ const dangerZoneStyle: CSSProperties = {
 
 const dangerTitleStyle: CSSProperties = {
   margin: "0 0 0.5rem",
+  fontSize: "1.17rem",
   color: "#fca5a5"
 };
 

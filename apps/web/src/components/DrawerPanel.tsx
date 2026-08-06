@@ -1,4 +1,6 @@
-import { useEffect, type CSSProperties, type PropsWithChildren } from "react";
+import { useEffect, useRef, type CSSProperties, type PropsWithChildren } from "react";
+
+import { useModalA11y } from "../hooks/useModalA11y";
 
 export function DrawerPanel({
   open,
@@ -14,6 +16,9 @@ export function DrawerPanel({
   width?: string;
   onClose: () => void;
 }>) {
+  const containerRef = useRef<HTMLElement | null>(null);
+  useModalA11y({ open, onClose, containerRef });
+
   useEffect(() => {
     if (!open) {
       return;
@@ -34,7 +39,7 @@ export function DrawerPanel({
   return (
     <>
       <div style={overlayStyle} onClick={onClose} />
-      <aside style={{ ...panelStyle, width }} aria-modal="true" role="dialog">
+      <aside ref={containerRef} style={{ ...panelStyle, width }} aria-modal="true" role="dialog">
         <header style={headerStyle}>
           <div>
             <h2 style={titleStyle}>{title}</h2>

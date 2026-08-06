@@ -325,12 +325,18 @@ export function VehicleForm({
         </p>
       ) : null}
       {validationError ? (
-        <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>{validationError}</p>
+        <p style={{ ...supportingPanelStyle, color: "#fda4af" }} role="alert" aria-live="assertive">
+          {validationError}
+        </p>
       ) : null}
       {queuedMessage ? (
         <p style={{ ...supportingPanelStyle, color: "#fbbf24" }}>{queuedMessage}</p>
       ) : null}
-      {error ? <p style={{ ...supportingPanelStyle, color: "#fda4af" }}>Falha ao salvar veículo.</p> : null}
+      {error ? (
+        <p style={{ ...supportingPanelStyle, color: "#fda4af" }} role="alert" aria-live="assertive">
+          Falha ao salvar veículo.
+        </p>
+      ) : null}
       <div style={footerActionsStyle}>
         <button style={primarySubmitStyle} type="submit" disabled={loading || limitReached}>
           {loading ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar veículo"}

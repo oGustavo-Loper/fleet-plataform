@@ -125,13 +125,18 @@ export function AppNavigation() {
 
   return (
     <>
+      <a href="#main-content" className="skip-link">
+        Pular para o conteúdo
+      </a>
       {!isDesktop ? (
         <>
           <div style={mobileTopBarStyle}>
             <button
               type="button"
-              className="app-sidebar-control"
+              className="app-sidebar-control focus-ring"
               style={toggleButtonStyle}
+              aria-label={open ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={open}
               onClick={() => setOpen((current) => !current)}
             >
               <span style={toggleLineStyle} />
@@ -166,7 +171,7 @@ export function AppNavigation() {
             return sidebarPhotoUrl ? (
               <img
                 src={resolveMediaUrl(sidebarPhotoUrl)}
-                alt={ownDriver?.fullName ?? activeTenant?.name}
+                alt={ownDriver?.fullName ?? activeTenant?.name ?? "Avatar do usuário"}
                 style={tenantAvatarStyle}
               />
             ) : (
@@ -182,7 +187,7 @@ export function AppNavigation() {
             <strong>{activeTenant?.name ?? "Conta"}</strong>
           </div>
         </div>
-        <nav style={linksStyle}>
+        <nav style={linksStyle} aria-label="Navegação principal">
           {visibleLinks.map((link) => (
             <Link
               key={link.to}
@@ -257,8 +262,6 @@ const toggleButtonStyle: CSSProperties = {
   placeItems: "center",
   gap: "0.2rem",
   padding: "0.7rem",
-  outline: "none",
-  boxShadow: "none",
   WebkitTapHighlightColor: "transparent"
 };
 
@@ -408,8 +411,6 @@ const linkStyle: CSSProperties = {
   background: "rgba(15, 23, 42, 0.56)",
   border: "1px solid rgba(148, 163, 184, 0.18)",
   color: "#cbd5e1",
-  outline: "none",
-  boxShadow: "none",
   WebkitTapHighlightColor: "transparent"
 };
 
@@ -464,7 +465,5 @@ const logoutButtonStyle: CSSProperties = {
   color: "#f8fafc",
   padding: "0.8rem 0.95rem",
   marginTop: "0.75rem",
-  outline: "none",
-  boxShadow: "none",
   WebkitTapHighlightColor: "transparent"
 };

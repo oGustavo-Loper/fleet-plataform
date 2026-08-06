@@ -262,8 +262,16 @@ export function LoginPage() {
               </button>
             </form>
             {resetMessage ? <p style={successStyle}>{resetMessage}</p> : null}
-            {resetRequestError ? <p style={errorStyle}>{resetRequestError.message}</p> : null}
-            {resetConfirmError ? <p style={errorStyle}>{resetConfirmError.message}</p> : null}
+            {resetRequestError ? (
+              <p style={errorStyle} role="alert" aria-live="assertive">
+                {resetRequestError.message}
+              </p>
+            ) : null}
+            {resetConfirmError ? (
+              <p style={errorStyle} role="alert" aria-live="assertive">
+                {resetConfirmError.message}
+              </p>
+            ) : null}
           </div>
         ) : (
           <form style={formStyle} onSubmit={handleSubmit}>
@@ -309,8 +317,16 @@ export function LoginPage() {
                 Esqueci minha senha
               </button>
             </div>
-            {error ? <p style={errorStyle}>{error.message}</p> : null}
-            {formError ? <p style={errorStyle}>{formError}</p> : null}
+            {error ? (
+              <p style={errorStyle} role="alert" aria-live="assertive">
+                {error.message}
+              </p>
+            ) : null}
+            {formError ? (
+              <p style={errorStyle} role="alert" aria-live="assertive">
+                {formError}
+              </p>
+            ) : null}
             <button style={buttonStyle} type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </button>

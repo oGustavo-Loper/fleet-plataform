@@ -461,11 +461,16 @@ export function LandingPage() {
                     style={faqButtonStyle}
                     onClick={() => setOpenFaqIndex(open ? null : index)}
                     aria-expanded={open}
+                    aria-controls={`faq-answer-${index}`}
                   >
                     <span style={faqQuestionStyle}>{item.question}</span>
                     <ChevronIcon open={open} />
                   </button>
-                  {open ? <p style={faqAnswerStyle}>{item.answer}</p> : null}
+                  {open ? (
+                    <p id={`faq-answer-${index}`} style={faqAnswerStyle}>
+                      {item.answer}
+                    </p>
+                  ) : null}
                 </div>
               );
             })}
@@ -838,7 +843,7 @@ function previewTagStyle(color: string): CSSProperties {
 
 const previewCaptionStyle: CSSProperties = {
   margin: 0,
-  color: "#64748b",
+  color: "#94a3b8",
   fontSize: "0.74rem",
   textAlign: "center"
 };
@@ -986,7 +991,7 @@ const stepIndexStyle: CSSProperties = {
 };
 
 const stepArrowStyle: CSSProperties = {
-  color: "#475569",
+  color: "#94a3b8",
   fontSize: "1.1rem"
 };
 
@@ -1056,7 +1061,7 @@ const planPeriodStyle: CSSProperties = {
 
 const planOldPriceStyle: CSSProperties = {
   margin: 0,
-  color: "#64748b",
+  color: "#94a3b8",
   fontSize: "0.85rem"
 };
 
@@ -1201,6 +1206,6 @@ const footerLinkStyle: CSSProperties = {
 
 const footerCopyStyle: CSSProperties = {
   margin: 0,
-  color: "#64748b",
+  color: "#94a3b8",
   fontSize: "0.82rem"
 };

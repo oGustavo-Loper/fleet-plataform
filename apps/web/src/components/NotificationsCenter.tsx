@@ -76,12 +76,22 @@ export function NotificationsCenter() {
       }
     }
 
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setNotificationsOpen(false);
+      }
+    }
+
     if (!notificationsOpen) {
       return;
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [notificationsOpen]);
 
   useEffect(() => {
@@ -135,7 +145,11 @@ export function NotificationsCenter() {
       <div style={isDesktop ? floatingWrapperStyle : mobileWrapperStyle} ref={notificationPanelRef}>
         <button
           type="button"
+          className="focus-ring"
           style={notificationButtonStyle}
+          aria-label="Notificações"
+          aria-haspopup="true"
+          aria-expanded={notificationsOpen}
           onClick={() => {
             setNotificationsOpen((current) => !current);
             if (auth?.userId && auth.tenantId) {
@@ -149,7 +163,7 @@ export function NotificationsCenter() {
           ) : null}
         </button>
         {notificationsOpen ? (
-          <div style={notificationPanelStyle}>
+          <div style={notificationPanelStyle} role="menu">
             <div style={panelHeaderRowStyle}>
               <div style={panelHeaderStyle}>
                 <strong style={{ fontSize: "0.95rem" }}>Notificações</strong>

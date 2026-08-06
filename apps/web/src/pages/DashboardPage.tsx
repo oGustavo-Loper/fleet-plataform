@@ -93,7 +93,9 @@ export function DashboardPage() {
       {loading || tenantLoading ? (
         <p style={{ color: "#94a3b8" }}>Carregando dashboard...</p>
       ) : error ? (
-        <p style={{ color: "#fda4af" }}>Falha ao carregar dashboard da API.</p>
+        <p style={{ color: "#fda4af" }} role="alert" aria-live="assertive">
+          Falha ao carregar dashboard da API.
+        </p>
       ) : summary ? (
         <DashboardView summary={summary} syncStatus={status} apiStatusLabel={apiStatusLabel} />
       ) : (

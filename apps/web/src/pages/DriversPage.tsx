@@ -142,7 +142,7 @@ export function DriversPage() {
             <section style={terminatedSectionStyle}>
               <div style={terminatedHeaderStyle}>
                 <div>
-                  <h3 style={{ margin: 0 }}>Motoristas desligados</h3>
+                  <h2 style={{ margin: 0, fontSize: "1.05rem" }}>Motoristas desligados</h2>
                   <p style={terminatedSubtitleStyle}>
                     Registros preservados para consulta e histórico interno.
                   </p>

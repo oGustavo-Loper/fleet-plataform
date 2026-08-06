@@ -28,7 +28,9 @@ export function ErrorState({
 }) {
   return (
     <section style={panelStyle}>
-      <p style={errorStateStyle}>{message}</p>
+      <p style={errorStateStyle} role="alert" aria-live="assertive">
+        {message}
+      </p>
       {detail ? <p style={detailStyle}>{detail}</p> : null}
     </section>
   );

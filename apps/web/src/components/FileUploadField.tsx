@@ -51,7 +51,11 @@ export function FileUploadField({
         </button>
         <span style={uploadHintStyle}>{hint ?? "PNG, JPG ou WEBP"}</span>
       </div>
-      {error ? <p style={errorStyle}>{error}</p> : null}
+      {error ? (
+        <p style={errorStyle} role="alert" aria-live="assertive">
+          {error}
+        </p>
+      ) : null}
       {previewUrl ? <img src={previewUrl} alt={previewAlt ?? label} style={previewStyle} /> : null}
     </FormField>
   );

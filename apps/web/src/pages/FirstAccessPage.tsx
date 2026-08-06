@@ -127,8 +127,16 @@ export function FirstAccessPage() {
         <p style={hintStyle}>
           Depois de salvar, a senha temporaria deixa de funcionar.
         </p>
-        {localError ? <p style={errorStyle}>{localError}</p> : null}
-        {error ? <p style={errorStyle}>{error.message}</p> : null}
+        {localError ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {localError}
+          </p>
+        ) : null}
+        {error ? (
+          <p style={errorStyle} role="alert" aria-live="assertive">
+            {error.message}
+          </p>
+        ) : null}
         <button style={buttonStyle} type="submit" disabled={loading}>
           {loading ? "Atualizando senha..." : "Salvar nova senha"}
         </button>

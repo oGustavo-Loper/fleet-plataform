@@ -38,16 +38,19 @@ export function ActionMenu({ actions }: { actions: ActionItem[] }) {
         type="button"
         style={triggerStyle}
         aria-label="Abrir ações"
+        aria-haspopup="true"
+        aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
         ...
       </button>
       {open ? (
-        <div style={menuStyle}>
+        <div style={menuStyle} role="menu">
           {actions.map((action) => (
             <button
               key={action.label}
               type="button"
+              role="menuitem"
               style={{
                 ...itemStyle,
                 ...(action.danger ? dangerItemStyle : null)

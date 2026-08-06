@@ -14,7 +14,7 @@ export function AppShell({
           <p style={subtitleStyle}>{subtitle}</p>
         </div>
       </header>
-      <main style={mainStyle}>{children}</main>
+      <main id="main-content" style={mainStyle}>{children}</main>
     </div>
   );
 }

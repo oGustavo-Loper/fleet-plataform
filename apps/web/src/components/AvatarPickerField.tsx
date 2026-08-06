@@ -38,7 +38,11 @@ export function AvatarPickerField({ photoUrl, alt, loading, error, onSelect }: P
         )}
         <span style={avatarBadgeStyle}>{loading ? "…" : "✎"}</span>
       </button>
-      {error ? <p style={errorStyle}>{error}</p> : null}
+      {error ? (
+        <p style={errorStyle} role="alert" aria-live="assertive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
