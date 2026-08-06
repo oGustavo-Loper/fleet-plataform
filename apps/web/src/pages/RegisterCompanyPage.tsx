@@ -5,12 +5,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { AppShell } from "@fleet/ui";
 import { TERMS_VERSION } from "@fleet/shared-types";
+import { isValidCnpj } from "@fleet/shared-validation";
 
 import { FileUploadField } from "../components/FileUploadField";
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { apolloClient } from "../lib/apollo";
-import { hasMinDigits, isBlank } from "../lib/form-validation";
+import { isBlank } from "../lib/form-validation";
 import { formatCnpj } from "../lib/masks";
 import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
 import { REGISTER_COMPANY_MUTATION } from "../lib/queries";
@@ -48,7 +49,7 @@ export function RegisterCompanyPage() {
       return;
     }
 
-    if (!hasMinDigits(cnpj, 14)) {
+    if (!isValidCnpj(cnpj)) {
       setValidationError("Informe um CNPJ válido.");
       return;
     }
@@ -162,7 +163,7 @@ export function RegisterCompanyPage() {
         <FormField label="CNPJ">
           <input
             style={formInputStyle}
-            placeholder="Ex: 12.345.678/0001-99"
+            placeholder="Ex: 12.ABC.345/0001-XX"
             value={form.cnpj}
             maxLength={18}
             required

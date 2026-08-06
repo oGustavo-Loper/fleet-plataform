@@ -5,11 +5,12 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { AppShell } from "@fleet/ui";
 import { TERMS_VERSION } from "@fleet/shared-types";
+import { isValidCpf } from "@fleet/shared-validation";
 
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { apolloClient } from "../lib/apollo";
-import { hasMinDigits, isBlank } from "../lib/form-validation";
+import { isBlank } from "../lib/form-validation";
 import { formatCpf } from "../lib/masks";
 import { REGISTER_INDIVIDUAL_MUTATION } from "../lib/queries";
 
@@ -41,7 +42,7 @@ export function RegisterIndividualPage() {
       return;
     }
 
-    if (!hasMinDigits(cpf, 11)) {
+    if (!isValidCpf(cpf)) {
       setValidationError("Informe um CPF válido.");
       return;
     }

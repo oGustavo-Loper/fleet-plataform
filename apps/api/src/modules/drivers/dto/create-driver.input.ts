@@ -1,4 +1,7 @@
 import { Field, InputType } from "@nestjs/graphql";
+import { IsOptional } from "class-validator";
+
+import { IsValidCpf } from "../../../common/validators/document-number.validator.js";
 
 @InputType()
 export class CreateDriverInput {
@@ -9,6 +12,8 @@ export class CreateDriverInput {
   fullName!: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsValidCpf()
   cpf?: string;
 
   @Field({ nullable: true })
