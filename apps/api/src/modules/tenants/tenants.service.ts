@@ -31,4 +31,13 @@ export class TenantsService {
 
     return tenant ? mapTenant(tenant) : null;
   }
+
+  async updatePhoto(tenantId: string, photoDataUrl?: string) {
+    const tenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { photoDataUrl }
+    });
+
+    return mapTenant(tenant);
+  }
 }

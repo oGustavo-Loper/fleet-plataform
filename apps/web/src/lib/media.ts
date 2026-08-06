@@ -58,9 +58,63 @@ function appendAccessToken(path: string) {
   return `${path}${separator}token=${encodeURIComponent(accessToken)}`;
 }
 
+const MAX_IMAGE_DIMENSION = 1280;
+const RESIZED_IMAGE_QUALITY = 0.85;
+const RESIZABLE_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+
+/**
+ * Downscales oversized photos (e.g. straight off a phone camera, often
+ * 3000px+ and several MB) before upload, since nothing in the UI displays
+ * them larger than a couple hundred pixels. Best-effort: any failure (or
+ * an already-small/non-raster file) just falls back to the original file
+ * rather than blocking the upload.
+ */
+async function resizeImageIfNeeded(file: File): Promise<File> {
+  if (!RESIZABLE_MIME_TYPES.has(file.type) || typeof createImageBitmap !== "function") {
+    return file;
+  }
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const largestSide = Math.max(bitmap.width, bitmap.height);
+
+    if (largestSide <= MAX_IMAGE_DIMENSION) {
+      bitmap.close();
+      return file;
+    }
+
+    const scale = MAX_IMAGE_DIMENSION / largestSide;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", RESIZED_IMAGE_QUALITY)
+    );
+    if (!blob) {
+      return file;
+    }
+
+    const resizedName = file.name.replace(/\.\w+$/, "") + ".jpg";
+    return new File([blob], resizedName, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 export async function uploadMediaFile(file: File, scope: string): Promise<UploadedMedia> {
+  const uploadFile = await resizeImageIfNeeded(file);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", uploadFile);
   formData.append("scope", scope);
   const accessToken = getAccessToken();
 
@@ -86,9 +140,9 @@ export async function uploadMediaFile(file: File, scope: string): Promise<Upload
   return {
     url: payload.url,
     path: payload.path ?? payload.url,
-    originalName: payload.originalName ?? file.name,
-    mimeType: payload.mimeType ?? file.type,
-    size: payload.size ?? file.size
+    originalName: payload.originalName ?? uploadFile.name,
+    mimeType: payload.mimeType ?? uploadFile.type,
+    size: payload.size ?? uploadFile.size
   };
 }
 

@@ -7,13 +7,11 @@ import { AppShell } from "@fleet/ui";
 import { TERMS_VERSION } from "@fleet/shared-types";
 import { isValidCnpj } from "@fleet/shared-validation";
 
-import { FileUploadField } from "../components/FileUploadField";
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
 import { apolloClient } from "../lib/apollo";
 import { isBlank } from "../lib/form-validation";
 import { formatCnpj } from "../lib/masks";
-import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
 import { REGISTER_COMPANY_MUTATION } from "../lib/queries";
 
 export function RegisterCompanyPage() {
@@ -25,12 +23,9 @@ export function RegisterCompanyPage() {
     adminFullName: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    photoDataUrl: ""
+    confirmPassword: ""
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [photoLoading, setPhotoLoading] = useState(false);
-  const [photoError, setPhotoError] = useState("");
   const [validationError, setValidationError] = useState("");
   const [registerMutation, { loading, error }] = useMutation(REGISTER_COMPANY_MUTATION);
 
@@ -134,32 +129,6 @@ export function RegisterCompanyPage() {
             onChange={(event) => setForm({ ...form, companyName: event.target.value })}
           />
         </FormField>
-        <FileUploadField
-          label="Foto da empresa"
-          accept="image/*"
-          buttonLabel="Selecionar foto"
-          hint={photoLoading ? "Enviando foto..." : "Imagem usada no perfil da empresa"}
-          error={photoError}
-          loading={photoLoading}
-          previewUrl={resolveMediaUrl(form.photoDataUrl)}
-          previewAlt="Preview da empresa"
-          onSelect={async (file) => {
-            if (!file) {
-              setForm({ ...form, photoDataUrl: "" });
-              return;
-            }
-            setPhotoLoading(true);
-            setPhotoError("");
-            try {
-              const uploaded = await uploadMediaFile(file, "company-photo");
-              setForm({ ...form, photoDataUrl: uploaded.url });
-            } catch (uploadError) {
-              setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
-            } finally {
-              setPhotoLoading(false);
-            }
-          }}
-        />
         <FormField label="CNPJ">
           <input
             style={formInputStyle}
@@ -212,7 +181,8 @@ export function RegisterCompanyPage() {
           />
         </FormField>
         <p style={hintStyle}>
-          Ao concluir, a empresa já entra no sistema com plano inicial e login administrativo.
+          Ao concluir, a empresa já entra no sistema com plano inicial e login administrativo. A
+          foto da empresa pode ser adicionada depois, em Meu perfil.
         </p>
         <label style={checkboxLabelStyle}>
           <input

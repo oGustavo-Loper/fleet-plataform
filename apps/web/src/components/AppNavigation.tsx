@@ -155,15 +155,24 @@ export function AppNavigation() {
         }}
       >
         <div style={sidebarHeaderStyle}>
-          {ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl ? (
-            <img
-              src={resolveMediaUrl(ownDriver?.photoDataUrl ?? ownUser?.photoDataUrl ?? activeTenant?.photoDataUrl)}
-              alt={ownDriver?.fullName ?? activeTenant?.name}
-              style={tenantAvatarStyle}
-            />
-          ) : (
-            <div style={tenantAvatarFallbackStyle}>{activeTenant?.name?.slice(0, 1).toUpperCase() ?? "F"}</div>
-          )}
+          {(() => {
+            // Company accounts have a single "photo" concept — the
+            // company logo — since the admin's own photo field is hidden
+            // on that account type (see ProfilePage's AccountProfileForm).
+            const sidebarPhotoUrl = isCompanyAccount
+              ? ownDriver?.photoDataUrl || activeTenant?.photoDataUrl || ownUser?.photoDataUrl
+              : ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl;
+
+            return sidebarPhotoUrl ? (
+              <img
+                src={resolveMediaUrl(sidebarPhotoUrl)}
+                alt={ownDriver?.fullName ?? activeTenant?.name}
+                style={tenantAvatarStyle}
+              />
+            ) : (
+              <div style={tenantAvatarFallbackStyle}>{activeTenant?.name?.slice(0, 1).toUpperCase() ?? "F"}</div>
+            );
+          })()}
           <div style={tenantInfoStyle}>
             <p style={sidebarEyebrowStyle}>Fleet Platform</p>
             <span style={betaBadgeStyle}>Beta</span>

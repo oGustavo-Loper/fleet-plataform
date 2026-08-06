@@ -1,10 +1,12 @@
 import { ForbiddenException, UseGuards } from "@nestjs/common";
-import { Args, Query, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 
 import type { AuthenticatedUser } from "../../common/auth-user.js";
+import { assertTenantAccess } from "../../common/assert-tenant-access.js";
 import { CurrentUser } from "../../common/current-user.js";
 import { GqlJwtAuthGuard } from "../../common/gql-jwt-auth.guard.js";
 import { PtBrMessage } from "../../common/messages.js";
+import { UpdateTenantPhotoInput } from "./dto/update-tenant-photo.input.js";
 import { TenantModel } from "./tenant.types.js";
 import { TenantsService } from "./tenants.service.js";
 
@@ -33,5 +35,14 @@ export class TenantsResolver {
       return null;
     }
     return this.tenantsService.findById(id);
+  }
+
+  @Mutation(() => TenantModel)
+  updateTenantPhoto(
+    @Args("input") input: UpdateTenantPhotoInput,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    assertTenantAccess(user, input.tenantId);
+    return this.tenantsService.updatePhoto(input.tenantId, input.photoDataUrl);
   }
 }

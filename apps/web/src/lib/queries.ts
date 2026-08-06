@@ -608,6 +608,15 @@ export const UPDATE_MY_PROFILE_MUTATION = gql`
   }
 `;
 
+export const UPDATE_TENANT_PHOTO_MUTATION = gql`
+  mutation UpdateTenantPhoto($input: UpdateTenantPhotoInput!) {
+    updateTenantPhoto(input: $input) {
+      id
+      photoDataUrl
+    }
+  }
+`;
+
 export const DELETE_MY_ACCOUNT_MUTATION = gql`
   mutation DeleteMyAccount($input: DeleteMyAccountInput!) {
     deleteMyAccount(input: $input)

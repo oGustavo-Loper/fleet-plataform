@@ -17,8 +17,10 @@ import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
 import {
   DELETE_MY_ACCOUNT_MUTATION,
   DRIVERS_QUERY,
+  TENANT_QUERY,
   UPDATE_DRIVER_MUTATION,
   UPDATE_MY_PROFILE_MUTATION,
+  UPDATE_TENANT_PHOTO_MUTATION,
   USERS_QUERY
 } from "../lib/queries";
 
@@ -46,6 +48,7 @@ export function ProfilePage() {
       }
     >
       {isDriverProfile ? <DriverProfileForm /> : <AccountProfileForm />}
+      {!isDriverProfile ? <CompanyLogoSection /> : null}
       {canDeleteAccount ? <DeleteAccountSection /> : null}
     </AppShell>
   );
@@ -272,10 +275,13 @@ function AccountProfileForm() {
     setSuccessMessage("Perfil atualizado com sucesso.");
   }
 
+  const isCompanyAccount = activeTenant?.accountType === "COMPANY";
+
   return (
     <form style={formPanelStyle} onSubmit={handleSubmit}>
-      <AvatarPickerField
-        photoUrl={resolveMediaUrl(photoDataUrl)}
+      {!isCompanyAccount ? (
+        <AvatarPickerField
+          photoUrl={resolveMediaUrl(photoDataUrl)}
           alt="Sua foto"
           loading={photoLoading}
           error={photoError}
@@ -296,6 +302,7 @@ function AccountProfileForm() {
             }
           }}
         />
+      ) : null}
         <div style={formGridStyle}>
           <FormField label="Nome completo">
             <input
@@ -345,6 +352,52 @@ function AccountProfileForm() {
           {loading ? "Salvando..." : "Salvar alterações"}
         </button>
     </form>
+  );
+}
+
+function CompanyLogoSection() {
+  const { activeTenant } = useTenant();
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [updateTenantPhoto] = useMutation(UPDATE_TENANT_PHOTO_MUTATION);
+
+  const tenantId = activeTenant?.id;
+
+  async function handleSelect(file: File | null) {
+    if (!tenantId) {
+      return;
+    }
+
+    setPhotoError("");
+    setPhotoLoading(true);
+    try {
+      const photoDataUrl = file ? (await uploadMediaFile(file, "company-photo")).url : "";
+      await updateTenantPhoto({
+        variables: { input: { tenantId, photoDataUrl } },
+        refetchQueries: [{ query: TENANT_QUERY, variables: { id: tenantId } }]
+      });
+    } catch (uploadError) {
+      setPhotoError(uploadError instanceof Error ? uploadError.message : "Falha ao enviar foto.");
+    } finally {
+      setPhotoLoading(false);
+    }
+  }
+
+  if (!activeTenant || activeTenant.accountType !== "COMPANY") {
+    return null;
+  }
+
+  return (
+    <section style={formPanelStyle}>
+      <p style={companyLogoLabelStyle}>Logo da empresa</p>
+      <AvatarPickerField
+        photoUrl={resolveMediaUrl(activeTenant.photoDataUrl)}
+        alt="Logo da empresa"
+        loading={photoLoading}
+        error={photoError}
+        onSelect={handleSelect}
+      />
+    </section>
   );
 }
 
@@ -460,6 +513,11 @@ const dangerButtonStyle: CSSProperties = {
 const hintStyle: CSSProperties = {
   color: "#fbbf24",
   margin: 0
+};
+
+const companyLogoLabelStyle: CSSProperties = {
+  margin: "0 0 0.75rem",
+  fontWeight: 700
 };
 
 const errorStyle: CSSProperties = {
