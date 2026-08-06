@@ -8,9 +8,11 @@ import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState"
 import { VehicleForm } from "../features/vehicles/VehicleForm";
 import { VehicleList } from "../features/vehicles/VehicleList";
 import { VehiclePlanSummary } from "../features/vehicles/VehiclePlanSummary";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useVehiclesPageState } from "../hooks/useVehiclesPageState";
 
 export function VehiclesPage() {
+  usePageMeta("Veículos", "Cadastro, consulta rápida e status operacional da frota.");
   const navigate = useNavigate();
   const {
     activeTenant,

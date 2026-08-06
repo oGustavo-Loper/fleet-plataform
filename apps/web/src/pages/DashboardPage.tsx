@@ -8,12 +8,14 @@ import { useAuth } from "../contexts/AuthContext";
 import { DashboardView } from "../features/dashboard/DashboardView";
 import { useApiHeartbeat } from "../hooks/useApiHeartbeat";
 import { SyncCenter } from "../features/sync/SyncCenter";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useSyncStatus } from "../hooks/useSyncStatus";
 import { useTenant } from "../hooks/useTenant";
 import { DASHBOARD_SUMMARY_QUERY } from "../lib/queries";
 import { planLabel } from "../lib/plans";
 
 export function DashboardPage() {
+  usePageMeta("Painel de operação", "Visão consolidada de frota, custos, manutenção e sincronização offline.");
   const { auth } = useAuth();
   const canViewReports = auth?.role !== "DRIVER";
   const { status } = useSyncStatus();

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { CenteredShell } from "../components/CenteredShell";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 /**
  * Pricing temporarily disabled until real Mercado Pago payment is fully
@@ -12,6 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
  * where relevant) once billing is live.
  */
 export function PlansPage() {
+  usePageMeta("Planos", "Planos Fleet Platform para uso pessoal ou empresarial, em breve disponíveis.");
   const { auth } = useAuth();
 
   return (

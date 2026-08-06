@@ -1,11 +1,16 @@
 import type { CSSProperties, PropsWithChildren } from "react";
 
 import { CenteredShell } from "../components/CenteredShell";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 const LAST_UPDATED = "04 de agosto de 2026";
 const CONTACT_EMAIL = "suporte@fleet.gustavoloper.xyz";
 
 export function TermsPage() {
+  usePageMeta(
+    "Termos de Uso e Política de Privacidade",
+    `Termos de Uso e Política de Privacidade do Fleet Platform. Última atualização: ${LAST_UPDATED}.`
+  );
   return (
     <CenteredShell
       title="Termos de Uso e Política de Privacidade"

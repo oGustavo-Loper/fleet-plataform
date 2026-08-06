@@ -9,9 +9,11 @@ import { MaintenanceDetailsPanel } from "../features/maintenance/MaintenanceDeta
 import { MaintenanceForm } from "../features/maintenance/MaintenanceForm";
 import { MaintenanceList } from "../features/maintenance/MaintenanceList";
 import { useMaintenancePageState } from "../hooks/useMaintenancePageState";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { revealMaintenanceHistory } from "../lib/maintenance-history";
 
 export function MaintenancePage() {
+  usePageMeta("Manutenções", "Registro de manutenções preventivas e corretivas, com próxima data ou quilometragem.");
   const [selectedItem, setSelectedItem] = useState<MaintenanceItem | null>(null);
   const [historyHighlight, setHistoryHighlight] = useState(false);
   const historySectionRef = useRef<HTMLElement | null>(null);

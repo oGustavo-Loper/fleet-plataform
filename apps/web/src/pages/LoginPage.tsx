@@ -7,6 +7,7 @@ import { AppShell } from "@fleet/ui";
 
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { apolloClient } from "../lib/apollo";
 import { isBlank } from "../lib/form-validation";
 import {
@@ -16,6 +17,7 @@ import {
 } from "../lib/queries";
 
 export function LoginPage() {
+  usePageMeta("Entrar", "Acesse sua conta Fleet Platform como administrador, empresa, motorista ou pessoa física.");
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();

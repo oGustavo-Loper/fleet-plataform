@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { usePageMeta } from "../hooks/usePageMeta";
+
 type IconProps = { size?: number };
 
 function CarIcon({ size = 22 }: IconProps) {
@@ -208,6 +210,10 @@ const faqs = [
 ];
 
 export function LandingPage() {
+  usePageMeta(
+    "Gestão de frota sem depender de sinal",
+    "Gestão de frota, combustível, quilometragem e manutenção com suporte offline para empresas e motoristas autônomos no Brasil."
+  );
   const [isMobile, setIsMobile] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 

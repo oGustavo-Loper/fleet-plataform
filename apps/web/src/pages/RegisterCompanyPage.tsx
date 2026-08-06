@@ -9,12 +9,14 @@ import { isValidCnpj } from "@fleet/shared-validation";
 
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { apolloClient } from "../lib/apollo";
 import { isBlank } from "../lib/form-validation";
 import { formatCnpj } from "../lib/masks";
 import { REGISTER_COMPANY_MUTATION } from "../lib/queries";
 
 export function RegisterCompanyPage() {
+  usePageMeta("Criar conta empresarial", "Cadastre sua empresa no Fleet Platform e gere o primeiro acesso administrativo.");
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({

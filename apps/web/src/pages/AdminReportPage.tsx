@@ -5,12 +5,17 @@ import type { DriverListItem, FuelLogItem, VehicleListItem } from "@fleet/shared
 
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { formatPlate } from "../lib/masks";
 import { DRIVERS_QUERY, FUEL_LOGS_QUERY, VEHICLES_QUERY } from "../lib/queries";
 
 const legacyAliasPattern = /^[A-Z]{3} D\d{3}$/;
 
 export function AdminReportPage() {
+  usePageMeta(
+    "Relatório administrativo",
+    "Rota técnica para verificar duplicidades, estados operacionais e vestígios de dados legados."
+  );
   const { auth } = useAuth();
   const tenantId = auth?.tenantId ?? "";
 

@@ -15,6 +15,8 @@ export default defineConfig({
       manifest: {
         name: "Fleet Platform",
         short_name: "Fleet",
+        description: "Gestão de veículos, custos, quilometragem e manutenções com suporte offline.",
+        lang: "pt-BR",
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",

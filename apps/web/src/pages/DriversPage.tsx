@@ -11,10 +11,12 @@ import { DriverDetailsPanel } from "../features/drivers/DriverDetailsPanel";
 import { DriverForm } from "../features/drivers/DriverForm";
 import { DriverList } from "../features/drivers/DriverList";
 import { useDriversPageState } from "../hooks/useDriversPageState";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 type StatusFilter = "ALL" | DriverEmploymentStatus;
 
 export function DriversPage() {
+  usePageMeta("Motoristas", "Cadastro, status de acesso e histórico dos motoristas vinculados à conta.");
   const { auth } = useAuth();
   const canManageRoles = auth?.role === "ADMIN";
   const {

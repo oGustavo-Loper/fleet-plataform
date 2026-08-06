@@ -4,6 +4,7 @@ import { AppShell } from "@fleet/ui";
 import type { UserRole } from "@fleet/shared-types";
 
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useTenant } from "../hooks/useTenant";
 import { USERS_QUERY } from "../lib/queries";
 
@@ -26,6 +27,7 @@ type TeamUser = {
 };
 
 export function TeamPage() {
+  usePageMeta("Equipe", "Usuários com acesso à conta, além dos motoristas.");
   const { activeTenant } = useTenant();
 
   const { data, loading, error } = useQuery<{ users: TeamUser[] }>(USERS_QUERY, {

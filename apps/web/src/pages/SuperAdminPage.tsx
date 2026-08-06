@@ -4,6 +4,7 @@ import { AppShell } from "@fleet/ui";
 import type { PlatformTenantSummary } from "@fleet/shared-types";
 
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { ALL_TENANTS_QUERY } from "../lib/queries";
 import { planLabel } from "../lib/plans";
 
@@ -16,6 +17,7 @@ const planStatusLabel: Record<string, string> = {
 type StatusFilter = "ALL" | "ACTIVE_PAID";
 
 export function SuperAdminPage() {
+  usePageMeta("Todas as contas", "Visão de plataforma: contas de todos os clientes, com plano e status de pagamento.");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const { data, loading, error } = useQuery<{ allTenants: PlatformTenantSummary[] }>(ALL_TENANTS_QUERY, {
     fetchPolicy: "network-only"

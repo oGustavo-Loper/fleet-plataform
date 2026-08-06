@@ -39,7 +39,7 @@ export function AppRouter() {
               : <LandingPage />
           }
         />
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/landing" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/first-access" element={<FirstAccessPage />} />
         <Route path="/register/company" element={<RegisterCompanyPage />} />

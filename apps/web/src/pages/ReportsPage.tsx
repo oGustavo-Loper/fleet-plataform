@@ -9,12 +9,14 @@ import { ReportMaintenanceSection } from "../features/reports/ReportMaintenanceS
 import { ReportPerformancePanel } from "../features/reports/ReportPerformancePanel";
 import { ReportSummaryGrid } from "../features/reports/ReportSummaryGrid";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useReportsPageState } from "../hooks/useReportsPageState";
 import { createVehicleReportPdfBlob, downloadBlob } from "../lib/pdf";
 import { formatPlate } from "../lib/masks";
 import { formatMaintenanceType } from "../lib/maintenance";
 
 export function ReportsPage() {
+  usePageMeta("Relatórios", "Resumo por veículo com abastecimentos, manutenções, custos e consumo médio.");
   const { auth } = useAuth();
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfError, setPdfError] = useState("");

@@ -10,6 +10,7 @@ import { AvatarPickerField } from "../components/AvatarPickerField";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { FormField, formGridStyle, formInputStyle, formPanelStyle, primarySubmitStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useTenant } from "../hooks/useTenant";
 import { hasExactDigits, isBlank } from "../lib/form-validation";
 import { limitText, onlyDigits } from "../lib/masks";
@@ -36,6 +37,7 @@ function getInitialForm(driver?: DriverListItem | null) {
 }
 
 export function ProfilePage() {
+  usePageMeta("Meu perfil", "Gerencie seus dados de acesso, foto e informações da conta.");
   const { auth } = useAuth();
   const isDriverProfile = Boolean(auth?.driverId);
   const canDeleteAccount = Boolean(auth?.role && ACCOUNT_OWNER_ROLES.has(auth.role));

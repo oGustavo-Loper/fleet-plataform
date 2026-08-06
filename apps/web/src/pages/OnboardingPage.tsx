@@ -5,11 +5,13 @@ import { AppShell } from "@fleet/ui";
 import type { DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { useTenant } from "../hooks/useTenant";
 import { DRIVERS_QUERY, VEHICLES_QUERY } from "../lib/queries";
 import { planLabel } from "../lib/plans";
 
 export function OnboardingPage() {
+  usePageMeta("Primeiros passos", "Configure os primeiros dados da conta para começar a operar no Fleet Platform.");
   const { auth } = useAuth();
   const { activeTenant } = useTenant();
   const tenantId = activeTenant?.id ?? "";

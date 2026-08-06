@@ -9,12 +9,14 @@ import { isValidCpf } from "@fleet/shared-validation";
 
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { apolloClient } from "../lib/apollo";
 import { isBlank } from "../lib/form-validation";
 import { formatCpf } from "../lib/masks";
 import { REGISTER_INDIVIDUAL_MUTATION } from "../lib/queries";
 
 export function RegisterIndividualPage() {
+  usePageMeta("Criar conta pessoal", "Cadastre sua conta pessoal e comece com até 3 veículos no plano inicial.");
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({

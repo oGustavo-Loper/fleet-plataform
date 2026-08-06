@@ -9,8 +9,10 @@ import { FuelDetailsPanel } from "../features/fuels/FuelDetailsPanel";
 import { FuelForm } from "../features/fuels/FuelForm";
 import { FuelList } from "../features/fuels/FuelList";
 import { useFuelsPageState } from "../hooks/useFuelsPageState";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 export function FuelsPage() {
+  usePageMeta("Abastecimentos", "Registro rápido de abastecimentos, custos e histórico por veículo.");
   const [selectedItem, setSelectedItem] = useState<FuelLogItem | null>(null);
   const {
     tenantId,

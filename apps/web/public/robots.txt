@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register/company
+Allow: /register/individual
+Allow: /plans
+Allow: /termos
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /profile
+Disallow: /fuels
+Disallow: /maintenance
+Disallow: /reports
+Disallow: /vehicles
+Disallow: /drivers
+Disallow: /admin/
+Disallow: /team
+Disallow: /super-admin
+Disallow: /first-access
+
+Sitemap: https://fleet.gustavoloper.xyz/sitemap.xml

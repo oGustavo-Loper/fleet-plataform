@@ -6,11 +6,13 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { CenteredShell } from "../components/CenteredShell";
 import { FormField, formInputStyle } from "../components/FormField";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../hooks/usePageMeta";
 import { apolloClient } from "../lib/apollo";
 import { isBlank } from "../lib/form-validation";
 import { COMPLETE_FIRST_LOGIN_MUTATION } from "../lib/queries";
 
 export function FirstAccessPage() {
+  usePageMeta("Primeiro acesso", "Defina uma senha nova antes de continuar usando a conta.");
   const navigate = useNavigate();
   const { auth, login, isAuthenticated, isInitializing } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
