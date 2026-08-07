@@ -3,15 +3,16 @@ import type { CSSProperties } from "react";
 import type { AccountType, DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
 import { ActionMenu } from "../../components/ActionMenu";
-import { resolveMediaUrl } from "../../lib/media";
+import { useMediaUrl } from "../../lib/media";
 import { DriverStatusPill } from "./DriverStatusPill";
 
 function DriverAvatar({ driver, muted }: { driver: DriverListItem; muted?: boolean }) {
+  const resolvedUrl = useMediaUrl(driver.photoDataUrl);
   const initial = driver.fullName.slice(0, 1).toUpperCase();
   const style = { ...avatarStyle, ...(muted ? avatarMutedStyle : null) };
 
   if (driver.photoDataUrl) {
-    return <img src={resolveMediaUrl(driver.photoDataUrl)} alt={driver.fullName} style={style} />;
+    return <img src={resolvedUrl} alt={driver.fullName} style={style} />;
   }
 
   return (
@@ -116,27 +117,6 @@ export function DriverList({
           <div style={vehicleRowStyle}>
             <span style={vehicleLabelStyle}>Veículo</span>
             <span style={vehicleValueStyle}>{getVehicleLabel(driver)}</span>
-          <div style={headerStyle}>
-            {driver.photoDataUrl ? (
-              <DriverAvatar photoDataUrl={driver.photoDataUrl} fullName={driver.fullName} />
-            ) : (
-              <div style={avatarFallbackStyle}>{driver.fullName.slice(0, 1).toUpperCase()}</div>
-            )}
-            <div style={identityStyle}>
-              <div style={nameRowStyle}>
-                <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
-                {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
-                {driver.loginEmail && !driver.hasCompletedFirstLogin ? (
-                  <span style={pendingBadgeStyle}>Pendente</span>
-                ) : null}
-              </div>
-              <p style={mutedStyle}>
-                {isCompany
-                  ? `Matrícula: ${driver.registrationId ?? "Não informada"}`
-                  : `CPF: ${driver.cpf ?? "Não informado"}`}
-              </p>
-              <p style={statusTextStyle}>{getStatusLabel(driver.employmentStatus)}</p>
-            </div>
           </div>
         </article>
       ))}
