@@ -19,7 +19,7 @@ import { isBlank, parseNumber } from "../../lib/form-validation";
 import { submitOrQueueOffline } from "../../lib/offline-submit";
 import { getPendingMaxOdometerKm } from "../../lib/sync-manager";
 import { formatPlate } from "../../lib/masks";
-import { captureCurrentLocation, resolveMediaUrl, uploadMediaFile } from "../../lib/media";
+import { captureCurrentLocation, useMediaUrl, uploadMediaFile } from "../../lib/media";
 
 type Props = {
   tenantId: string;
@@ -73,6 +73,7 @@ export function FuelForm({
     fuelingLatitude: null as number | null,
     fuelingLongitude: null as number | null
   });
+  const receiptPreviewUrl = useMediaUrl(form.receiptPhotoDataUrl);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [receiptLoading, setReceiptLoading] = useState(false);
@@ -479,7 +480,7 @@ export function FuelForm({
           hint={receiptLoading ? "Enviando comprovante..." : "Anexe uma foto ou captura do pagamento"}
           error={receiptError}
           loading={receiptLoading}
-          previewUrl={resolveMediaUrl(form.receiptPhotoDataUrl)}
+          previewUrl={receiptPreviewUrl}
           previewAlt="Comprovante"
           onSelect={async (file) => {
             if (!file) {

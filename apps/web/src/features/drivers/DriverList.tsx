@@ -3,7 +3,12 @@ import type { CSSProperties } from "react";
 import type { AccountType, DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
 import { ActionMenu } from "../../components/ActionMenu";
-import { resolveMediaUrl } from "../../lib/media";
+import { useMediaUrl } from "../../lib/media";
+
+function DriverAvatar({ photoDataUrl, fullName }: { photoDataUrl: string; fullName: string }) {
+  const resolvedUrl = useMediaUrl(photoDataUrl);
+  return <img src={resolvedUrl} alt={fullName} style={avatarStyle} />;
+}
 
 export function DriverList({
   accountType,
@@ -93,11 +98,7 @@ export function DriverList({
           </div>
           <div style={headerStyle}>
             {driver.photoDataUrl ? (
-              <img
-                src={resolveMediaUrl(driver.photoDataUrl)}
-                alt={driver.fullName}
-                style={avatarStyle}
-              />
+              <DriverAvatar photoDataUrl={driver.photoDataUrl} fullName={driver.fullName} />
             ) : (
               <div style={avatarFallbackStyle}>{driver.fullName.slice(0, 1).toUpperCase()}</div>
             )}

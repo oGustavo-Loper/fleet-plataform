@@ -1,3 +1,5 @@
+import { useEffect, useSyncExternalStore } from "react";
+
 import { fetchWithTimeout, resolveApiUrl } from "./http";
 import { getAccessToken } from "./storage";
 
@@ -13,7 +15,95 @@ export type UploadedMedia = {
   size: number;
 };
 
-export function resolveMediaUrl(source?: string | null) {
+// 1x1 transparent GIF shown in place of a /media/* image while a scoped
+// token is still being fetched, so the <img> never gets an empty src
+// (which browsers treat as a request to the current document URL).
+const BLANK_IMAGE = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+const MEDIA_TOKEN_EXPIRY_SKEW_MS = 10_000;
+
+let mediaTokenState: { token: string; expiresAt: number } | null = null;
+let mediaTokenFetch: Promise<void> | null = null;
+const mediaTokenListeners = new Set<() => void>();
+
+function notifyMediaTokenListeners() {
+  for (const listener of mediaTokenListeners) {
+    listener();
+  }
+}
+
+function subscribeMediaToken(listener: () => void) {
+  mediaTokenListeners.add(listener);
+  return () => mediaTokenListeners.delete(listener);
+}
+
+function getMediaTokenSnapshot() {
+  if (mediaTokenState && mediaTokenState.expiresAt > Date.now()) {
+    return mediaTokenState.token;
+  }
+  return null;
+}
+
+/** Cleared on logout so a fresh session doesn't reuse a stale token/promise. */
+export function clearMediaToken() {
+  mediaTokenState = null;
+  mediaTokenFetch = null;
+  notifyMediaTokenListeners();
+}
+
+/**
+ * Fetches a short-lived, media-scoped token (GET /media/token) and caches
+ * it — /media/* URLs carry this instead of the real access token, since
+ * <img> tags and canvas/PDF fetches can't attach an Authorization header.
+ * Safe to call repeatedly: concurrent calls share one in-flight request,
+ * and a still-valid cached token skips the request entirely.
+ */
+export function ensureMediaToken(): Promise<void> {
+  if (getMediaTokenSnapshot()) {
+    return Promise.resolve();
+  }
+
+  if (mediaTokenFetch) {
+    return mediaTokenFetch;
+  }
+
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    return Promise.resolve();
+  }
+
+  mediaTokenFetch = (async () => {
+    try {
+      const response = await fetchWithTimeout(`${apiBaseUrl}/media/token`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { token?: string; expiresInSeconds?: number };
+      if (!payload.token) {
+        return;
+      }
+
+      const ttlMs = (payload.expiresInSeconds ?? 120) * 1000;
+      mediaTokenState = {
+        token: payload.token,
+        expiresAt: Date.now() + Math.max(ttlMs - MEDIA_TOKEN_EXPIRY_SKEW_MS, 0)
+      };
+      notifyMediaTokenListeners();
+    } catch {
+      // Best-effort: callers fall back to an unauthenticated (rejected)
+      // request and can retry on the next render/token refresh.
+    } finally {
+      mediaTokenFetch = null;
+    }
+  })();
+
+  return mediaTokenFetch;
+}
+
+function buildMediaUrl(source: string | null | undefined, mediaToken: string | null) {
   if (!source) {
     return "";
   }
@@ -28,13 +118,14 @@ export function resolveMediaUrl(source?: string | null) {
   }
 
   const normalizedSource = source.startsWith("/") ? source : `/${source}`;
+  const isMediaRoute = normalizedSource.startsWith("/media/");
 
-  // /media/* requires authentication (tenant-scoped access), but <img> tags
-  // and canvas/PDF fetches can't attach an Authorization header — carry the
-  // current access token as a query param instead, same short-lived token
-  // used everywhere else, just also accepted here for this one route.
-  const withToken = normalizedSource.startsWith("/media/")
-    ? appendAccessToken(normalizedSource)
+  if (isMediaRoute && !mediaToken) {
+    return BLANK_IMAGE;
+  }
+
+  const withToken = isMediaRoute
+    ? `${normalizedSource}${normalizedSource.includes("?") ? "&" : "?"}token=${encodeURIComponent(mediaToken as string)}`
     : normalizedSource;
 
   // When the API is served from the same origin (the default in production,
@@ -48,14 +139,27 @@ export function resolveMediaUrl(source?: string | null) {
   return `${apiBaseUrl}${withToken}`;
 }
 
-function appendAccessToken(path: string) {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    return path;
-  }
+/**
+ * React-render-safe resolver for /media/* (and data:/blob:/http(s)) image
+ * sources. Renders a blank placeholder until the scoped media token is
+ * fetched, then re-renders with the real, tokened URL.
+ */
+export function useMediaUrl(source?: string | null) {
+  const mediaToken = useSyncExternalStore(subscribeMediaToken, getMediaTokenSnapshot, getMediaTokenSnapshot);
 
-  const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}token=${encodeURIComponent(accessToken)}`;
+  useEffect(() => {
+    if (!mediaToken) {
+      void ensureMediaToken();
+    }
+  }, [mediaToken]);
+
+  return buildMediaUrl(source, mediaToken);
+}
+
+/** Non-hook variant for one-off async contexts (e.g. PDF export) outside React render. */
+export async function resolveMediaUrlAsync(source?: string | null) {
+  await ensureMediaToken();
+  return buildMediaUrl(source, getMediaTokenSnapshot());
 }
 
 const MAX_IMAGE_DIMENSION = 1280;

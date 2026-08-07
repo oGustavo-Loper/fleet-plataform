@@ -2,10 +2,11 @@ import type { CSSProperties } from "react";
 
 import type { FuelLogItem } from "@fleet/shared-types";
 import { formatCurrency } from "../../lib/currency";
-import { resolveMediaUrl } from "../../lib/media";
+import { useMediaUrl } from "../../lib/media";
 
 export function FuelDetailsPanel({ item }: { item: FuelLogItem }) {
   const hasCoordinates = item.fuelingLatitude != null && item.fuelingLongitude != null;
+  const receiptUrl = useMediaUrl(item.receiptPhotoDataUrl);
 
   return (
     <section style={panelStyle}>
@@ -59,7 +60,7 @@ export function FuelDetailsPanel({ item }: { item: FuelLogItem }) {
         </div>
       ) : null}
       {item.receiptPhotoDataUrl ? (
-        <img src={resolveMediaUrl(item.receiptPhotoDataUrl)} alt="Comprovante" style={receiptStyle} />
+        <img src={receiptUrl} alt="Comprovante" style={receiptStyle} />
       ) : null}
     </section>
   );

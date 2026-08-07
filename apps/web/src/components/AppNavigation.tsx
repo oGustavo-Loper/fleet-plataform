@@ -7,7 +7,7 @@ import type { DriverListItem, UserRole } from "@fleet/shared-types";
 import { useAuth } from "../contexts/AuthContext";
 import { useTenant } from "../hooks/useTenant";
 import { DRIVERS_QUERY, USERS_QUERY } from "../lib/queries";
-import { resolveMediaUrl } from "../lib/media";
+import { useMediaUrl } from "../lib/media";
 import { planLabel } from "../lib/plans";
 
 type SelfUser = { id: string; photoDataUrl?: string };
@@ -53,6 +53,13 @@ export function AppNavigation() {
   const ownUser = usersQuery.data?.users.find((user) => user.id === auth?.userId);
   const hasPendingCnh = Boolean(auth?.driverId && ownDriver && !ownDriver.cnh);
   const isFamilyAccount = isIndividualAccount && driversCount > 1;
+  // Company accounts have a single "photo" concept — the company logo —
+  // since the admin's own photo field is hidden on that account type (see
+  // ProfilePage's AccountProfileForm).
+  const sidebarPhotoUrl = isCompanyAccount
+    ? ownDriver?.photoDataUrl || activeTenant?.photoDataUrl || ownUser?.photoDataUrl
+    : ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl;
+  const sidebarPhotoResolvedUrl = useMediaUrl(sidebarPhotoUrl);
   const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual"]);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
@@ -160,24 +167,15 @@ export function AppNavigation() {
         }}
       >
         <div style={sidebarHeaderStyle}>
-          {(() => {
-            // Company accounts have a single "photo" concept — the
-            // company logo — since the admin's own photo field is hidden
-            // on that account type (see ProfilePage's AccountProfileForm).
-            const sidebarPhotoUrl = isCompanyAccount
-              ? ownDriver?.photoDataUrl || activeTenant?.photoDataUrl || ownUser?.photoDataUrl
-              : ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl;
-
-            return sidebarPhotoUrl ? (
-              <img
-                src={resolveMediaUrl(sidebarPhotoUrl)}
-                alt={ownDriver?.fullName ?? activeTenant?.name ?? "Avatar do usuário"}
-                style={tenantAvatarStyle}
-              />
-            ) : (
-              <div style={tenantAvatarFallbackStyle}>{activeTenant?.name?.slice(0, 1).toUpperCase() ?? "F"}</div>
-            );
-          })()}
+          {sidebarPhotoUrl ? (
+            <img
+              src={sidebarPhotoResolvedUrl}
+              alt={ownDriver?.fullName ?? activeTenant?.name ?? "Avatar do usuário"}
+              style={tenantAvatarStyle}
+            />
+          ) : (
+            <div style={tenantAvatarFallbackStyle}>{activeTenant?.name?.slice(0, 1).toUpperCase() ?? "F"}</div>
+          )}
           <div style={tenantInfoStyle}>
             <p style={sidebarEyebrowStyle}>Fleet Platform</p>
             <span style={betaBadgeStyle}>Beta</span>

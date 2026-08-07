@@ -19,7 +19,7 @@ import {
 import { upsertQueryListItem } from "../../lib/apollo-cache";
 import { hasExactDigits, hasMinDigits, isBlank } from "../../lib/form-validation";
 import { formatCpf, formatPlate, limitText, onlyDigits } from "../../lib/masks";
-import { resolveMediaUrl, uploadMediaFile } from "../../lib/media";
+import { useMediaUrl, uploadMediaFile } from "../../lib/media";
 import { submitOrQueueOffline } from "../../lib/offline-submit";
 
 function getInitialForm(driver?: DriverListItem | null) {
@@ -90,6 +90,8 @@ export function DriverForm({
   useEffect(() => {
     setForm(getInitialForm(initialDriver));
   }, [initialDriver]);
+
+  const photoUrl = useMediaUrl(form.photoDataUrl);
 
   const [mutateDriver, { loading, error, reset: resetMutation }] = useMutation(
     isEditing ? UPDATE_DRIVER_MUTATION : CREATE_DRIVER_MUTATION,
@@ -253,7 +255,7 @@ export function DriverForm({
   return (
     <form style={formPanelStyle} onSubmit={handleSubmit}>
       <AvatarPickerField
-        photoUrl={resolveMediaUrl(form.photoDataUrl)}
+        photoUrl={photoUrl}
         alt="Foto do motorista"
         loading={photoLoading}
         error={photoError}

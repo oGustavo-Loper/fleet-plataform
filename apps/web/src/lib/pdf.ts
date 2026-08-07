@@ -8,7 +8,7 @@ import type {
 
 import { fetchWithTimeout } from "./http";
 import { formatMaintenanceType } from "./maintenance";
-import { resolveMediaUrl } from "./media";
+import { resolveMediaUrlAsync } from "./media";
 import { planLabel } from "./plans";
 import { buildReportPerformanceInsights } from "./report-performance";
 
@@ -585,7 +585,7 @@ async function createHeaderImage(input: VehicleReportPdfInput): Promise<PdfImage
   context.stroke();
 
   const logoUrl = sanitizeText(input.tenant?.photoDataUrl)
-    ? resolveMediaUrl(input.tenant?.photoDataUrl)
+    ? await resolveMediaUrlAsync(input.tenant?.photoDataUrl)
     : "";
   let logoDrawn = false;
   if (logoUrl) {
