@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { apolloClient } from "../lib/apollo";
+import { clearMediaToken } from "../lib/media";
 import { REFRESH_SESSION_MUTATION } from "../lib/queries";
 import {
   clearStoredAuth,
@@ -106,6 +107,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setAuth(nextAuth);
     } catch {
       clearStoredAuth();
+      clearMediaToken();
       setAuth(null);
       void apolloClient.clearStore();
     } finally {
@@ -124,6 +126,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       logout: () => {
         clearStoredAuth();
+        clearMediaToken();
         setAuth(null);
         void apolloClient.clearStore();
       }
