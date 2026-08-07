@@ -275,7 +275,7 @@ export async function captureCurrentLocation() {
   };
 }
 
-async function reverseGeocode(latitude: number, longitude: number) {
+export async function reverseGeocode(latitude: number, longitude: number) {
   try {
     const url = new URL("https://nominatim.openstreetmap.org/reverse");
     url.searchParams.set("format", "jsonv2");

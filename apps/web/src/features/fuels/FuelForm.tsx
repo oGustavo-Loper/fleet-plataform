@@ -19,7 +19,8 @@ import { isBlank, parseNumber } from "../../lib/form-validation";
 import { submitOrQueueOffline } from "../../lib/offline-submit";
 import { getPendingMaxOdometerKm } from "../../lib/sync-manager";
 import { formatPlate } from "../../lib/masks";
-import { captureCurrentLocation, useMediaUrl, uploadMediaFile } from "../../lib/media";
+import { captureCurrentLocation, reverseGeocode, useMediaUrl, uploadMediaFile } from "../../lib/media";
+import { FuelLocationPicker } from "./FuelLocationPicker";
 
 type Props = {
   tenantId: string;
@@ -76,6 +77,7 @@ export function FuelForm({
   const receiptPreviewUrl = useMediaUrl(form.receiptPhotoDataUrl);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [locationDetailsOpen, setLocationDetailsOpen] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptError, setReceiptError] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -310,6 +312,9 @@ export function FuelForm({
       }));
     } catch (error) {
       setLocationError(error instanceof Error ? error.message : "Falha ao capturar localização.");
+      // GPS auto-capture failed — open the map so the user can pin the
+      // location manually instead of leaving them with no way to notice.
+      setLocationDetailsOpen(true);
     } finally {
       setLocationLoading(false);
     }
@@ -320,6 +325,12 @@ export function FuelForm({
     // Only on mount — this form is create-only, so there is always exactly
     // one fueling location to capture per drawer open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleMapLocationChange = useCallback(async (latitude: number, longitude: number) => {
+    setForm((current) => ({ ...current, fuelingLatitude: latitude, fuelingLongitude: longitude }));
+    const address = await reverseGeocode(latitude, longitude);
+    setForm((current) => ({ ...current, fuelingAddress: address }));
   }, []);
 
   return (
@@ -465,6 +476,38 @@ export function FuelForm({
           </div>
           {locationError ? <p style={locationErrorStyle}>{locationError}</p> : null}
         </FormField>
+        <div style={fullWidthFieldStyle}>
+          <details
+            style={mapDetailsStyle}
+            open={locationDetailsOpen}
+            onToggle={(event) => setLocationDetailsOpen(event.currentTarget.open)}
+          >
+            <summary style={mapSummaryStyle}>
+              <span>Local no mapa</span>
+              <span style={mapSummaryHintStyle}>
+                {locationError
+                  ? "Falha ao localizar — ajuste manualmente"
+                  : locationLoading
+                    ? "Buscando localização..."
+                    : form.fuelingLatitude != null
+                      ? "Local capturado — clique para revisar"
+                      : "Definir local"}
+              </span>
+            </summary>
+            {locationDetailsOpen ? (
+              <div style={mapDetailsContentStyle}>
+                <p style={helperTextStyle}>
+                  Arraste o marcador ou clique no mapa para ajustar o ponto exato do abastecimento.
+                </p>
+                <FuelLocationPicker
+                  latitude={form.fuelingLatitude}
+                  longitude={form.fuelingLongitude}
+                  onChange={handleMapLocationChange}
+                />
+              </div>
+            ) : null}
+          </details>
+        </div>
         <FormField label="Observações" style={fullWidthFieldStyle}>
           <input
             style={formInputStyle}
@@ -677,6 +720,36 @@ const addressCaptureButtonStyle: CSSProperties = {
 const locationErrorStyle: CSSProperties = {
   color: "#fda4af",
   margin: "0.5rem 0 0"
+};
+
+const mapDetailsStyle: CSSProperties = {
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(148, 163, 184, 0.18)",
+  background: "rgba(15, 23, 42, 0.68)",
+  overflow: "hidden"
+};
+
+const mapSummaryStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "0.75rem",
+  padding: "1rem",
+  cursor: "pointer",
+  color: "#f8fafc",
+  fontWeight: 600
+};
+
+const mapSummaryHintStyle: CSSProperties = {
+  color: "#94a3b8",
+  fontWeight: 400,
+  fontSize: "0.86rem"
+};
+
+const mapDetailsContentStyle: CSSProperties = {
+  display: "grid",
+  gap: "0.6rem",
+  padding: "0 1rem 1rem"
 };
 
 const footerActionsStyle: CSSProperties = {
