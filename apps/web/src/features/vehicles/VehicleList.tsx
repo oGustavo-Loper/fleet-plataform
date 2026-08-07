@@ -12,13 +12,6 @@ const vehicleTypeLabel: Record<VehicleType, string> = {
   BUS: "Ônibus"
 };
 
-const vehicleTypeIcon: Record<VehicleType, string> = {
-  CAR: "🚗",
-  MOTORCYCLE: "🏍️",
-  TRUCK: "🚚",
-  BUS: "🚌"
-};
-
 const STATUS_TONE: Record<VehicleStatus, { fg: string; bg: string; border: string; label: string }> = {
   ACTIVE: { fg: "#4ade80", bg: "rgba(74, 222, 128, 0.12)", border: "rgba(74, 222, 128, 0.28)", label: "Ativo" },
   MAINTENANCE: { fg: "#fbbf24", bg: "rgba(251, 191, 36, 0.12)", border: "rgba(251, 191, 36, 0.28)", label: "Manutenção" },
@@ -48,14 +41,11 @@ export function VehicleList({
       {vehicles.map((vehicle) => (
         <article key={vehicle.id} className="list-card" style={cardStyle}>
           <div style={headerStyle}>
-            <div style={typeIconStyle} aria-hidden="true">
-              {vehicleTypeIcon[vehicle.vehicleType]}
-            </div>
             <div style={identityStyle}>
               <strong style={nameStyle}>
                 {vehicle.brand} {vehicle.model}
               </strong>
-              <p style={mutedStyle}>{formatPlate(vehicle.plate)}</p>
+              <p style={mutedStyle}>Placa: {formatPlate(vehicle.plate)}</p>
             </div>
             {onEdit ? (
               <ActionMenu
@@ -103,18 +93,6 @@ const headerStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "0.9rem"
-};
-
-const typeIconStyle: CSSProperties = {
-  width: "58px",
-  height: "58px",
-  flexShrink: 0,
-  borderRadius: "999px",
-  display: "grid",
-  placeItems: "center",
-  fontSize: "1.5rem",
-  background: "linear-gradient(160deg, rgba(251, 191, 36, 0.24), rgba(251, 191, 36, 0.08))",
-  border: "2px solid rgba(148, 163, 184, 0.18)"
 };
 
 const identityStyle: CSSProperties = {
