@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { VehicleListItem } from "@fleet/shared-types";
 
 import { VEHICLES_QUERY } from "../lib/queries";
+import { usePaginatedItems } from "./usePaginatedItems";
 import { useTenant } from "./useTenant";
 
 export function useVehiclesPageState() {
@@ -38,6 +39,13 @@ export function useVehiclesPageState() {
     });
   }, [search, statusFilter, vehicles]);
 
+  const pageSize = 8;
+  const { page, setPage, totalPages, pagedItems: pagedVehicles } = usePaginatedItems({
+    items: filteredVehicles,
+    pageSize,
+    resetDependencies: [search, statusFilter]
+  });
+
   function openCreateDrawer() {
     setEditingVehicle(null);
     setDrawerMode("create");
@@ -60,6 +68,11 @@ export function useVehiclesPageState() {
     error: vehiclesQuery.error,
     vehicles,
     filteredVehicles,
+    pagedVehicles,
+    page,
+    setPage,
+    pageSize,
+    totalPages,
     vehicleLimit,
     limitReached,
     search,

@@ -12,18 +12,6 @@ function parseDate(value?: string) {
   return value ? new Date(value) : null;
 }
 
-function inRange(date: Date, range: ReportRange) {
-  const fromDate = parseDate(range.from);
-  const toDate = parseDate(range.to);
-  if (fromDate && date.getTime() < fromDate.getTime()) {
-    return false;
-  }
-  if (toDate && date.getTime() > toDate.getTime()) {
-    return false;
-  }
-  return true;
-}
-
 @Injectable()
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -37,40 +25,42 @@ export class ReportsService {
       throw new BadRequestException(PtBrMessage.VEHICLE_NOT_FOUND_FOR_ACCOUNT);
     }
 
-    const [fuelLogsRaw, maintenanceLogsRaw, vehicles, drivers] = await Promise.all([
-      this.prisma.fuelLog.findMany({ where: { tenantId } }),
-      this.prisma.maintenanceLog.findMany({ where: { tenantId } }),
-      this.prisma.vehicle.findMany({ where: { tenantId } }),
-      this.prisma.driver.findMany({ where: { tenantId } })
+    const fromDate = parseDate(range.from);
+    const toDate = parseDate(range.to);
+    const dateFilter = fromDate || toDate ? { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } : undefined;
+
+    // Filtered by vehicleId + date range at the DB level (both fields are
+    // indexed as [tenantId, vehicleId, <date>]) instead of pulling every
+    // fuel/maintenance log for the whole tenant and filtering in JS.
+    const [fuelLogsRaw, maintenanceLogsRaw] = await Promise.all([
+      this.prisma.fuelLog.findMany({
+        where: { tenantId, vehicleId, ...(dateFilter ? { fueledAt: dateFilter } : {}) },
+        orderBy: { fueledAt: "desc" }
+      }),
+      this.prisma.maintenanceLog.findMany({
+        where: { tenantId, vehicleId, ...(dateFilter ? { performedAt: dateFilter } : {}) },
+        orderBy: { performedAt: "desc" }
+      })
     ]);
 
-    const fuelLogs = fuelLogsRaw
-      .filter((item) => item.vehicleId === vehicleId && inRange(new Date(item.fueledAt), range))
-      .sort((left, right) => new Date(right.fueledAt).getTime() - new Date(left.fueledAt).getTime())
-      .map((item) => {
-        const vehicleInfo = vehicles.find((candidate) => candidate.id === item.vehicleId);
-        const driverInfo = drivers.find((candidate) => candidate.id === item.driverId);
+    const driverIds = [...new Set(fuelLogsRaw.map((item) => item.driverId).filter((id): id is string => Boolean(id)))];
+    const drivers = driverIds.length
+      ? await this.prisma.driver.findMany({ where: { id: { in: driverIds } } })
+      : [];
+    const driverById = new Map(drivers.map((driver) => [driver.id, driver]));
 
-        return {
-          ...item,
-          vehicleLabel: vehicleInfo ? `${vehicleInfo.plate} • ${vehicleInfo.model}` : item.vehicleId,
-          driverName: driverInfo?.fullName
-        };
-      });
+    const vehicleLabel = `${vehicle.plate} • ${vehicle.model}`;
 
-    const maintenanceLogs = maintenanceLogsRaw
-      .filter(
-        (item) => item.vehicleId === vehicleId && inRange(new Date(item.performedAt), range)
-      )
-      .sort((left, right) => right.performedAt.getTime() - left.performedAt.getTime())
-      .map((item) => {
-        const vehicleInfo = vehicles.find((candidate) => candidate.id === item.vehicleId);
+    const fuelLogs = fuelLogsRaw.map((item) => ({
+      ...item,
+      vehicleLabel,
+      driverName: item.driverId ? driverById.get(item.driverId)?.fullName : undefined
+    }));
 
-        return {
-          ...item,
-          vehicleLabel: vehicleInfo ? `${vehicleInfo.plate} • ${vehicleInfo.model}` : item.vehicleId
-        };
-      });
+    const maintenanceLogs = maintenanceLogsRaw.map((item) => ({
+      ...item,
+      vehicleLabel
+    }));
 
     const totalFuelCost = fuelLogs.reduce((total, item) => total + Number(item.totalCost), 0);
     const totalMaintenanceCost = maintenanceLogs.reduce(

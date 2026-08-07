@@ -1133,6 +1133,30 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       const rows = result.rows.map((row: Record<string, unknown>) => this.mapDriverRow(row));
       return sortByOrder(rows, args?.orderBy) as DriverRecord[];
     },
+    count: async (args?: { where?: Record<string, unknown> }) => {
+      await this.ensureReady();
+      const tenantId = args?.where?.tenantId as string | undefined;
+      const employmentStatusFilter = args?.where?.employmentStatus as { not?: string } | undefined;
+      const params: unknown[] = [];
+      const conditions: string[] = [];
+      if (tenantId) {
+        params.push(tenantId);
+        conditions.push(`tenant_id = $${params.length}`);
+      }
+      if (employmentStatusFilter?.not) {
+        // IS DISTINCT FROM (not !=) so a NULL employment_status — treated
+        // as non-terminated by mapDriverRow's is_active fallback — is still
+        // counted, instead of being silently dropped by NULL comparison.
+        params.push(employmentStatusFilter.not);
+        conditions.push(`employment_status IS DISTINCT FROM $${params.length}`);
+      }
+      let sql = "SELECT COUNT(*)::int AS count FROM drivers";
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(" AND ")}`;
+      }
+      const result = await pool.query<{ count: number }>(sql, params);
+      return Number(result.rows[0]?.count ?? 0);
+    },
     findUnique: async (args: FindUniqueArgs) => {
       await this.ensureReady();
       const result = await pool.query("SELECT * FROM drivers WHERE id = $1 LIMIT 1", [args.where.id]);
@@ -1313,6 +1337,18 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       const rows = result.rows.map((row: Record<string, unknown>) => this.mapVehicleRow(row));
       return sortByOrder(rows, args?.orderBy) as VehicleRecord[];
     },
+    count: async (args?: { where?: Record<string, unknown> }) => {
+      await this.ensureReady();
+      const tenantId = args?.where?.tenantId as string | undefined;
+      const params: unknown[] = [];
+      let sql = "SELECT COUNT(*)::int AS count FROM vehicles";
+      if (tenantId) {
+        params.push(tenantId);
+        sql += " WHERE tenant_id = $1";
+      }
+      const result = await pool.query<{ count: number }>(sql, params);
+      return Number(result.rows[0]?.count ?? 0);
+    },
     findUnique: async (args: FindUniqueArgs) => {
       await this.ensureReady();
       const result = await pool.query("SELECT * FROM vehicles WHERE id = $1 LIMIT 1", [args.where.id]);
@@ -1392,15 +1428,42 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     findMany: async (args?: FindManyArgs) => {
       await this.ensureReady();
       const tenantId = args?.where?.tenantId as string | undefined;
+      const vehicleId = args?.where?.vehicleId as string | undefined;
+      const fueledAtFilter = args?.where?.fueledAt as { gte?: Date; lte?: Date } | undefined;
       const params: unknown[] = [];
-      let sql = "SELECT * FROM fuel_logs";
+      const conditions: string[] = [];
       if (tenantId) {
         params.push(tenantId);
-        sql += " WHERE tenant_id = $1";
+        conditions.push(`tenant_id = $${params.length}`);
+      }
+      if (vehicleId) {
+        params.push(vehicleId);
+        conditions.push(`vehicle_id = $${params.length}`);
+      }
+      if (fueledAtFilter?.gte) {
+        params.push(fueledAtFilter.gte);
+        conditions.push(`fueled_at >= $${params.length}`);
+      }
+      if (fueledAtFilter?.lte) {
+        params.push(fueledAtFilter.lte);
+        conditions.push(`fueled_at <= $${params.length}`);
+      }
+      let sql = "SELECT * FROM fuel_logs";
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(" AND ")}`;
       }
       const result = await pool.query(sql, params);
       const rows = result.rows.map((row: Record<string, unknown>) => this.mapFuelLogRow(row));
       return sortByOrder(rows, args?.orderBy) as FuelLogRecord[];
+    },
+    /** One row per vehicle — its most recently fueled log, pushed to the DB via DISTINCT ON. */
+    findLatestPerVehicle: async (tenantId: string) => {
+      await this.ensureReady();
+      const result = await pool.query(
+        `SELECT DISTINCT ON (vehicle_id) * FROM fuel_logs WHERE tenant_id = $1 ORDER BY vehicle_id, fueled_at DESC`,
+        [tenantId]
+      );
+      return result.rows.map((row: Record<string, unknown>) => this.mapFuelLogRow(row)) as FuelLogRecord[];
     },
     create: async (args: CreateArgs<Record<string, unknown>>) => {
       await this.ensureReady();
@@ -1824,21 +1887,75 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   maintenanceLog = {
     findMany: async (args?: FindManyArgs) => {
       await this.ensureReady();
-      const tenantId = args?.where?.tenantId as string | undefined;
+      const where = args?.where ?? {};
+      const tenantId = where.tenantId as string | undefined;
+      const vehicleId = where.vehicleId as string | undefined;
+      const performedAtFilter = where.performedAt as { gte?: Date; lte?: Date } | undefined;
+      // Only shape this app actually sends: an OR between "has a next-due
+      // date" and "has a next-due km" (dashboard's upcoming-maintenance
+      // query) — not a general-purpose OR interpreter.
+      const orFilter = where.OR as Array<Record<string, unknown>> | undefined;
       const params: unknown[] = [];
+      const conditions: string[] = [];
+      if (tenantId) {
+        params.push(tenantId);
+        conditions.push(`m.tenant_id = $${params.length}`);
+      }
+      if (vehicleId) {
+        params.push(vehicleId);
+        conditions.push(`m.vehicle_id = $${params.length}`);
+      }
+      if (performedAtFilter?.gte) {
+        params.push(performedAtFilter.gte);
+        conditions.push(`m.performed_at >= $${params.length}`);
+      }
+      if (performedAtFilter?.lte) {
+        params.push(performedAtFilter.lte);
+        conditions.push(`m.performed_at <= $${params.length}`);
+      }
+      if (orFilter?.length) {
+        const orConditions = orFilter
+          .map((clause): string | null => {
+            if ("nextMaintenanceAt" in clause) {
+              return "m.next_maintenance_at IS NOT NULL";
+            }
+            if ("nextMaintenanceKm" in clause) {
+              return "m.next_maintenance_km IS NOT NULL";
+            }
+            return null;
+          })
+          .filter((clause): clause is string => clause !== null);
+        if (orConditions.length > 0) {
+          conditions.push(`(${orConditions.join(" OR ")})`);
+        }
+      }
       let sql = `
         SELECT m.*, v.plate AS vehicle_plate, v.model AS vehicle_model
         FROM maintenance_logs m
         INNER JOIN vehicles v ON v.id = m.vehicle_id
       `;
-      if (tenantId) {
-        params.push(tenantId);
-        sql += " WHERE m.tenant_id = $1";
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(" AND ")}`;
       }
       const result = await pool.query(sql, params);
       const rows = result.rows.map((row: Record<string, unknown>) => this.mapMaintenanceRow(row));
       const ordered = sortByOrder(rows, args?.orderBy) as MaintenanceRecord[];
       return ordered.slice(0, args?.take ?? ordered.length);
+    },
+    /** One row per vehicle — its most recent maintenance log, pushed to the DB via DISTINCT ON. */
+    findLatestPerVehicle: async (tenantId: string) => {
+      await this.ensureReady();
+      const result = await pool.query(
+        `
+          SELECT DISTINCT ON (m.vehicle_id) m.*, v.plate AS vehicle_plate, v.model AS vehicle_model
+          FROM maintenance_logs m
+          INNER JOIN vehicles v ON v.id = m.vehicle_id
+          WHERE m.tenant_id = $1
+          ORDER BY m.vehicle_id, m.performed_at DESC
+        `,
+        [tenantId]
+      );
+      return result.rows.map((row: Record<string, unknown>) => this.mapMaintenanceRow(row)) as MaintenanceRecord[];
     },
     create: async (args: CreateArgs<Record<string, unknown>>) => {
       await this.ensureReady();

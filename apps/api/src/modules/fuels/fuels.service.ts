@@ -10,7 +10,7 @@ import { CreateFuelLogInput } from "./dto/create-fuel-log.input.js";
 export class FuelsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async enrichLog(
+  private buildEnrichedLog(
     item: {
       id: string;
       tenantId: string;
@@ -32,20 +32,9 @@ export class FuelsService {
       distanceKm: number;
       averageConsumption: number;
     },
-    tenantId: string
+    vehicle?: { plate: string; model: string },
+    driver?: { fullName: string }
   ) {
-    const [vehicles, drivers] = await Promise.all([
-      this.prisma.vehicle.findMany({
-        where: { tenantId }
-      }),
-      this.prisma.driver.findMany({
-        where: { tenantId }
-      })
-    ]);
-
-    const vehicle = vehicles.find((candidate) => candidate.id === item.vehicleId);
-    const driver = drivers.find((candidate) => candidate.id === item.driverId);
-
     return {
       ...item,
       vehicleLabel: vehicle ? `${vehicle.plate} • ${vehicle.model}` : item.vehicleId,
@@ -69,7 +58,18 @@ export class FuelsService {
         )
       : items;
 
-    return Promise.all(visibleItems.map((item) => this.enrichLog(item, tenantId)));
+    // Fetched once for the whole page instead of per fuel log — this used
+    // to be a 2N-query N+1 (full vehicle + driver table scan per item).
+    const [vehicles, drivers] = await Promise.all([
+      this.prisma.vehicle.findMany({ where: { tenantId } }),
+      this.prisma.driver.findMany({ where: { tenantId } })
+    ]);
+    const vehicleById = new Map(vehicles.map((vehicle) => [vehicle.id, vehicle]));
+    const driverById = new Map(drivers.map((driver) => [driver.id, driver]));
+
+    return visibleItems.map((item) =>
+      this.buildEnrichedLog(item, vehicleById.get(item.vehicleId), driverById.get(item.driverId ?? ""))
+    );
   }
 
   async create(input: CreateFuelLogInput) {
@@ -165,6 +165,10 @@ export class FuelsService {
       }
     });
 
-    return this.enrichLog(created, input.tenantId);
+    const driver = input.driverId
+      ? await this.prisma.driver.findUnique({ where: { id: input.driverId } })
+      : undefined;
+
+    return this.buildEnrichedLog(created, vehicle, driver ?? undefined);
   }
 }
