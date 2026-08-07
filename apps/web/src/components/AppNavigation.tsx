@@ -9,6 +9,7 @@ import { useTenant } from "../hooks/useTenant";
 import { DRIVERS_QUERY, USERS_QUERY } from "../lib/queries";
 import { useMediaUrl } from "../lib/media";
 import { planLabel } from "../lib/plans";
+import { KNOWN_APP_PATHS, PUBLIC_PATHS } from "../router/knownAppPaths";
 
 type SelfUser = { id: string; photoDataUrl?: string };
 
@@ -60,7 +61,7 @@ export function AppNavigation() {
     ? ownDriver?.photoDataUrl || activeTenant?.photoDataUrl || ownUser?.photoDataUrl
     : ownDriver?.photoDataUrl || ownUser?.photoDataUrl || activeTenant?.photoDataUrl;
   const sidebarPhotoResolvedUrl = useMediaUrl(sidebarPhotoUrl);
-  const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual"]);
+  const isKnownRoute = KNOWN_APP_PATHS.has(location.pathname);
   const visibleLinks = links.filter((link) => {
     if (!auth) {
       return false;
@@ -95,24 +96,24 @@ export function AppNavigation() {
 
   useEffect(() => {
     const shouldReserveSidebarSpace =
-      isDesktop && isAuthenticated && !publicPaths.has(location.pathname);
+      isDesktop && isAuthenticated && isKnownRoute && !PUBLIC_PATHS.has(location.pathname);
     document.body.style.paddingLeft = shouldReserveSidebarSpace ? "320px" : "0";
     document.body.style.transition = "padding-left 180ms ease";
 
     return () => {
       document.body.style.paddingLeft = "0";
     };
-  }, [isAuthenticated, isDesktop, location.pathname]);
+  }, [isAuthenticated, isDesktop, isKnownRoute, location.pathname]);
 
   useEffect(() => {
     const shouldReserveTopSpace =
-      !isDesktop && isAuthenticated && !publicPaths.has(location.pathname);
+      !isDesktop && isAuthenticated && isKnownRoute && !PUBLIC_PATHS.has(location.pathname);
     document.body.style.paddingTop = shouldReserveTopSpace ? "5.5rem" : "0";
 
     return () => {
       document.body.style.paddingTop = "0";
     };
-  }, [isAuthenticated, isDesktop, location.pathname]);
+  }, [isAuthenticated, isDesktop, isKnownRoute, location.pathname]);
 
   useEffect(() => {
     if (isDesktop || !open) {
@@ -126,7 +127,7 @@ export function AppNavigation() {
     };
   }, [isDesktop, open]);
 
-  if (!isAuthenticated || publicPaths.has(location.pathname)) {
+  if (!isAuthenticated || !isKnownRoute || PUBLIC_PATHS.has(location.pathname)) {
     return null;
   }
 

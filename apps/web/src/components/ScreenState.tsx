@@ -1,7 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 
 export function LoadingState({ message }: { message: string }) {
-  return <p style={mutedStateStyle}>{message}</p>;
+  return (
+    <div style={loadingWrapperStyle} role="status" aria-live="polite">
+      <span className="spinner" style={spinnerStyle} aria-hidden="true" />
+      <p style={mutedStateStyle}>{message}</p>
+    </div>
+  );
 }
 
 export function EmptyState({
@@ -35,6 +40,21 @@ export function ErrorState({
     </section>
   );
 }
+
+const loadingWrapperStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.85rem",
+  padding: "3rem 1rem",
+  textAlign: "center"
+};
+
+const spinnerStyle: CSSProperties = {
+  width: "2.25rem",
+  height: "2.25rem"
+};
 
 const panelStyle: CSSProperties = {
   padding: "1rem 1.1rem",
