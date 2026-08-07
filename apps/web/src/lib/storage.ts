@@ -102,12 +102,20 @@ export function getAccessToken() {
   return getStoredAuth()?.accessToken ?? "";
 }
 
+/**
+ * Returns the normalized record (with accessTokenExpiresAt/
+ * refreshTokenExpiresAt actually computed) so callers can keep React state
+ * in sync with what's on disk — passing the raw pre-normalization object to
+ * setAuth() instead leaves those fields undefined in memory even though
+ * they're correct in storage.
+ */
 export function setStoredAuth(auth: StoredAuth) {
   const normalized = normalizeStoredAuth(auth);
   const targetStorage = normalized.rememberMe ? window.localStorage : window.sessionStorage;
   window.localStorage.removeItem(AUTH_KEY);
   window.sessionStorage.removeItem(AUTH_KEY);
   targetStorage.setItem(AUTH_KEY, JSON.stringify(normalized));
+  return normalized;
 }
 
 export function clearStoredAuth() {

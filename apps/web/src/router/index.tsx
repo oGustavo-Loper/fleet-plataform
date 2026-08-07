@@ -18,6 +18,7 @@ const DriversPage = lazy(() => import("../pages/DriversPage").then((m) => ({ def
 const FirstAccessPage = lazy(() => import("../pages/FirstAccessPage").then((m) => ({ default: m.FirstAccessPage })));
 const FuelsPage = lazy(() => import("../pages/FuelsPage").then((m) => ({ default: m.FuelsPage })));
 const MaintenancePage = lazy(() => import("../pages/MaintenancePage").then((m) => ({ default: m.MaintenancePage })));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 const OnboardingPage = lazy(() => import("../pages/OnboardingPage").then((m) => ({ default: m.OnboardingPage })));
 const ReportsPage = lazy(() => import("../pages/ReportsPage").then((m) => ({ default: m.ReportsPage })));
 const PlansPage = lazy(() => import("../pages/PlansPage").then((m) => ({ default: m.PlansPage })));
@@ -80,6 +81,7 @@ export function AppRouter() {
           <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}>
             <Route path="/super-admin" element={<SuperAdminPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </>

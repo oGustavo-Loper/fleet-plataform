@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren
 } from "react";
@@ -31,6 +32,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [auth, setAuth] = useState<StoredAuth | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Bumped on every login/logout. A background refresh started before a
+  // logout can still be in flight (and resolve) after clearStoredAuth() ran
+  // — without this guard its success handler would silently write a fresh
+  // session back to storage, un-doing the logout. Any refresh whose
+  // generation no longer matches when it resolves is discarded instead of
+  // applied.
+  const sessionGenerationRef = useRef(0);
+  // The effect below only cancels its timer via cleanup on the *next*
+  // render, after setAuth(null) is scheduled — an async gap a login()/
+  // logout() call happening synchronously can't close by itself. Keeping
+  // the live timer id in a ref lets login/logout clearTimeout it
+  // immediately, in the same tick, instead of waiting on React.
+  const refreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setAuth(getStoredAuth());
@@ -48,17 +62,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const waitMs = Math.max(5_000, refreshAt - Date.now());
 
     const timer = window.setTimeout(() => {
+      refreshTimerRef.current = null;
       void refreshAuthSession(auth);
     }, waitMs);
+    refreshTimerRef.current = timer;
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      if (refreshTimerRef.current === timer) {
+        refreshTimerRef.current = null;
+      }
+    };
   }, [auth?.accessToken, auth?.accessTokenExpiresAt, auth?.refreshToken]);
+
+  function cancelPendingRefresh() {
+    if (refreshTimerRef.current !== null) {
+      window.clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+  }
 
   async function refreshAuthSession(currentAuth: StoredAuth) {
     if (isRefreshing) {
       return;
     }
 
+    const generation = sessionGenerationRef.current;
     setIsRefreshing(true);
 
     try {
@@ -89,10 +118,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
         throw new Error("Empty refresh payload");
       }
 
+      if (sessionGenerationRef.current !== generation) {
+        // Logged out (or a fresh login replaced this session) while the
+        // request was in flight — applying it now would resurrect a
+        // session the user already ended.
+        return;
+      }
+
       const nextAuth: StoredAuth = {
         ...currentAuth,
         accessToken: payload.accessToken,
         refreshToken: payload.refreshToken,
+        // Force recomputation from the new tokens — normalizeStoredAuth
+        // only fills these in when absent, and the spread above would
+        // otherwise carry over the previous (now stale) token's expiry.
+        accessTokenExpiresAt: undefined,
+        refreshTokenExpiresAt: undefined,
         userId: payload.userId,
         tenantId: payload.tenantId,
         role: payload.role,
@@ -103,13 +144,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         mustChangePassword: payload.mustChangePassword ?? false
       };
 
-      setStoredAuth(nextAuth);
-      setAuth(nextAuth);
+      setAuth(setStoredAuth(nextAuth));
     } catch {
-      clearStoredAuth();
-      clearMediaToken();
-      setAuth(null);
-      void apolloClient.clearStore();
+      if (sessionGenerationRef.current === generation) {
+        clearStoredAuth();
+        clearMediaToken();
+        setAuth(null);
+        void apolloClient.clearStore();
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -121,10 +163,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isAuthenticated: Boolean(auth?.accessToken),
       isInitializing,
       login: (nextAuth) => {
-        setStoredAuth(nextAuth);
-        setAuth(nextAuth);
+        sessionGenerationRef.current += 1;
+        cancelPendingRefresh();
+        setAuth(setStoredAuth(nextAuth));
       },
       logout: () => {
+        sessionGenerationRef.current += 1;
+        cancelPendingRefresh();
         clearStoredAuth();
         clearMediaToken();
         setAuth(null);

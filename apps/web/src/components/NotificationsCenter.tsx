@@ -14,8 +14,7 @@ import {
   setToastedNotificationIds
 } from "../lib/notifications";
 import { NOTIFICATIONS_QUERY } from "../lib/queries";
-
-const publicPaths = new Set(["/", "/landing", "/login", "/first-access", "/plans", "/register/company", "/register/individual"]);
+import { KNOWN_APP_PATHS, PUBLIC_PATHS } from "../router/knownAppPaths";
 
 export function NotificationsCenter() {
   const location = useLocation();
@@ -155,7 +154,12 @@ export function NotificationsCenter() {
     setToastItems((current) => current.filter((toast) => toast.id !== id));
   }
 
-  if (!isAuthenticated || publicPaths.has(location.pathname) || auth?.role === "DRIVER") {
+  if (
+    !isAuthenticated ||
+    !KNOWN_APP_PATHS.has(location.pathname) ||
+    PUBLIC_PATHS.has(location.pathname) ||
+    auth?.role === "DRIVER"
+  ) {
     return null;
   }
 
