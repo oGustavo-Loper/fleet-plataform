@@ -172,7 +172,6 @@ export function DriversPage() {
                 muted
                 onView={openViewDrawer}
                 onEdit={openEditDrawer}
-                onActivate={(driver) => handleStatusUpdate(driver, "ACTIVE")}
               />
             </section>
           ) : null}

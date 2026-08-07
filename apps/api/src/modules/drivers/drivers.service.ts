@@ -165,6 +165,13 @@ export class DriversService {
       throw new ForbiddenException(PtBrMessage.DRIVER_ACCESS_DENIED);
     }
 
+    // Termination already anonymized this driver's name/CPF/CNH/login (see
+    // delete() below) — there's nothing left to edit, and "reactivating"
+    // would just flip employmentStatus back on top of wiped personal data.
+    if (currentDriver.employmentStatus === "TERMINATED") {
+      throw new BadRequestException(PtBrMessage.DRIVER_TERMINATED_CANNOT_BE_UPDATED);
+    }
+
     this.assertValidCnh(input.cnh);
 
     const employmentStatus =
@@ -233,7 +240,11 @@ export class DriversService {
         photoDataUrl: null,
         loginEmail: null,
         employmentStatus: "TERMINATED",
-        isActive: false
+        isActive: false,
+        // Free up the vehicle(s) this driver was tied to instead of leaving
+        // them permanently "assigned" to a terminated, anonymized record.
+        assignedVehicleIds: [],
+        allowAnyVehicle: false
       }
     });
 
