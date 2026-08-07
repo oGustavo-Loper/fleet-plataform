@@ -8,8 +8,10 @@ import { useTenant } from "../hooks/useTenant";
 import {
   getNotificationsClearedBefore,
   getSeenNotificationIds,
+  getToastedNotificationIds,
   setNotificationsClearedBefore,
-  setSeenNotificationIds
+  setSeenNotificationIds,
+  setToastedNotificationIds
 } from "../lib/notifications";
 import { NOTIFICATIONS_QUERY } from "../lib/queries";
 
@@ -46,8 +48,9 @@ export function NotificationsCenter() {
     () => (auth?.userId && auth?.tenantId ? getNotificationsClearedBefore(auth.userId, auth.tenantId) : null),
     [auth?.tenantId, auth?.userId, clearVersion]
   );
-  const visibleNotifications = notifications.filter(
-    (item) => !clearedBefore || item.createdAt > clearedBefore
+  const visibleNotifications = useMemo(
+    () => notifications.filter((item) => !clearedBefore || item.createdAt > clearedBefore),
+    [notifications, clearedBefore]
   );
   const unreadNotifications = visibleNotifications.filter((item) => !seenIds.includes(item.id));
 
@@ -94,12 +97,24 @@ export function NotificationsCenter() {
     };
   }, [notificationsOpen]);
 
+  // Seeds the "already toasted" set from localStorage once the user is
+  // known, so a page reload doesn't treat every still-visible notification
+  // as brand-new and toast it again.
   useEffect(() => {
-    if (!isDesktop || !auth?.userId || !auth.tenantId || notifications.length === 0) {
+    if (!auth?.userId || !auth.tenantId) {
       return;
     }
+    setToastShownIds(getToastedNotificationIds(auth.userId, auth.tenantId));
+  }, [auth?.userId, auth?.tenantId]);
 
-    const fresh = notifications.filter((item) => !toastShownIds.includes(item.id));
+  useEffect(() => {
+    if (!isDesktop || !auth?.userId || !auth.tenantId || visibleNotifications.length === 0) {
+      return;
+    }
+    const userId = auth.userId;
+    const tenantId = auth.tenantId;
+
+    const fresh = visibleNotifications.filter((item) => !toastShownIds.includes(item.id));
     if (fresh.length === 0) {
       return;
     }
@@ -108,7 +123,11 @@ export function NotificationsCenter() {
       const next = [...fresh.map((item) => ({ id: item.id, title: item.title, severity: item.severity })), ...current];
       return next.slice(0, 3);
     });
-    setToastShownIds((current) => [...new Set([...current, ...fresh.map((item) => item.id)])]);
+    setToastShownIds((current) => {
+      const next = [...new Set([...current, ...fresh.map((item) => item.id)])];
+      setToastedNotificationIds(userId, tenantId, next);
+      return next;
+    });
 
     fresh.forEach((item) => {
       const timer = window.setTimeout(() => {
@@ -117,7 +136,7 @@ export function NotificationsCenter() {
       }, 4500);
       toastTimersRef.current.set(item.id, timer);
     });
-  }, [auth?.tenantId, auth?.userId, isDesktop, notifications, toastShownIds]);
+  }, [auth?.tenantId, auth?.userId, isDesktop, visibleNotifications, toastShownIds]);
 
   useEffect(() => {
     const timers = toastTimersRef.current;
