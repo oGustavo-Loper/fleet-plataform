@@ -49,6 +49,7 @@ export enum PtBrMessage {
   CPF_INVALID = "Informe um CPF válido.",
   CNPJ_INVALID = "Informe um CNPJ válido.",
   DRIVER_PLAN_LIMIT_REACHED = "Limite de motoristas do plano gratuito atingido (2 motoristas). Assine um plano pago para cadastrar mais motoristas.",
+  DRIVER_TERMINATED_CANNOT_BE_UPDATED = "Motorista desligado não pode ser editado ou reativado. O desligamento é permanente.",
   CURRENT_PASSWORD_REQUIRED = "Informe a senha atual para definir uma nova senha.",
   CURRENT_PASSWORD_INVALID = "Senha atual incorreta.",
   LOGIN_TOO_MANY_ATTEMPTS = "Muitas tentativas de login. Tente novamente em alguns minutos.",

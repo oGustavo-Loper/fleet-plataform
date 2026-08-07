@@ -64,7 +64,9 @@ export function DriverList({
             <ActionMenu
               actions={[
                 ...(onView ? [{ label: "Visualizar motorista", onSelect: () => onView(driver) }] : []),
-                ...(onEdit ? [{ label: "Editar motorista", onSelect: () => onEdit(driver) }] : []),
+                ...(onEdit && driver.employmentStatus !== "TERMINATED"
+                  ? [{ label: "Editar motorista", onSelect: () => onEdit(driver) }]
+                  : []),
                 ...(isCompany && driver.employmentStatus === "ACTIVE" && onSetVacation
                   ? [
                       {
@@ -73,7 +75,10 @@ export function DriverList({
                       }
                     ]
                   : []),
-                ...(isCompany && driver.employmentStatus !== "ACTIVE" && onActivate
+                // Termination is permanent (the driver's personal data is
+                // anonymized when they're desligado) — only a VACATION
+                // driver can be reactivated, not a TERMINATED one.
+                ...(isCompany && driver.employmentStatus === "VACATION" && onActivate
                   ? [{ label: "Reativar motorista", onSelect: () => onActivate(driver) }]
                   : []),
                 ...(isCompany && driver.employmentStatus !== "TERMINATED" && onTerminate

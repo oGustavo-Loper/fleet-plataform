@@ -1194,9 +1194,9 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
             ? String(args.data.loginEmail)
             : undefined;
       const nextAssignedVehicleIds =
-        Array.isArray(args.data.assignedVehicleIds) && args.data.assignedVehicleIds.length > 0
-          ? (args.data.assignedVehicleIds as string[])
-          : current.assignedVehicleIds;
+        args.data.assignedVehicleIds === undefined
+          ? current.assignedVehicleIds
+          : (args.data.assignedVehicleIds as string[]);
       const nextAllowAnyVehicle =
         args.data.allowAnyVehicle === undefined
           ? current.allowAnyVehicle
