@@ -111,6 +111,27 @@ export function DriverList({
           <div style={vehicleRowStyle}>
             <span style={vehicleLabelStyle}>Veículo</span>
             <span style={vehicleValueStyle}>{getVehicleLabel(driver)}</span>
+          <div style={headerStyle}>
+            {driver.photoDataUrl ? (
+              <DriverAvatar photoDataUrl={driver.photoDataUrl} fullName={driver.fullName} />
+            ) : (
+              <div style={avatarFallbackStyle}>{driver.fullName.slice(0, 1).toUpperCase()}</div>
+            )}
+            <div style={identityStyle}>
+              <div style={nameRowStyle}>
+                <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
+                {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
+                {driver.loginEmail && !driver.hasCompletedFirstLogin ? (
+                  <span style={pendingBadgeStyle}>Pendente</span>
+                ) : null}
+              </div>
+              <p style={mutedStyle}>
+                {isCompany
+                  ? `Matrícula: ${driver.registrationId ?? "Não informada"}`
+                  : `CPF: ${driver.cpf ?? "Não informado"}`}
+              </p>
+              <p style={statusTextStyle}>{getStatusLabel(driver.employmentStatus)}</p>
+            </div>
           </div>
         </article>
       ))}

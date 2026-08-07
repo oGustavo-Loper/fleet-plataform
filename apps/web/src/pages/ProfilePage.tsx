@@ -14,7 +14,7 @@ import { usePageMeta } from "../hooks/usePageMeta";
 import { useTenant } from "../hooks/useTenant";
 import { hasExactDigits, isBlank } from "../lib/form-validation";
 import { limitText, onlyDigits } from "../lib/masks";
-import { resolveMediaUrl, uploadMediaFile } from "../lib/media";
+import { useMediaUrl, uploadMediaFile } from "../lib/media";
 import {
   DELETE_MY_ACCOUNT_MUTATION,
   DRIVERS_QUERY,
@@ -81,6 +81,7 @@ function DriverProfileForm() {
   }, [driver?.id]);
 
   const [mutateDriver, { loading, error }] = useMutation(UPDATE_DRIVER_MUTATION);
+  const photoUrl = useMediaUrl(form.photoDataUrl);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -123,7 +124,7 @@ function DriverProfileForm() {
     <>
       <form style={formPanelStyle} onSubmit={handleSubmit}>
         <AvatarPickerField
-          photoUrl={resolveMediaUrl(form.photoDataUrl)}
+          photoUrl={photoUrl}
           alt="Sua foto"
           loading={photoLoading}
           error={photoError}
@@ -234,6 +235,7 @@ function AccountProfileForm() {
   }, [ownUser?.id]);
 
   const [mutateProfile, { loading, error }] = useMutation(UPDATE_MY_PROFILE_MUTATION);
+  const photoUrl = useMediaUrl(photoDataUrl);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -291,7 +293,7 @@ function AccountProfileForm() {
     <form style={formPanelStyle} onSubmit={handleSubmit}>
       {!isCompanyAccount ? (
         <AvatarPickerField
-          photoUrl={resolveMediaUrl(photoDataUrl)}
+          photoUrl={photoUrl}
           alt="Sua foto"
           loading={photoLoading}
           error={photoError}
@@ -378,6 +380,7 @@ function CompanyLogoSection() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [updateTenantPhoto] = useMutation(UPDATE_TENANT_PHOTO_MUTATION);
+  const logoUrl = useMediaUrl(activeTenant?.photoDataUrl);
 
   const tenantId = activeTenant?.id;
 
@@ -409,7 +412,7 @@ function CompanyLogoSection() {
     <section style={formPanelStyle}>
       <p style={companyLogoLabelStyle}>Logo da empresa</p>
       <AvatarPickerField
-        photoUrl={resolveMediaUrl(activeTenant.photoDataUrl)}
+        photoUrl={logoUrl}
         alt="Logo da empresa"
         loading={photoLoading}
         error={photoError}

@@ -35,13 +35,11 @@ export class VehiclesService {
       }
     });
 
-    const tenantVehicleCount = (
-      await this.prisma.vehicle.findMany({
-        where: {
-          tenantId: input.tenantId
-        }
-      })
-    ).length;
+    const tenantVehicleCount = await this.prisma.vehicle.count({
+      where: {
+        tenantId: input.tenantId
+      }
+    });
 
     const companyTrialLimit =
       tenant?.accountType === "COMPANY" && tenant?.planStatus !== "ACTIVE" ? 3 : undefined;

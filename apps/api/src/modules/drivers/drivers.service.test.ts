@@ -71,6 +71,9 @@ function createDriversService(options?: {
           id: `existing-driver-${index}`,
           employmentStatus: "ACTIVE"
         }));
+      },
+      async count() {
+        return options?.existingDriverCount ?? 0;
       }
     },
     activityLog: {

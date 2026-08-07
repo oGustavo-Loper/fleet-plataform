@@ -34,8 +34,25 @@ export class DashboardService {
     const today = new Date();
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     const isDriver = user.role === "DRIVER";
-    const [allVehicles, syncPending, alerts, allMaintenances, allFuelLogs, drivers, activities] =
-      await Promise.all([
+
+    // The dashboard is the highest-traffic page, so instead of pulling every
+    // fuel/maintenance log ever recorded for the tenant, each query below is
+    // scoped to exactly what that section needs: maintenance items with an
+    // upcoming due date/km, this month's cost records, and (via a DISTINCT
+    // ON query, not a JS reduce over the full history) only the single most
+    // recent fuel/maintenance record per vehicle for the odometer check.
+    const [
+      allVehicles,
+      syncPending,
+      alerts,
+      maintenancesDue,
+      maintenancesCurrentMonth,
+      lastMaintenancePerVehicle,
+      fuelLogsCurrentMonthRaw,
+      lastFuelPerVehicle,
+      drivers,
+      activities
+    ] = await Promise.all([
       this.prisma.vehicle.findMany({
         where: { tenantId },
         select: { id: true, plate: true, model: true, status: true, currentKm: true }
@@ -49,14 +66,21 @@ export class DashboardService {
         orderBy: [{ severity: "desc" }, { createdAt: "desc" }]
       }),
       this.prisma.maintenanceLog.findMany({
-        where: { tenantId },
+        where: {
+          tenantId,
+          OR: [{ nextMaintenanceAt: { not: null } }, { nextMaintenanceKm: { not: null } }]
+        },
         orderBy: { performedAt: "desc" },
         include: { vehicle: true }
       }),
-      this.prisma.fuelLog.findMany({
-        where: { tenantId },
-        orderBy: { createdAt: "desc" }
+      this.prisma.maintenanceLog.findMany({
+        where: { tenantId, performedAt: { gte: monthStart } }
       }),
+      this.prisma.maintenanceLog.findLatestPerVehicle(tenantId),
+      this.prisma.fuelLog.findMany({
+        where: { tenantId, fueledAt: { gte: monthStart } }
+      }),
+      this.prisma.fuelLog.findLatestPerVehicle(tenantId),
       this.prisma.driver.findMany({
         where: { tenantId }
       }),
@@ -70,8 +94,23 @@ export class DashboardService {
       getVisibleVehicleIds(user, allVehicles.map((vehicle) => vehicle.id))
     );
     const vehicles = allVehicles.filter((vehicle) => visibleVehicleIds.has(vehicle.id));
-    const maintenances = allMaintenances.filter((item) => visibleVehicleIds.has(item.vehicleId));
-    const fuelLogs = allFuelLogs.filter((item) => visibleVehicleIds.has(item.vehicleId));
+    const maintenances = maintenancesDue.filter((item) => visibleVehicleIds.has(item.vehicleId));
+    const maintenancesCurrentMonthVisible = maintenancesCurrentMonth.filter((item) =>
+      visibleVehicleIds.has(item.vehicleId)
+    );
+    const lastMaintenanceByVehicle = new Map(
+      lastMaintenancePerVehicle
+        .filter((item) => visibleVehicleIds.has(item.vehicleId))
+        .map((item) => [item.vehicleId, item])
+    );
+    const fuelLogsCurrentMonth = fuelLogsCurrentMonthRaw.filter((item) =>
+      visibleVehicleIds.has(item.vehicleId)
+    );
+    const lastFuelByVehicle = new Map(
+      lastFuelPerVehicle
+        .filter((item) => visibleVehicleIds.has(item.vehicleId))
+        .map((item) => [item.vehicleId, item])
+    );
 
     const generatedAlerts = maintenances.flatMap((item) => {
       const vehicle = item.vehicle as { plate: string; model: string };
@@ -155,12 +194,8 @@ export class DashboardService {
     });
 
     const kmAlerts = vehicles.flatMap((vehicle) => {
-      const lastFuel = fuelLogs
-        .filter((item) => item.vehicleId === vehicle.id)
-        .sort((left, right) => new Date(right.fueledAt).getTime() - new Date(left.fueledAt).getTime())[0];
-      const lastMaintenance = maintenances
-        .filter((item) => item.vehicleId === vehicle.id)
-        .sort((left, right) => right.performedAt.getTime() - left.performedAt.getTime())[0];
+      const lastFuel = lastFuelByVehicle.get(vehicle.id);
+      const lastMaintenance = lastMaintenanceByVehicle.get(vehicle.id);
       const maxRecordedKm = Math.max(
         Number(lastFuel?.odometerKm ?? 0),
         Number(lastMaintenance?.odometerKm ?? 0)
@@ -179,17 +214,11 @@ export class DashboardService {
       return [];
     });
 
-    const fuelLogsCurrentMonth = fuelLogs.filter(
-      (item) => new Date(item.fueledAt).getTime() >= monthStart.getTime()
-    );
-    const maintenancesCurrentMonth = maintenances.filter(
-      (item) => item.performedAt.getTime() >= monthStart.getTime()
-    );
     const monthlyFuelCost = fuelLogsCurrentMonth.reduce(
       (total, item) => total + Number(item.totalCost),
       0
     );
-    const monthlyMaintenanceCost = maintenancesCurrentMonth.reduce(
+    const monthlyMaintenanceCost = maintenancesCurrentMonthVisible.reduce(
       (total, item) => total + Number(item.totalCost),
       0
     );
@@ -209,7 +238,7 @@ export class DashboardService {
       const day = new Date(item.fueledAt).toISOString().slice(0, 10);
       costByDate.set(day, (costByDate.get(day) ?? 0) + Number(item.totalCost));
     }
-    for (const item of maintenancesCurrentMonth) {
+    for (const item of maintenancesCurrentMonthVisible) {
       const day = item.performedAt.toISOString().slice(0, 10);
       costByDate.set(day, (costByDate.get(day) ?? 0) + Number(item.totalCost));
     }
@@ -242,7 +271,6 @@ export class DashboardService {
       pendingSyncItems: syncPending,
       costTrend,
       upcomingMaintenance: maintenances
-        .filter((item) => item.nextMaintenanceAt || item.nextMaintenanceKm)
         .map((item) => ({
           id: item.id,
           vehicleLabel: `${(item.vehicle as { plate: string }).plate} • ${(item.vehicle as { model: string }).model}`,

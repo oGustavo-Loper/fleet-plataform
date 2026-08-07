@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 
+import type { AuthenticatedUser } from "../../common/auth-user.js";
 import { getJwtAccessSecret } from "../../common/jwt-secrets.js";
 import { PtBrMessage } from "../../common/messages.js";
 
@@ -12,9 +13,13 @@ type MediaRequest = {
 
 /**
  * <img> tags and canvas/PDF fetches can't attach an Authorization header,
- * so this guard accepts the access token via the standard header OR a
- * "token" query param — unlike every other guarded route, which only
- * accepts the header.
+ * so this guard accepts a token via the standard header OR a "token" query
+ * param — unlike every other guarded route, which only accepts the header.
+ *
+ * The query-param path only accepts the short-lived, media-scoped token
+ * minted by GET /media/token (never the full-privilege access token) —
+ * that token ending up in browser history or proxy/CDN access logs is a
+ * much smaller exposure than the real bearer credential would be.
  */
 @Injectable()
 export class MediaAccessGuard implements CanActivate {
@@ -34,11 +39,18 @@ export class MediaAccessGuard implements CanActivate {
       throw new UnauthorizedException(PtBrMessage.SESSION_INVALID);
     }
 
+    let payload: AuthenticatedUser;
     try {
-      request.user = await this.jwtService.verifyAsync(token, { secret: getJwtAccessSecret() });
-      return true;
+      payload = await this.jwtService.verifyAsync(token, { secret: getJwtAccessSecret() });
     } catch {
       throw new UnauthorizedException(PtBrMessage.SESSION_EXPIRED);
     }
+
+    if (!headerToken && payload.scope !== "media") {
+      throw new UnauthorizedException(PtBrMessage.SESSION_INVALID);
+    }
+
+    request.user = payload;
+    return true;
   }
 }

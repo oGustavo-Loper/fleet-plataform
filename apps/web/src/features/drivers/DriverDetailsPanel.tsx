@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { AccountType, DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
-import { resolveMediaUrl } from "../../lib/media";
+import { useMediaUrl } from "../../lib/media";
 import { formatCpf } from "../../lib/masks";
 import { DriverStatusPill } from "./DriverStatusPill";
 
@@ -16,13 +16,14 @@ export function DriverDetailsPanel({
 }) {
   const isCompany = accountType === "COMPANY";
   const assignedVehicle = vehicles.find((vehicle) => vehicle.id === driver.assignedVehicleIds[0]);
+  const photoUrl = useMediaUrl(driver.photoDataUrl);
 
   return (
     <section style={detailsPanelStyle}>
       <div style={detailsHeaderStyle}>
         {driver.photoDataUrl ? (
           <img
-            src={resolveMediaUrl(driver.photoDataUrl)}
+            src={photoUrl}
             alt={driver.fullName}
             style={detailsAvatarStyle}
           />
