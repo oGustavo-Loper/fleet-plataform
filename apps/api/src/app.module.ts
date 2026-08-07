@@ -28,7 +28,15 @@ import { VehiclesModule } from "./modules/vehicles/vehicles.module.js";
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
-      playground: true,
+      // Playground/introspection expose the full schema (including
+      // PII-shaped field names) to anyone who can reach /graphql, so they
+      // only run when explicitly opted into for local development. Unset
+      // NODE_ENV is treated as production (fail closed).
+      playground: process.env.NODE_ENV === "development",
+      introspection: process.env.NODE_ENV === "development",
+      // Never echo stack traces to the client; unexpected errors are still
+      // logged server-side by Nest's default exception handling.
+      includeStacktraceInErrorResponses: false,
       sortSchema: true,
       context: ({ req }: { req?: unknown }) => ({ req })
     }),

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, Injectable, Logger } from "@nestjs/common";
 
 import { PtBrMessage } from "../../common/messages.js";
 import { PrismaService } from "../../common/prisma.service.js";
@@ -14,6 +14,8 @@ import { PushSyncInput } from "./dto/push-sync.input.js";
 
 @Injectable()
 export class SyncService {
+  private readonly logger = new Logger(SyncService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly vehiclesService: VehiclesService,
@@ -103,7 +105,15 @@ export class SyncService {
         errorMessage: event.errorMessage ?? undefined
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Falha ao sincronizar.";
+      // HttpException (BadRequestException/ForbiddenException, etc.) carries
+      // a deliberate, safe PT-BR message meant for the end user. Anything
+      // else (e.g. a raw Prisma error) is unexpected and may contain
+      // internal details, so it's logged server-side instead of returned.
+      const errorMessage =
+        error instanceof HttpException ? error.message : "Falha ao sincronizar.";
+      if (!(error instanceof HttpException)) {
+        this.logger.error(`Sync apply failed for operation ${input.operationId}`, error instanceof Error ? error.stack : error);
+      }
       const event = await this.prisma.syncEvent.upsert({
         where: { operationId: input.operationId },
         create: {
