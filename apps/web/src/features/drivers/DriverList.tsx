@@ -59,7 +59,7 @@ export function DriverList({
       {drivers.map((driver) => (
         <article
           key={driver.id}
-          className="driver-card"
+          className="list-card"
           style={{ ...cardStyle, ...(muted ? cardMutedStyle : null) }}
         >
           <div style={headerStyle}>

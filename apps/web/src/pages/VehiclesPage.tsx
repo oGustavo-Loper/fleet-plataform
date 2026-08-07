@@ -47,10 +47,14 @@ export function VehiclesPage() {
     >
       <div style={actionsStyle}>
         <button
+          className="btn-primary"
           style={primaryButtonStyle}
           type="button"
           onClick={openCreateDrawer}
         >
+          <span aria-hidden="true" style={primaryButtonIconStyle}>
+            +
+          </span>
           Novo veículo
         </button>
         <button
@@ -71,17 +75,30 @@ export function VehiclesPage() {
       <div style={filterGridStyle}>
         <label style={filterLabelStyle}>
           Buscar
-          <input
-            style={searchInputStyle}
-            placeholder="Ex: Hilux, ABC 1D23, Fiat..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <span style={searchFieldStyle}>
+            <svg
+              style={searchIconStyle}
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              style={searchInputStyle}
+              placeholder="Ex: Hilux, ABC 1D23, Fiat..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </span>
         </label>
         <label style={filterLabelStyle}>
           Status
           <select
-            style={searchInputStyle}
+            style={selectInputStyle}
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
           >
@@ -153,12 +170,25 @@ const actionsStyle: CSSProperties = {
 };
 
 const primaryButtonStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
   border: 0,
   borderRadius: "0.9rem",
-  padding: "0.9rem 1rem",
+  padding: "0.9rem 1.1rem",
   background: "#fbbf24",
   color: "#0f172a",
-  fontWeight: 700
+  fontWeight: 700,
+  transition: "transform 0.15s ease, box-shadow 0.15s ease"
+};
+
+const primaryButtonIconStyle: CSSProperties = {
+  display: "inline-grid",
+  placeItems: "center",
+  width: "1.1rem",
+  height: "1.1rem",
+  fontSize: "1rem",
+  lineHeight: 1
 };
 
 const secondaryButtonStyle: CSSProperties = {
@@ -183,7 +213,30 @@ const filterLabelStyle: CSSProperties = {
   fontSize: "0.95rem"
 };
 
+const searchFieldStyle: CSSProperties = {
+  position: "relative",
+  display: "flex",
+  alignItems: "center"
+};
+
+const searchIconStyle: CSSProperties = {
+  position: "absolute",
+  left: "1rem",
+  color: "#64748b",
+  pointerEvents: "none"
+};
+
 const searchInputStyle: CSSProperties = {
+  width: "100%",
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(148, 163, 184, 0.2)",
+  background: "rgba(15, 23, 42, 0.68)",
+  color: "#f8fafc",
+  padding: "0.9rem 1rem 0.9rem 2.6rem",
+  outline: "none"
+};
+
+const selectInputStyle: CSSProperties = {
   borderRadius: "0.9rem",
   border: "1px solid rgba(148, 163, 184, 0.2)",
   background: "rgba(15, 23, 42, 0.68)",
