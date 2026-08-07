@@ -41,7 +41,10 @@ export function FuelsPage() {
       subtitle="Registro rápido de abastecimentos, custos e histórico por veículo."
     >
       <div style={quickActionsStyle}>
-        <button style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
+        <button className="btn-primary" style={quickActionButtonStyle} type="button" onClick={() => setDrawerOpen(true)}>
+          <span aria-hidden="true" style={quickActionIconStyle}>
+            +
+          </span>
           Novo abastecimento
         </button>
         <button style={quickActionGhostStyle} type="button" onClick={() => window.scrollTo({ top: 520, behavior: "smooth" })}>
@@ -51,12 +54,25 @@ export function FuelsPage() {
       <div style={searchBarStyle}>
         <label style={searchLabelStyle}>
           Buscar abastecimento
-          <input
-            style={searchInputStyle}
-            placeholder="Ex: Hilux, Carlos, posto..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <span style={searchFieldStyle}>
+            <svg
+              style={searchIconStyle}
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              style={searchInputStyle}
+              placeholder="Ex: Hilux, Carlos, posto..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </span>
         </label>
       </div>
       {tenantLoading || loading ? (
@@ -117,12 +133,25 @@ const quickActionsStyle = {
 };
 
 const quickActionButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
   border: 0,
   borderRadius: "0.9rem",
-  padding: "0.9rem 1rem",
+  padding: "0.9rem 1.1rem",
   background: "#fbbf24",
   color: "#0f172a",
-  fontWeight: 700
+  fontWeight: 700,
+  transition: "transform 0.15s ease, box-shadow 0.15s ease"
+};
+
+const quickActionIconStyle = {
+  display: "inline-grid",
+  placeItems: "center",
+  width: "1.1rem",
+  height: "1.1rem",
+  fontSize: "1rem",
+  lineHeight: 1
 };
 
 const quickActionGhostStyle = {
@@ -143,11 +172,25 @@ const searchLabelStyle = {
   color: "#cbd5e1"
 };
 
+const searchFieldStyle = {
+  position: "relative" as const,
+  display: "flex",
+  alignItems: "center"
+};
+
+const searchIconStyle = {
+  position: "absolute" as const,
+  left: "1rem",
+  color: "#64748b",
+  pointerEvents: "none" as const
+};
+
 const searchInputStyle = {
+  width: "100%",
   borderRadius: "0.9rem",
   border: "1px solid rgba(148, 163, 184, 0.2)",
   background: "rgba(15, 23, 42, 0.68)",
   color: "#f8fafc",
-  padding: "0.9rem 1rem",
+  padding: "0.9rem 1rem 0.9rem 2.6rem",
   outline: "none"
 };
