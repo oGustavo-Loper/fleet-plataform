@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
-import type { AccountType, DriverEmploymentStatus, DriverListItem, VehicleListItem } from "@fleet/shared-types";
+import type { AccountType, DriverListItem, VehicleListItem } from "@fleet/shared-types";
 
 import { resolveMediaUrl } from "../../lib/media";
 import { formatCpf } from "../../lib/masks";
+import { DriverStatusPill } from "./DriverStatusPill";
 
 export function DriverDetailsPanel({
   accountType,
@@ -35,7 +36,7 @@ export function DriverDetailsPanel({
               ? `Matrícula ${driver.registrationId ?? "Não informada"}`
               : `CPF ${driver.cpf ? formatCpf(driver.cpf) : "Não informado"}`}
           </p>
-          <p style={detailsMutedStyle}>{statusLabelMap[driver.employmentStatus]}</p>
+          <DriverStatusPill status={driver.employmentStatus} />
         </div>
       </div>
       <div style={detailsGridStyle}>
@@ -46,7 +47,6 @@ export function DriverDetailsPanel({
           value={driver.cnhExpiresAt ? new Date(driver.cnhExpiresAt).toLocaleDateString("pt-BR") : "Pendente"}
         />
         <DetailItem label="Login" value={driver.loginEmail ?? "Não configurado"} />
-        <DetailItem label="Status" value={statusLabelMap[driver.employmentStatus]} />
         <DetailItem
           label="Veículo vinculado"
           value={assignedVehicle ? `${assignedVehicle.plate} • ${assignedVehicle.model}` : "Sem veículo fixo"}
@@ -69,12 +69,6 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-const statusLabelMap: Record<DriverEmploymentStatus, string> = {
-  ACTIVE: "Ativo",
-  VACATION: "Em férias",
-  TERMINATED: "Desligado"
-};
-
 const detailsPanelStyle: CSSProperties = {
   display: "grid",
   gap: "1rem"
@@ -94,18 +88,20 @@ const detailsIdentityStyle: CSSProperties = {
 const detailsAvatarStyle: CSSProperties = {
   width: "76px",
   height: "76px",
-  borderRadius: "22px",
+  flexShrink: 0,
+  borderRadius: "999px",
   objectFit: "cover",
-  border: "1px solid rgba(148, 163, 184, 0.18)"
+  border: "2px solid rgba(148, 163, 184, 0.18)"
 };
 
 const detailsAvatarFallbackStyle: CSSProperties = {
   ...detailsAvatarStyle,
   display: "grid",
   placeItems: "center",
-  background: "rgba(251, 191, 36, 0.14)",
+  background: "linear-gradient(160deg, rgba(251, 191, 36, 0.24), rgba(251, 191, 36, 0.08))",
   color: "#fbbf24",
-  fontWeight: 800
+  fontWeight: 800,
+  fontSize: "1.4rem"
 };
 
 const detailsMutedStyle: CSSProperties = {
@@ -122,8 +118,8 @@ const detailsGridStyle: CSSProperties = {
 const detailCardStyle: CSSProperties = {
   padding: "0.95rem",
   borderRadius: "1rem",
-  border: "1px solid rgba(148, 163, 184, 0.16)",
-  background: "rgba(15, 23, 42, 0.5)",
+  border: "1px solid rgba(148, 163, 184, 0.14)",
+  background: "linear-gradient(180deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5))",
   display: "grid",
   gap: "0.3rem"
 };

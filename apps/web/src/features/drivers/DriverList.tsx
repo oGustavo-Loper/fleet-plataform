@@ -4,11 +4,28 @@ import type { AccountType, DriverListItem, VehicleListItem } from "@fleet/shared
 
 import { ActionMenu } from "../../components/ActionMenu";
 import { resolveMediaUrl } from "../../lib/media";
+import { DriverStatusPill } from "./DriverStatusPill";
+
+function DriverAvatar({ driver, muted }: { driver: DriverListItem; muted?: boolean }) {
+  const initial = driver.fullName.slice(0, 1).toUpperCase();
+  const style = { ...avatarStyle, ...(muted ? avatarMutedStyle : null) };
+
+  if (driver.photoDataUrl) {
+    return <img src={resolveMediaUrl(driver.photoDataUrl)} alt={driver.fullName} style={style} />;
+  }
+
+  return (
+    <div style={{ ...style, ...avatarFallbackStyle, ...(muted ? avatarFallbackMutedStyle : null) }}>
+      {initial}
+    </div>
+  );
+}
 
 export function DriverList({
   accountType,
   drivers,
   vehicles,
+  muted,
   onView,
   onEdit,
   onSetVacation,
@@ -20,6 +37,8 @@ export function DriverList({
   accountType?: AccountType;
   drivers: DriverListItem[];
   vehicles: VehicleListItem[];
+  /** Visually de-emphasizes cards — used for the terminated-drivers roster. */
+  muted?: boolean;
   onView?: (driver: DriverListItem) => void;
   onEdit?: (driver: DriverListItem) => void;
   onSetVacation?: (driver: DriverListItem) => void;
@@ -39,28 +58,19 @@ export function DriverList({
       {drivers.map((driver) => (
         <article
           key={driver.id}
-          style={{
-            ...cardStyle,
-            borderColor:
-              driver.employmentStatus === "ACTIVE"
-                ? "rgba(74, 222, 128, 0.36)"
-                : driver.employmentStatus === "VACATION"
-                  ? "rgba(248, 113, 113, 0.3)"
-                  : "rgba(148, 163, 184, 0.26)"
-          }}
+          className="driver-card"
+          style={{ ...cardStyle, ...(muted ? cardMutedStyle : null) }}
         >
-          <div style={topRowStyle}>
-            <span
-              style={{
-                ...statusDotStyle,
-                background:
-                  driver.employmentStatus === "ACTIVE"
-                    ? "#4ade80"
-                    : driver.employmentStatus === "VACATION"
-                      ? "#f87171"
-                      : "#94a3b8"
-              }}
-            />
+          <div style={headerStyle}>
+            <DriverAvatar driver={driver} muted={muted} />
+            <div style={identityStyle}>
+              <strong style={nameStyle}>{driver.fullName}</strong>
+              <p style={mutedStyle}>
+                {isCompany
+                  ? `Matrícula ${driver.registrationId ?? "não informada"}`
+                  : `CPF ${driver.cpf ?? "não informado"}`}
+              </p>
+            </div>
             <ActionMenu
               actions={[
                 ...(onView ? [{ label: "Visualizar motorista", onSelect: () => onView(driver) }] : []),
@@ -91,88 +101,74 @@ export function DriverList({
               ]}
             />
           </div>
-          <div style={headerStyle}>
-            {driver.photoDataUrl ? (
-              <img
-                src={resolveMediaUrl(driver.photoDataUrl)}
-                alt={driver.fullName}
-                style={avatarStyle}
-              />
-            ) : (
-              <div style={avatarFallbackStyle}>{driver.fullName.slice(0, 1).toUpperCase()}</div>
-            )}
-            <div style={identityStyle}>
-              <div style={nameRowStyle}>
-                <strong style={{ fontSize: "1.05rem" }}>{driver.fullName}</strong>
-                {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
-                {driver.loginEmail && !driver.hasCompletedFirstLogin ? (
-                  <span style={pendingBadgeStyle}>Pendente</span>
-                ) : null}
-              </div>
-              <p style={mutedStyle}>
-                {isCompany
-                  ? `Matrícula: ${driver.registrationId ?? "Não informada"}`
-                  : `CPF: ${driver.cpf ?? "Não informado"}`}
-              </p>
-              <p style={statusTextStyle}>{getStatusLabel(driver.employmentStatus)}</p>
-            </div>
+          <div style={badgeRowStyle}>
+            <DriverStatusPill status={driver.employmentStatus} />
+            {driver.accountRole === "MANAGER" ? <span style={managerBadgeStyle}>Gestor</span> : null}
+            {driver.loginEmail && !driver.hasCompletedFirstLogin ? (
+              <span style={pendingBadgeStyle}>Pendente</span>
+            ) : null}
           </div>
-          <p style={supportingTextStyle}>{getVehicleLabel(driver)}</p>
+          <div style={vehicleRowStyle}>
+            <span style={vehicleLabelStyle}>Veículo</span>
+            <span style={vehicleValueStyle}>{getVehicleLabel(driver)}</span>
+          </div>
         </article>
       ))}
     </section>
   );
 }
 
-function getStatusLabel(status: DriverListItem["employmentStatus"]) {
-  if (status === "VACATION") {
-    return "Em férias";
-  }
-  if (status === "TERMINATED") {
-    return "Desligado";
-  }
-  return "Ativo";
-}
-
 const listStyle: CSSProperties = {
   display: "grid",
-  gap: "1rem",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))"
+  gap: "1.1rem",
+  gridTemplateColumns: "repeat(auto-fit, minmax(272px, 1fr))"
 };
 
 const cardStyle: CSSProperties = {
-  padding: "1rem",
-  borderRadius: "1rem",
-  background: "rgba(15, 23, 42, 0.72)",
-  border: "1px solid rgba(148, 163, 184, 0.18)",
+  padding: "1.25rem",
+  borderRadius: "1.25rem",
+  background: "linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.55))",
+  border: "1px solid rgba(148, 163, 184, 0.14)",
+  boxShadow: "0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 12px 24px rgba(2, 6, 23, 0.18)",
   minHeight: "100%",
   position: "relative",
-  overflow: "visible"
+  overflow: "visible",
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease"
 };
 
-const topRowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "0.85rem"
+const cardMutedStyle: CSSProperties = {
+  background: "rgba(15, 23, 42, 0.32)",
+  boxShadow: "none"
 };
 
 const headerStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "0.85rem"
+  gap: "0.9rem"
 };
 
 const identityStyle: CSSProperties = {
   display: "grid",
-  gap: "0.25rem"
+  gap: "0.3rem",
+  minWidth: 0,
+  flex: 1
 };
 
-const nameRowStyle: CSSProperties = {
+const nameStyle: CSSProperties = {
+  fontSize: "1.08rem",
+  fontWeight: 700,
+  letterSpacing: "-0.01em",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap"
+};
+
+const badgeRowStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: "0.5rem",
-  flexWrap: "wrap"
+  gap: "0.4rem",
+  flexWrap: "wrap",
+  marginTop: "0.9rem"
 };
 
 const managerBadgeStyle: CSSProperties = {
@@ -180,10 +176,10 @@ const managerBadgeStyle: CSSProperties = {
   borderRadius: "999px",
   background: "rgba(251, 191, 36, 0.14)",
   color: "#fbbf24",
-  fontSize: "0.72rem",
+  fontSize: "0.68rem",
   fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.04em"
+  letterSpacing: "0.05em"
 };
 
 const pendingBadgeStyle: CSSProperties = {
@@ -191,47 +187,68 @@ const pendingBadgeStyle: CSSProperties = {
   borderRadius: "999px",
   background: "rgba(148, 163, 184, 0.14)",
   color: "#cbd5e1",
-  fontSize: "0.72rem",
+  fontSize: "0.68rem",
   fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.04em"
+  letterSpacing: "0.05em"
 };
 
 const mutedStyle: CSSProperties = {
   margin: 0,
-  color: "#94a3b8"
+  color: "#94a3b8",
+  fontSize: "0.88rem"
 };
 
-const statusTextStyle: CSSProperties = {
-  margin: 0,
+const vehicleRowStyle: CSSProperties = {
+  marginTop: "1rem",
+  paddingTop: "0.85rem",
+  borderTop: "1px solid rgba(148, 163, 184, 0.12)",
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: "0.6rem"
+};
+
+const vehicleLabelStyle: CSSProperties = {
+  color: "#64748b",
+  fontSize: "0.78rem",
+  flexShrink: 0
+};
+
+const vehicleValueStyle: CSSProperties = {
   color: "#cbd5e1",
-  fontSize: "0.9rem"
-};
-
-const supportingTextStyle: CSSProperties = {
-  margin: "0.95rem 0 0",
-  color: "#94a3b8"
-};
-
-const statusDotStyle: CSSProperties = {
-  width: "0.65rem",
-  height: "0.65rem",
-  borderRadius: "999px"
+  fontSize: "0.88rem",
+  fontWeight: 600,
+  textAlign: "right",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap"
 };
 
 const avatarStyle: CSSProperties = {
-  width: "54px",
-  height: "54px",
+  width: "58px",
+  height: "58px",
+  flexShrink: 0,
   borderRadius: "999px",
   objectFit: "cover",
-  border: "1px solid rgba(148, 163, 184, 0.18)"
+  border: "2px solid rgba(148, 163, 184, 0.18)"
+};
+
+const avatarMutedStyle: CSSProperties = {
+  filter: "grayscale(0.6)",
+  opacity: 0.75
 };
 
 const avatarFallbackStyle: CSSProperties = {
-  ...avatarStyle,
   display: "grid",
   placeItems: "center",
-  background: "rgba(251, 191, 36, 0.14)",
+  background: "linear-gradient(160deg, rgba(251, 191, 36, 0.24), rgba(251, 191, 36, 0.08))",
   color: "#fbbf24",
-  fontWeight: 800
+  fontWeight: 800,
+  fontSize: "1.15rem"
+};
+
+const avatarFallbackMutedStyle: CSSProperties = {
+  background: "rgba(148, 163, 184, 0.12)",
+  color: "#94a3b8"
 };

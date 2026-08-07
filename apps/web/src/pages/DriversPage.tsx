@@ -69,21 +69,34 @@ export function DriversPage() {
           <div style={filtersStyle}>
             <label style={filterLabelStyle}>
               Buscar por nome ou {activeTenant?.accountType === "COMPANY" ? "matrícula" : "CPF"}
-              <input
-                style={filterInputStyle}
-                placeholder={
-                  activeTenant?.accountType === "COMPANY"
-                    ? "Ex: Carlos ou MT-1024"
-                    : "Ex: Carlos ou 12345678910"
-                }
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
+              <span style={searchFieldStyle}>
+                <svg
+                  style={searchIconStyle}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <input
+                  style={filterInputStyle}
+                  placeholder={
+                    activeTenant?.accountType === "COMPANY"
+                      ? "Ex: Carlos ou MT-1024"
+                      : "Ex: Carlos ou 12345678910"
+                  }
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </span>
             </label>
             <label style={filterLabelStyle}>
               Status
               <select
-                style={filterInputStyle}
+                style={selectInputStyle}
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
               >
@@ -95,7 +108,10 @@ export function DriversPage() {
             </label>
           </div>
         )}
-        <button type="button" style={primaryButtonStyle} onClick={openCreateDrawer}>
+        <button type="button" className="btn-primary" style={primaryButtonStyle} onClick={openCreateDrawer}>
+          <span aria-hidden="true" style={primaryButtonIconStyle}>
+            +
+          </span>
           Novo motorista
         </button>
       </div>
@@ -153,6 +169,7 @@ export function DriversPage() {
                 accountType={activeTenant?.accountType}
                 drivers={terminatedDrivers}
                 vehicles={vehicles}
+                muted
                 onView={openViewDrawer}
                 onEdit={openEditDrawer}
                 onActivate={(driver) => handleStatusUpdate(driver, "ACTIVE")}
@@ -238,10 +255,34 @@ const filtersStyle: CSSProperties = {
 const filterLabelStyle: CSSProperties = {
   display: "grid",
   gap: "0.4rem",
-  color: "#cbd5e1"
+  color: "#cbd5e1",
+  fontSize: "0.9rem"
+};
+
+const searchFieldStyle: CSSProperties = {
+  position: "relative",
+  display: "flex",
+  alignItems: "center"
+};
+
+const searchIconStyle: CSSProperties = {
+  position: "absolute",
+  left: "1rem",
+  color: "#64748b",
+  pointerEvents: "none"
 };
 
 const filterInputStyle: CSSProperties = {
+  width: "100%",
+  borderRadius: "0.9rem",
+  border: "1px solid rgba(148, 163, 184, 0.2)",
+  background: "rgba(15, 23, 42, 0.68)",
+  color: "#f8fafc",
+  padding: "0.9rem 1rem 0.9rem 2.6rem",
+  outline: "none"
+};
+
+const selectInputStyle: CSSProperties = {
   borderRadius: "0.9rem",
   border: "1px solid rgba(148, 163, 184, 0.2)",
   background: "rgba(15, 23, 42, 0.68)",
@@ -269,16 +310,29 @@ const limitNoticeStyle: CSSProperties = {
 };
 
 const primaryButtonStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "0.5rem",
   border: 0,
   borderRadius: "0.9rem",
-  padding: "0.9rem 1rem",
+  padding: "0.9rem 1.1rem",
   background: "#fbbf24",
   color: "#0f172a",
-  fontWeight: 700
+  fontWeight: 700,
+  transition: "transform 0.15s ease, box-shadow 0.15s ease"
+};
+
+const primaryButtonIconStyle: CSSProperties = {
+  display: "inline-grid",
+  placeItems: "center",
+  width: "1.1rem",
+  height: "1.1rem",
+  fontSize: "1rem",
+  lineHeight: 1
 };
 
 const terminatedSectionStyle: CSSProperties = {
-  marginTop: "2rem",
+  marginTop: "2.25rem",
   paddingTop: "1.5rem",
   borderTop: "1px solid rgba(148, 163, 184, 0.14)"
 };
@@ -288,7 +342,7 @@ const terminatedHeaderStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "center",
   gap: "1rem",
-  marginBottom: "1rem"
+  marginBottom: "1.1rem"
 };
 
 const terminatedSubtitleStyle: CSSProperties = {
@@ -302,7 +356,10 @@ const terminatedCountStyle: CSSProperties = {
   borderRadius: "999px",
   display: "grid",
   placeItems: "center",
-  background: "rgba(148, 163, 184, 0.16)",
-  color: "#e2e8f0",
+  background: "rgba(148, 163, 184, 0.14)",
+  border: "1px solid rgba(148, 163, 184, 0.2)",
+  color: "#cbd5e1",
+  fontSize: "0.85rem",
+  fontWeight: 700,
   padding: "0 0.65rem"
 };
