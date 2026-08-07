@@ -2,12 +2,14 @@ import "reflect-metadata";
 
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import compression from "compression";
 
 import { AppModule } from "./app.module.js";
 import { resolveCorsOrigins } from "./common/cors.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(compression());
   app.enableCors({
     origin: resolveCorsOrigins(),
     credentials: true

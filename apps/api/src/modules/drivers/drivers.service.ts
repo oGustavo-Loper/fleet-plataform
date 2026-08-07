@@ -54,9 +54,9 @@ export class DriversService {
       return;
     }
 
-    const activeDriverCount = (await this.prisma.driver.findMany({ where: { tenantId } })).filter(
-      (driver) => driver.employmentStatus !== "TERMINATED"
-    ).length;
+    const activeDriverCount = await this.prisma.driver.count({
+      where: { tenantId, employmentStatus: { not: "TERMINATED" } }
+    });
 
     if (activeDriverCount >= FREE_TIER_DRIVER_LIMIT) {
       throw new BadRequestException(PtBrMessage.DRIVER_PLAN_LIMIT_REACHED);

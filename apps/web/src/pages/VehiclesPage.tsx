@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppShell } from "@fleet/ui";
 
 import { DrawerPanel } from "../components/DrawerPanel";
+import { PaginationControls } from "../components/PaginationControls";
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
 import { VehicleForm } from "../features/vehicles/VehicleForm";
 import { VehicleList } from "../features/vehicles/VehicleList";
@@ -21,6 +22,11 @@ export function VehiclesPage() {
     error,
     vehicles,
     filteredVehicles,
+    pagedVehicles,
+    page,
+    setPage,
+    pageSize,
+    totalPages,
     vehicleLimit,
     limitReached,
     search,
@@ -100,10 +106,20 @@ export function VehiclesPage() {
       ) : error ? (
         <ErrorState message="Falha ao carregar veículos da API." />
       ) : filteredVehicles.length > 0 ? (
-        <VehicleList
-          vehicles={filteredVehicles}
-          onEdit={openEditDrawer}
-        />
+        <>
+          <VehicleList
+            vehicles={pagedVehicles}
+            onEdit={openEditDrawer}
+          />
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={filteredVehicles.length}
+            pageSize={pageSize}
+            currentCount={pagedVehicles.length}
+            onPageChange={setPage}
+          />
+        </>
       ) : (
         <EmptyState message="Nenhum veículo retornado pela API para esta conta." />
       )}
