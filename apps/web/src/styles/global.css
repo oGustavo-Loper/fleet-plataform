@@ -56,6 +56,16 @@ input {
   outline-offset: 2px;
 }
 
+.driver-card:hover {
+  border-color: rgba(251, 191, 36, 0.3);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 18px 32px rgba(2, 6, 23, 0.28);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(251, 191, 36, 0.22);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
